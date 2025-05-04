@@ -1,10 +1,29 @@
+import axios from "axios";
+
+let inMemoryToken: string | null = null;
+
 export const setToken = (token: string) => {
-    localStorage.setItem('token', token);
+  inMemoryToken = token;
 }
 
 export const getToken = () => {
-    return localStorage.getItem('token');
+  if (inMemoryToken) {
+    return inMemoryToken;
+  }
+  
+  return null;
 }
-export const removeToken = () => {
-    localStorage.removeItem('token');
+
+export const removeToken = async () => {
+  inMemoryToken = null;
+  
+  try {
+    (await axios.post('/api/auth/remove-cookie', {}, {
+        headers: {
+            "Content-Type": "application/json"
+        }
+    }));
+  } catch (error) {
+    console.error('Error al eliminar la cookie:', error);
+  }
 }

@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
 import { sidebarItems } from "../data/sidebar-items";
+import { useAuthStore } from "@/features/auth/context/auth-store";
 
 
 export const DashboardNavbar = () =>{
   const params = usePathname();
   const title = sidebarItems.find((item) => item.href === params)?.title;
-  console.log(title);
+  const {user} = useAuthStore();
 
   return (
     <header className="border-b p-4 bg-background flex items-center justify-between">
@@ -33,12 +34,12 @@ export const DashboardNavbar = () =>{
           <Avatar>
             <AvatarImage src="" />
             <AvatarFallback className="bg-primary/20 text-primary">
-              AU
+              {user?.fullName?.charAt(0) || "G"}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <p className="text-sm font-medium">Admin Usuario</p>
-            <p className="text-xs text-muted-foreground">admin@example.com</p>
+            <p className="text-sm font-medium">{user?.fullName || "Usuario"}</p>
+            <p className="text-xs text-muted-foreground">{user?.email || "admin@example.com"}</p>
           </div>
         </div>
       </div>
