@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,36 +11,40 @@ interface LoanCardProps {
   onReturnClick?: (loan: Loan) => void;
 }
 
-export function LoanCard({ loan, onReturnClick }: LoanCardProps) {
-  const isOverdue = loan.status === "active" && new Date() > new Date(loan.dueDate);
-  const effectiveStatus = isOverdue ? "overdue" : loan.status;
+export default function LoanCard({ loan, onReturnClick }: LoanCardProps) {
+  const { product, user } = loan;
 
-  const getStatusBadge = () => {
-    switch (effectiveStatus) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
       case "active":
-        return <Badge className="bg-green-100 text-green-800" variant="outline">Activo</Badge>;
+        return "bg-green-100 text-green-800";
       case "returned":
-        return <Badge className="bg-blue-100 text-blue-800" variant="outline">Devuelto</Badge>;
+        return "bg-blue-100 text-blue-800";
       case "overdue":
-        return <Badge className="bg-red-100 text-red-800" variant="outline">Vencido</Badge>;
+        return "bg-red-100 text-red-800";
       default:
-        return <Badge variant="outline">Desconocido</Badge>;
+        return "bg-gray-100 text-gray-800";
     }
   };
+
+  const isOverdue = loan.status === "active" && new Date() > new Date(loan.dueDate);
+  const displayStatus = isOverdue ? "overdue" : loan.status;
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-medium text-lg">
-              {loan.product?.name || "Producto"}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Código: {loan.product?.barcode || "N/A"}
-            </p>
+            <h3 className="font-medium text-lg">{product?.name || "Producto"}</h3>
+            <p className="text-muted-foreground text-sm">Código: {product?.barcode || "N/A"}</p>
           </div>
-          {getStatusBadge()}
+          <Badge className={getStatusColor(displayStatus)} variant="outline">
+            {displayStatus === "active"
+              ? "Activo"
+              : displayStatus === "returned"
+              ? "Devuelto"
+              : "Vencido"}
+          </Badge>
         </div>
       </CardHeader>
 
@@ -49,8 +53,7 @@ export function LoanCard({ loan, onReturnClick }: LoanCardProps) {
           <div className="grid gap-1">
             <span className="text-sm text-muted-foreground">Usuario:</span>
             <span className="text-sm font-medium">
-              {loan.user?.name || "Usuario"}
-              {loan.user?.studentId && ` (${loan.user.studentId})`}
+              {user?.name || "Usuario"} {user?.studentId ? `(${user.studentId})` : ""}
             </span>
           </div>
 
