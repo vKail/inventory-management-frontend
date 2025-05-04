@@ -1,4 +1,16 @@
+'use client';
+
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   CardContent,
   CardDescription,
@@ -6,25 +18,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useLogin } from "../../hooks/use-login-form";
-import { UserRole } from "@/features/users/data/enums/user-roles.enums";
+import { LoginFormValues, loginSchema } from "../../data/schemas/login-schema";
+import { useAuth } from "../../hooks/use-login-form";
 
-type LoginFormProps = {
-  role: UserRole;
-};
+export default function LoginForm() {
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-type LoginFormValues = {
-  email: string;
-  password: string;
-};
-
-export default function LoginForm({ role }: LoginFormProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
-  const { onSubmit } = useLogin(role);
+  const { onSubmit } = useAuth();
   
+  const handleSubmit = form.handleSubmit((data) => {
+    onSubmit(data);
+  });
+
   return (
     <>
       <CardHeader className="text-center">
@@ -35,48 +48,41 @@ export default function LoginForm({ role }: LoginFormProps) {
       </CardHeader>
       
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email o ID de usuario</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="correo@universidad.edu"
-              {...register("email", { 
-                required: "Este campo es requerido",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Email inválido"
-                }
-              })}
+        <Form {...form}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email o ID de usuario</FormLabel>
+                  <FormControl>
+                    <Input placeholder="correo@universidad.edu" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register("password", { 
-                required: "Este campo es requerido",
-                minLength: {
-                  value: 6,
-                  message: "La contraseña debe tener al menos 6 caracteres"
-                }
-              })}
+            
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contraseña</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
-            )}
-          </div>
-          
-          <Button type="submit" className="w-full">
-            Ingresar
-          </Button>
-        </form>
+            
+            <Button type="submit" className="w-full">
+              Ingresar
+            </Button>
+          </form>
+        </Form>
       </CardContent>
       
       <CardFooter className="flex flex-col space-y-2">
