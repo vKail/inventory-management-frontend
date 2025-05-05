@@ -1,8 +1,9 @@
+import { NewLoanForm } from "../components/new-loan-form";
+
 async function LoanRequestView() {
     return (
         <div>
-            <h1>Solicitud de Préstamo</h1>
-            {/* TODO: Add NewLoanForm component here */}
+            <NewLoanForm />
         </div>
     );
 }
