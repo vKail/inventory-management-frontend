@@ -8,8 +8,7 @@ import { useState } from 'react';
 import { Loan } from '@/features/loans/data/interfaces/loan.interface';
 
 export default function LoansView() {
-  const { loans, markAsReturned } = useLoanStore();
-  const [filtered, setFiltered] = useState<Loan[]>(loans);
+  const { loans, filteredLoans, markAsReturned } = useLoanStore();
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -19,7 +18,7 @@ export default function LoansView() {
   };
 
   const handleConfirmReturn = (loan: Loan) => {
-    markAsReturned(loan.id); // ✅ Actualiza el estado global
+    markAsReturned(loan.id);
     setShowModal(false);
   };
 
@@ -27,15 +26,11 @@ export default function LoansView() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Gestión de préstamos</h1>
 
-      <LoanFilters loans={loans} onFilter={setFiltered} />
+      <LoanFilters loans={loans} onFilter={() => {}} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map((loan) => (
-          <LoanCard
-            key={loan.id}
-            loan={loan}
-            onReturnClick={handleReturnClick}
-          />
+        {filteredLoans.map((loan) => (
+          <LoanCard key={loan.id} loan={loan} onReturnClick={handleReturnClick} />
         ))}
       </div>
 
