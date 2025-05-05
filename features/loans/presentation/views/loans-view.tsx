@@ -1,31 +1,32 @@
-// features/loans/presentation/views/loans-view.tsx
 'use client';
 
-import { useLoanStore } from "@/features/loans/context/loans-store";
-import LoanCard from "@/features/loans/presentation/components/LoanCard";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState } from 'react';
+import LoanCard from '@/features/loans/presentation/components/LoanCard';
+import LoanFilters from '@/features/loans/presentation/components/loan-filters';
+import { useLoanStore } from '@/features/loans/context/loans-store';
+import { Loan } from '@/features/loans/data/interfaces/loan.interface';
 
 export default function LoansView() {
-  const { filteredLoans, activeTab, setActiveTab } = useLoanStore();
+  const { loans } = useLoanStore(); 
+  const [filteredLoans, setFilteredLoans] = useState<Loan[]>(loans);
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Gestión de préstamos</h1>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="active">Activos</TabsTrigger>
-          <TabsTrigger value="returned">Devueltos</TabsTrigger>
-          <TabsTrigger value="overdue">Vencidos</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <LoanFilters loans={loans} onFilter={setFilteredLoans} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredLoans.map((loan) => (
-          <LoanCard key={loan.id} loan={loan} />
-        ))}
-      </div>
+      {filteredLoans.length === 0 ? (
+        <div className="text-center py-10 text-muted-foreground">
+          No se encontraron préstamos que coincidan con los filtros.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredLoans.map((loan) => (
+            <LoanCard key={loan.id} loan={loan} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
