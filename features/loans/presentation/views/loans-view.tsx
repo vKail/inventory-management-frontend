@@ -1,7 +1,7 @@
 'use client';
 
 import { useLoanStore } from '@/features/loans/context/loans-store';
-import LoanCard from '@/features/loans/presentation/components/LoanCard';
+import LoanCard from '@/features/loans/presentation/components/loan-card';
 import LoanRow from '@/features/loans/presentation/components/loan-row';
 import LoanTable from '@/features/loans/presentation/components/loan-table';
 import { ReturnModal } from '@/features/loans/presentation/components/return-modal';
