@@ -46,8 +46,7 @@ export function useLoanFilter(loans: Loan[]): UseLoanFilterResult {
         return productMatch || userMatch;
       });
     }
-
-    // Ordenamiento
+    
     result.sort((a, b) => {
       switch (sortBy) {
         case 'startDateAsc':

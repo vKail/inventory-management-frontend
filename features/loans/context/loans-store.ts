@@ -1,7 +1,6 @@
-// features/loans/context/loans-store.ts
-
 import { create } from 'zustand';
-import { Loan, LoanStatus } from '../data/interfaces/loan.interface';
+import { Loan } from '../data/interfaces/loan.interface';
+import { LoanStatus } from '../data/enums/loan-status.enum';
 
 interface LoanState {
   loans: Loan[];
@@ -18,9 +17,9 @@ export const useLoanStore = create<LoanState>((set, get) => {
       id: "1",
       productId: "1",
       userId: "u1",
-      startDate: new Date("2023-04-01"),
-      dueDate: new Date("2023-04-08"),
-      status: "active",
+      startDate: new Date("2024-05-01"),
+      dueDate: new Date("2024-05-10"),
+      status: LoanStatus.ACTIVE,
       product: {
         id: "1",
         barcode: "TEC-001",
@@ -37,9 +36,151 @@ export const useLoanStore = create<LoanState>((set, get) => {
       user: {
         id: "u1",
         name: "Carlos Méndez",
-        email: "test@test.com",
+        email: "carlos@test.com",
         role: "student",
         studentId: "A12345",
+      },
+    },
+    {
+      id: "2",
+      productId: "2",
+      userId: "u2",
+      startDate: new Date("2024-05-02"),
+      dueDate: new Date("2024-05-12"),
+      status: LoanStatus.ACTIVE,
+      product: {
+        id: "2",
+        barcode: "TEC-002",
+        name: "Tablet Samsung Galaxy Tab",
+        category: "technology",
+        department: "electronics",
+        quantity: 1,
+        status: "available",
+        description: "",
+        cost: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      user: {
+        id: "u2",
+        name: "Ana López",
+        email: "ana@test.com",
+        role: "teacher",
+      },
+    },
+
+    {
+      id: "3",
+      productId: "3",
+      userId: "u3",
+      startDate: new Date("2024-04-01"),
+      dueDate: new Date("2024-04-08"),
+      returnDate: new Date("2024-04-07"),
+      status: LoanStatus.RETURNED,
+      product: {
+        id: "3",
+        barcode: "TEC-003",
+        name: "Cámara Canon EOS",
+        category: "multimedia",
+        department: "design",
+        quantity: 1,
+        status: "available",
+        description: "",
+        cost: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      user: {
+        id: "u3",
+        name: "Luis Pérez",
+        email: "luis@test.com",
+        role: "student",
+        studentId: "C20234",
+      },
+    },
+    {
+      id: "4",
+      productId: "4",
+      userId: "u4",
+      startDate: new Date("2024-04-10"),
+      dueDate: new Date("2024-04-15"),
+      returnDate: new Date("2024-04-15"),
+      status: LoanStatus.RETURNED,
+      product: {
+        id: "4",
+        barcode: "TEC-004",
+        name: "Teclado Mecánico Logitech",
+        category: "accessories",
+        department: "computing",
+        quantity: 1,
+        status: "available",
+        description: "",
+        cost: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      user: {
+        id: "u4",
+        name: "Valeria Díaz",
+        email: "valeria@test.com",
+        role: "admin",
+      },
+    },
+
+    {
+      id: "5",
+      productId: "5",
+      userId: "u5",
+      startDate: new Date("2024-03-01"),
+      dueDate: new Date("2024-03-05"),
+      status: LoanStatus.OVERDUE,
+      product: {
+        id: "5",
+        barcode: "TEC-005",
+        name: "Proyector Epson",
+        category: "multimedia",
+        department: "audiovisual",
+        quantity: 1,
+        status: "borrowed",
+        description: "",
+        cost: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      user: {
+        id: "u5",
+        name: "Marco León",
+        email: "marco@test.com",
+        role: "student",
+        studentId: "D99876",
+      },
+    },
+    {
+      id: "6",
+      productId: "6",
+      userId: "u6",
+      startDate: new Date("2024-02-20"),
+      dueDate: new Date("2024-03-01"),
+      status: LoanStatus.OVERDUE,
+      product: {
+        id: "6",
+        barcode: "TEC-006",
+        name: "Kit Arduino Starter",
+        category: "technology",
+        department: "electronics",
+        quantity: 1,
+        status: "borrowed",
+        description: "",
+        cost: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      user: {
+        id: "u6",
+        name: "Sofía Ramírez",
+        email: "sofia@test.com",
+        role: "student",
+        studentId: "E11009",
       },
     },
   ];
@@ -83,7 +224,7 @@ export const useLoanStore = create<LoanState>((set, get) => {
         loan.id === id
           ? {
               ...loan,
-              status: 'returned' as LoanStatus,
+              status: LoanStatus.RETURNED,
               returnDate: new Date(),
             }
           : loan

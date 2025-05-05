@@ -1,5 +1,3 @@
-// features/loans/data/interfaces/loan.interface.ts
-
 export type LoanStatus = 'active' | 'returned' | 'overdue';
 
 export interface Product {

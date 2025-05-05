@@ -9,7 +9,7 @@ import LoanFilters from '@/features/loans/presentation/components/loan-filters';
 import { useState } from 'react';
 import { Loan } from '@/features/loans/data/interfaces/loan.interface';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, List, Table } from 'lucide-react';
+import { LayoutGrid, List, Table, Plus } from 'lucide-react';
 
 export default function LoansView() {
   const { loans, markAsReturned } = useLoanStore();
@@ -33,28 +33,35 @@ export default function LoansView() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Gestión de préstamos</h1>
 
-        <div className="flex gap-1">
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('grid')}
-          >
-            <LayoutGrid className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+          <Button className="bg-primary text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            Registrar préstamo
           </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('list')}
-          >
-            <List className="w-5 h-5" />
-          </Button>
-          <Button
-            variant={viewMode === 'table' ? 'default' : 'outline'}
-            size="icon"
-            onClick={() => setViewMode('table')}
-          >
-            <Table className="w-5 h-5" />
-          </Button>
+
+          <div className="flex gap-1">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="w-5 h-5" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-5 h-5" />
+            </Button>
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              size="icon"
+              onClick={() => setViewMode('table')}
+            >
+              <Table className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
