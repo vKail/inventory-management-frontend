@@ -10,7 +10,7 @@ export interface RegisterFormData {
     dimensiones: string;
     numeroActaMatriz: string;
     marcaOtrosDatos: string;
-    fechaIngreso: string;
+    fechaIngreso: Date;
     nombreCustodio: string;
     numeroItemRegion: string;
     codigoCuentaContable: string;
