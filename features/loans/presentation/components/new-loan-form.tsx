@@ -30,92 +30,38 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { useNewLoanForm } from "../../hooks/use-new-loan-form";
+
 export function NewLoanForm() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    nombres: "",
-    apellidos: "",
-    correo: "",
-    telefono: "",
-    rol: "",
-    cedula: "",
-    bienId: "",
-    bienNombre: "",
-    motivo: "",
-    eventoAsociado: "",
-    ubicacionExterna: "",
-    fechaDevolucion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días después
-    notas: "",
-    aceptaResponsabilidad: false,
-  });
+ 
+  const {
+    formData,
+    searchQuery,
+    searchResults,
+    showResults,
+    setFormData,
+    handleSearchBien,
+    handleSelectBien,
+    handleInputChange,
+    handleSelectChange,
+    handleDateChange,
+    onSubmit,
+    setSearchQuery,
+    handleCancel,
 
-  // Simulación de búsqueda de bienes
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showResults, setShowResults] = useState(false);
-
-  const handleSearchBien = () => {
-    // Aquí iría la lógica real para buscar en la API
-    // Por ahora simulamos resultados:
-    setSearchResults([
-      { id: "1", nombre: "MacBook Pro 16''", barcode: "TEC-001" },
-      { id: "2", nombre: "Monitor Dell UltraSharp 27''", barcode: "TEC-002" },
-      { id: "3", nombre: "Arduino Starter Kit", barcode: "TEC-003" },
-    ]);
-    setShowResults(true);
-  };
-
-  const handleSelectBien = (bien: any) => {
-    setFormData({
-      ...formData,
-      bienId: bien.id,
-      bienNombre: bien.nombre,
-    });
-    setShowResults(false);
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setFormData({
-        ...formData,
-        fechaDevolucion: date,
-      });
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aquí iría la lógica para enviar el formulario
-    console.log("Datos del formulario:", formData);
-    alert("Solicitud de préstamo enviada correctamente");
-    router.push("/loans");
-  };
-
+    
+   
+  } = useNewLoanForm();
+  
+  
   return (
     <div className="max-w-4xl mx-auto">
-      <Card>
+      
         <CardHeader>
           <CardTitle>Solicitud de Préstamo de Bien</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={onSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Información del solicitante */}
               <div className="space-y-4">
@@ -357,7 +303,7 @@ export function NewLoanForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/loans")}
+                onClick={handleCancel}
               >
                 Cancelar
               </Button>
@@ -370,7 +316,7 @@ export function NewLoanForm() {
             </CardFooter>
           </form>
         </CardContent>
-      </Card>
+      
     </div>
   );
 }
