@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Loan } from '@/features/loans/data/interfaces/loan.interface';
 
 export default function LoansView() {
-  const { loans, setActiveTab, activeTab } = useLoanStore();
+  const { loans, markAsReturned } = useLoanStore();
   const [filtered, setFiltered] = useState<Loan[]>(loans);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -19,8 +19,7 @@ export default function LoansView() {
   };
 
   const handleConfirmReturn = (loan: Loan) => {
-    loan.status = 'returned';
-    loan.returnDate = new Date();
+    markAsReturned(loan.id); // ✅ Actualiza el estado global
     setShowModal(false);
   };
 
@@ -32,7 +31,11 @@ export default function LoansView() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((loan) => (
-          <LoanCard key={loan.id} loan={loan} onReturnClick={handleReturnClick} />
+          <LoanCard
+            key={loan.id}
+            loan={loan}
+            onReturnClick={handleReturnClick}
+          />
         ))}
       </div>
 

@@ -1,14 +1,18 @@
+// features/loans/context/loans-store.ts
+
 import { create } from 'zustand';
-import { Loan } from '../data/interfaces/loan.interface';
+import { Loan, LoanStatus } from '../data/interfaces/loan.interface';
 
 interface LoanState {
   loans: Loan[];
   filteredLoans: Loan[];
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  filterLoans: (tab: string, search?: string) => void;
+  markAsReturned: (id: string) => void;
 }
 
-export const useLoanStore = create<LoanState>((set) => {
+export const useLoanStore = create<LoanState>((set, get) => {
   const sampleLoans: Loan[] = [
     {
       id: "1",
@@ -44,13 +48,53 @@ export const useLoanStore = create<LoanState>((set) => {
     loans: sampleLoans,
     filteredLoans: sampleLoans,
     activeTab: 'all',
-    setActiveTab: (tab) =>
-      set((state) => {
-        const filtered =
-          tab === "all"
-            ? state.loans
-            : state.loans.filter((loan) => loan.status === tab);
-        return { activeTab: tab, filteredLoans: filtered };
-      }),
+
+    setActiveTab: (tab) => {
+      const { loans } = get();
+      const filtered = tab === 'all' ? loans : loans.filter((l) => l.status === tab);
+      set({ activeTab: tab, filteredLoans: filtered });
+    },
+
+    filterLoans: (tab, search = '') => {
+      const { loans } = get();
+      let filtered = loans;
+
+      if (tab !== 'all') {
+        filtered = filtered.filter((l) => l.status === tab);
+      }
+
+      if (search) {
+        const q = search.toLowerCase();
+        filtered = filtered.filter((l) =>
+          l.product?.name.toLowerCase().includes(q) ||
+          l.product?.barcode.toLowerCase().includes(q) ||
+          l.user?.name.toLowerCase().includes(q) ||
+          l.user?.studentId?.toLowerCase().includes(q)
+        );
+      }
+
+      set({ filteredLoans: filtered });
+    },
+
+    markAsReturned: (id: string) => {
+      const { loans, activeTab } = get();
+
+      const updated = loans.map((loan) =>
+        loan.id === id
+          ? {
+              ...loan,
+              status: 'returned' as LoanStatus,
+              returnDate: new Date(),
+            }
+          : loan
+      );
+
+      const filtered =
+        activeTab === 'all'
+          ? updated
+          : updated.filter((l) => l.status === activeTab);
+
+      set({ loans: updated, filteredLoans: filtered });
+    },
   };
 });
