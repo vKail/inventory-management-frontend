@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from "@/components/ui/card";
-import { NewLoanForm } from "../components/new-loan-form";
+import NewLoanForm  from "../components/new-loan-form";
 
 export default function LoanRequestView() {
   return (

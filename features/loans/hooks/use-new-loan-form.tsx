@@ -1,9 +1,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { loanRequestSchema } from "../data/schemas/loan-request-schema";
 
 export const useNewLoanForm = () => {
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     nombres: "",
     apellidos: "",
@@ -16,32 +18,16 @@ export const useNewLoanForm = () => {
     motivo: "",
     eventoAsociado: "",
     ubicacionExterna: "",
-    fechaDevolucion: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    fechaDevolucion: null as Date | null,
     notas: "",
     aceptaResponsabilidad: false,
   });
 
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
-
-  const handleSearchBien = () => {
-    setSearchResults([
-      { id: "1", nombre: "MacBook Pro 16''", barcode: "TEC-001" },
-      { id: "2", nombre: "Monitor Dell UltraSharp 27''", barcode: "TEC-002" },
-      { id: "3", nombre: "Arduino Starter Kit", barcode: "TEC-003" },
-    ]);
-    setShowResults(true);
-  };
-
-  const handleSelectBien = (bien: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      bienId: bien.id,
-      bienNombre: bien.nombre,
-    }));
-    setShowResults(false);
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -61,22 +47,67 @@ export const useNewLoanForm = () => {
   };
 
   const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setFormData((prev) => ({
-        ...prev,
-        fechaDevolucion: date,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      fechaDevolucion: (date ?? null) as Date | null,
+    }));
+  };
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      aceptaResponsabilidad: checked,
+    }));
+  };
+
+  const handleSearchBien = () => {
+    // Simular búsqueda
+    setSearchResults([
+      { id: "1", nombre: "MacBook Pro 16''", barcode: "TEC-001" },
+      { id: "2", nombre: "Monitor Dell UltraSharp 27''", barcode: "TEC-002" },
+      { id: "3", nombre: "Arduino Starter Kit", barcode: "TEC-003" },
+    ]);
+    setShowResults(true);
+  };
+
+  const handleSelectBien = (bien: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      bienId: bien.id,
+      bienNombre: bien.nombre,
+    }));
+    setShowResults(false);
   };
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Datos del formulario:", formData);
 
-    toast.success("Solicitud de préstamo enviada correctamente");
+    const parsed = loanRequestSchema.safeParse({
+      ...formData,
+      fechaDevolucion: formData.fechaDevolucion || undefined,
+    });
+
+    if (!parsed.success) {
+      const errors: { [key: string]: string } = {};
+      const errorMap = parsed.error.format();
+      for (const key in errorMap) {
+        const err = errorMap[key as keyof typeof errorMap];
+        if (err && (err as any)._errors?.length) {
+          errors[key] = (err as any)._errors[0];
+        }
+      }
+      setFormErrors(errors);
+      toast.error("Por favor corrige los errores del formulario.");
+      return;
+    }
+
+    toast.success("Solicitud de préstamo enviada correctamente.");
+
+    // Aquí iría tu lógica para enviar los datos (fetch/axios, etc.)
+
     setTimeout(() => {
       router.push("/loans");
-    }, 4000);
+    }, 3000);
   };
 
   const handleCancel = () => {
@@ -85,6 +116,7 @@ export const useNewLoanForm = () => {
 
   return {
     formData,
+    formErrors,
     searchQuery,
     searchResults,
     showResults,
@@ -94,9 +126,9 @@ export const useNewLoanForm = () => {
     handleInputChange,
     handleSelectChange,
     handleDateChange,
+    handleCheckboxChange,
     onSubmit,
     setSearchQuery,
     handleCancel,
-
   };
 };
