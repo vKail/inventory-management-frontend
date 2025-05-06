@@ -20,4 +20,10 @@ export const sidebarItems = [
         roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
         href: "/loans",
     },
+    {
+        title: "Registrar Prestamos",
+        icon: Users,
+        roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+        href: "/loans/request",
+    },
 ]
