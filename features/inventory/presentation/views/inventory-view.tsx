@@ -1,24 +1,25 @@
+// features/inventory/presentation/views/inventory-view.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { InventoryCard } from "../components/inventory-card";
 import { InventoryFilterBar } from "../components/inventory-filter-bar";
 import { useInventoryStore } from "@/features/inventory/context/inventory-store";
 import { InventoryListItem } from "../components/inventory-list-item";
+import { InventoryTableView } from "../components/inventory-table-view";
 import { Button } from "@/components/ui/button";
-import { Grid2X2, List, ArrowDownUp, Plus } from "lucide-react";
+import { Grid2X2, List, Table, ArrowDownUp, Plus } from "lucide-react";
 import { useNavigateToAddProduct } from "@/features/inventory/hooks/use-navigate-to-add-product";
 
 export const InventoryView = () => {
   const {
     filteredItems,
-    viewMode,
     isLoading,
     error,
     fetchItems,
-    setViewMode,
   } = useInventoryStore();
 
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("grid");
   const { navigateToAddProduct } = useNavigateToAddProduct();
 
   useEffect(() => {
@@ -47,15 +48,19 @@ export const InventoryView = () => {
               variant={viewMode === "list" ? "default" : "ghost"}
               size="icon"
               onClick={() => setViewMode("list")}
-              className="rounded-l-none"
+              className="rounded-none"
             >
               <List size={18} />
             </Button>
+            <Button
+              variant={viewMode === "table" ? "default" : "ghost"}
+              size="icon"
+              onClick={() => setViewMode("table")}
+              className="rounded-l-none"
+            >
+              <Table size={18} />
+            </Button>
           </div>
-          
-          <Button variant="outline" size="icon">
-            <ArrowDownUp size={18} />
-          </Button>
           
           <Button 
             onClick={navigateToAddProduct}
@@ -77,28 +82,34 @@ export const InventoryView = () => {
         setViewMode={setViewMode}
       />
 
-      <div className={
-        viewMode === 'grid' 
-          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
-          : "space-y-4"
-      }>
-        {filteredItems.map((item) => (
-          viewMode === 'grid' ? (
+      {viewMode === 'table' ? (
+        <InventoryTableView
+          items={filteredItems}
+          onViewClick={(item) => console.log("Ver detalles", item)}
+          onLoanClick={(item) => console.log("Solicitar", item)}
+        />
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredItems.map((item) => (
             <InventoryCard 
               key={item.id} 
               item={item}
               onViewClick={() => console.log("Ver detalles", item)}
               onLoanClick={() => console.log("Solicitar", item)}
             />
-          ) : (
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredItems.map((item) => (
             <InventoryListItem 
               key={item.id} 
               product={item} 
               viewMode={viewMode} 
             />
-          )
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {filteredItems.length === 0 && (
         <div className="text-center py-10">
