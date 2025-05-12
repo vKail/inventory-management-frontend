@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Location } from '../types/location'
+import { Location } from '../../interfaces/location.interface'
 
 interface LocationTableProps {
   locations: Location[]
@@ -32,7 +32,7 @@ export default function LocationTable({
         <TableBody>
           <TableRow>
             <TableCell colSpan={8} className="text-center py-12">
-              Loading...
+              Cargando...
             </TableCell>
           </TableRow>
         </TableBody>
@@ -48,7 +48,7 @@ export default function LocationTable({
             <TableCell colSpan={8} className="text-center py-20 text-muted-foreground">
               <div className="flex flex-col items-center gap-2">
                 <MapPin className="h-10 w-10 opacity-30" />
-                <span>No locations found</span>
+                <span>No se encontraron ubicaciones</span>
               </div>
             </TableCell>
           </TableRow>
@@ -61,14 +61,14 @@ export default function LocationTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Building</TableHead>
-          <TableHead>Floor</TableHead>
-          <TableHead>Capacity</TableHead>
-          <TableHead>Occupancy</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead>Nombre</TableHead>
+          <TableHead>Tipo</TableHead>
+          <TableHead>Edificio</TableHead>
+          <TableHead>Piso</TableHead>
+          <TableHead>Capacidad</TableHead>
+          <TableHead>Ocupación</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -82,7 +82,7 @@ export default function LocationTable({
             <TableCell>{`${location.occupancy} ${location.capacityUnit}`}</TableCell>
             <TableCell>
               <Badge variant={location.active ? 'default' : 'secondary'}>
-                {location.active ? 'Active' : 'Inactive'}
+                {location.active ? 'Activo' : 'Inactivo'}
               </Badge>
             </TableCell>
             <TableCell className="text-right space-x-2">

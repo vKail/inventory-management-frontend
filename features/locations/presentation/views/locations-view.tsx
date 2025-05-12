@@ -1,12 +1,21 @@
 'use client'
 
-import { PlusCircle, MapPin } from 'lucide-react'
+import { useState } from 'react'
+import { PlusCircle, MapPin, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { useLocations } from '../../hooks/use-locations'
 import LocationTable from '../components/location-table'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DialogDescription } from '@radix-ui/react-dialog'
 
 export default function LocationsView() {
   const {
@@ -20,15 +29,22 @@ export default function LocationsView() {
   } = useLocations()
 
   const router = useRouter()
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const handleEdit = (id: number) => {
     router.push(`/dashboard/locations/${id}/edit`)
   }
 
   const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this location?')) {
-      console.log('Delete location', id)
-    }
+    setSelectedId(id)
+    setDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    console.log('Eliminar ubicación', selectedId)
+    setDialogOpen(false)
+    setSelectedId(null)
   }
 
   return (
@@ -37,17 +53,17 @@ export default function LocationsView() {
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <span className="text-muted-foreground font-medium">Settings</span>
+              <span className="text-muted-foreground font-medium">Configuración</span>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <MapPin className="inline mr-1 h-4 w-4 text-primary align-middle" />
-              <BreadcrumbPage>Locations</BreadcrumbPage>
+              <BreadcrumbPage>Ubicaciones</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <h2 className="text-2xl font-bold tracking-tight">Location List</h2>
-        <p className="text-muted-foreground">All locations registered in the system</p>
+        <h2 className="text-2xl font-bold tracking-tight">Lista de Ubicaciones</h2>
+        <p className="text-muted-foreground">Todas las ubicaciones registradas en el sistema</p>
       </div>
       <Card className="w-[1200px] min-w-[1200px] max-w-[1200px] mx-auto">
         <CardHeader className="px-4 md:px-8 pb-0">
@@ -55,7 +71,7 @@ export default function LocationsView() {
             <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
               <input
                 type="text"
-                placeholder="Search by name, type, building or floor..."
+                placeholder="Buscar por nombre, tipo, edificio o piso..."
                 className="border rounded px-3 py-2 text-sm w-full md:w-64"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -63,7 +79,7 @@ export default function LocationsView() {
             </div>
             <Button onClick={() => router.push('/dashboard/locations/new')}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              New Location
+              Nueva Ubicación
             </Button>
           </div>
           <hr className="border-t border-muted" />
@@ -83,10 +99,10 @@ export default function LocationsView() {
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
               >
-                Previous
+                Anterior
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
+                Página {page} de {totalPages}
               </span>
               <Button
                 variant="outline"
@@ -94,12 +110,31 @@ export default function LocationsView() {
                 onClick={() => setPage(page + 1)}
                 disabled={page === totalPages}
               >
-                Next
+                Siguiente
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar ubicación?</DialogTitle>
+            <DialogDescription>
+              Estás a punto de eliminar esta ubicación del sistema. Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-4">
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Confirmar eliminación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
