@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb'
-import { useLocations } from '../hooks/use-locations'
+import { useLocations } from '../../hooks/use-locations'
 import LocationTable from '../components/location-table'
 
-export default function LocationsPage() {
+export default function LocationsView() {
   const {
     locations,
     loading,
@@ -22,7 +22,7 @@ export default function LocationsPage() {
   const router = useRouter()
 
   const handleEdit = (id: number) => {
-    router.push(`/locations/${id}/edit`)
+    router.push(`/dashboard/locations/${id}/edit`)
   }
 
   const handleDelete = (id: number) => {
@@ -61,7 +61,7 @@ export default function LocationsPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button onClick={() => router.push('/locations/new')}>
+            <Button onClick={() => router.push('/dashboard/locations/new')}>
               <PlusCircle className="mr-2 h-4 w-4" />
               New Location
             </Button>
