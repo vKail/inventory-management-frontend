@@ -43,20 +43,20 @@ export default function StateView() {
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
- useEffect(() => {
-  async function fetchStates() {
-    try {
-      setLoading(true);
-      const res = await getStates(page, pageSize);
-      setStates(res.records);
-    } catch (err) {
-      console.error("Failed to fetch states:", err);
-    } finally {
-      setLoading(false);
+  useEffect(() => { 
+    async function fetchStates() {
+      try {
+        setLoading(true);
+        const res = await getStates(page, pageSize);
+        setStates(res.records);
+      } catch (err) {
+        console.error("Failed to fetch states:", err);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-  fetchStates();
-}, [page]);
+    fetchStates();
+  }, [page]);
 
 
   const filteredStates = states.filter((state) =>
@@ -81,9 +81,10 @@ export default function StateView() {
     setPage(1);
   }, [search, maintenanceFilter, statusFilter]);
 
-  const handleEdit = (id: number) => {
-    router.push(`/states/${id}/edit`);
-  };
+const handleEdit = (id: number) => {
+  router.push(`/states/form?id=${id}`);
+};
+
 
   const handleDelete = (id: number) => {
     if (window.confirm("¿Estás seguro de eliminar este estado?")) {
@@ -116,37 +117,42 @@ export default function StateView() {
       </div>
 
       <Card className="w-[1200px] mx-auto">
-        <CardHeader className="px-4 md:px-8 pb-0">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <StateFilter
-              search={search}
-              onSearchChange={setSearch}
-              maintenanceFilter={maintenanceFilter}
-              onMaintenanceChange={setMaintenanceFilter}
-              statusFilter={statusFilter}
-              onStatusChange={setStatusFilter}
-            />
-            <Button onClick={() => router.push("/states/new")}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo Estado
-            </Button>
-          </div>
-          <hr className="border-t border-muted" />
-        </CardHeader>
-        <CardContent className="px-4 md:px-8 pb-6">
-          <StateTable
-            data={paginatedStates}
-            loading={loading}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-          <StatePagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
-        </CardContent>
-      </Card>
+  <CardHeader className="px-4 md:px-8 pb-0">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <StateFilter
+        search={search}
+        onSearchChange={setSearch}
+        maintenanceFilter={maintenanceFilter}
+        onMaintenanceChange={setMaintenanceFilter}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+      />
+
+  
+      <Button onClick={() => router.push("/states/form")}>
+        <Plus className="mr-2 h-4 w-4" />
+        Nuevo Estado
+      </Button>
+    </div>
+    <hr className="border-t border-muted" />
+  </CardHeader>
+
+  <CardContent className="px-4 md:px-8 pb-6">
+    <StateTable
+      data={paginatedStates}
+      loading={loading}
+  
+      onEdit={(id) => router.push(`/states/form?id=${id}`)}
+      onDelete={handleDelete}
+    />
+    <StatePagination
+      page={page}
+      totalPages={totalPages}
+      onPageChange={setPage}
+    />
+  </CardContent>
+</Card>
+
     </div>
   );
 }

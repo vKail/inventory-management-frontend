@@ -8,6 +8,12 @@ interface State {
   active: boolean;
 }
 
+export type CreateStateDTO = {
+  name: string;
+  description?: string;
+  requiresMaintenance?: boolean;
+};
+
 interface PaginatedResponse<T> {
   records: T[];
   total: number;
@@ -40,7 +46,7 @@ export async function getStates(page = 1, limit = 10): Promise<PaginatedResponse
 }
 
 export async function getStateById(id: number): Promise<State> {
-  const res = await fetch(`${API_URL}/states/${id}`, {
+  const res = await fetch(`${API_URL}states/${id}`, {
     headers: await getAuthHeaders(),
   });
 
@@ -52,8 +58,8 @@ export async function getStateById(id: number): Promise<State> {
   return json.data;
 }
 
-export async function createState(data: Omit<State, "id">): Promise<State> {
-  const res = await fetch(`${API_URL}/states`, {
+export async function createState(data: CreateStateDTO): Promise<State> {
+  const res = await fetch(`${API_URL}states`, {
     method: "POST",
     headers: await getAuthHeaders(),
     body: JSON.stringify(data),
@@ -67,8 +73,9 @@ export async function createState(data: Omit<State, "id">): Promise<State> {
   return json.data;
 }
 
+
 export async function updateState(id: number, data: Omit<State, "id">): Promise<State> {
-  const res = await fetch(`${API_URL}/states/${id}`, {
+  const res = await fetch(`${API_URL}states/${id}`, {
     method: "PATCH",
     headers: await getAuthHeaders(),
     body: JSON.stringify(data),
@@ -83,7 +90,7 @@ export async function updateState(id: number, data: Omit<State, "id">): Promise<
 }
 
 export async function deleteState(id: number): Promise<void> {
-  const res = await fetch(`${API_URL}/states/${id}`, {
+  const res = await fetch(`${API_URL}states/${id}`, {
     method: "DELETE",
     headers: await getAuthHeaders(),
   });
