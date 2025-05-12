@@ -19,9 +19,18 @@ export function useLocations() {
     }
   }
 
+  const deleteLocation = async (id: number) => {
+    try {
+      await locationService.delete(id)
+      await fetchLocations()
+    } catch (error) {
+      console.error('Error al eliminar ubicación:', error)
+    }
+  }
+
   useEffect(() => {
     fetchLocations()
-  }, [page]) 
+  }, [page])
 
   useEffect(() => {
     setPage(1)
@@ -38,14 +47,10 @@ export function useLocations() {
     )
   }, [locations, search])
 
-  const paginated = useMemo(() => {
-    return filtered
-  }, [filtered])
-
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
 
   return {
-    locations: paginated,
+    locations: filtered,
     totalPages,
     loading,
     search,
@@ -53,5 +58,6 @@ export function useLocations() {
     page,
     setPage,
     refresh: fetchLocations,
+    deleteLocation,
   }
 }

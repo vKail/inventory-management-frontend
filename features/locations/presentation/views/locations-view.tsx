@@ -26,6 +26,7 @@ export default function LocationsView() {
     search,
     setSearch,
     totalPages,
+    deleteLocation,
   } = useLocations()
 
   const router = useRouter()
@@ -41,8 +42,10 @@ export default function LocationsView() {
     setDialogOpen(true)
   }
 
-  const confirmDelete = () => {
-    console.log('Eliminar ubicación', selectedId)
+  const confirmDelete = async () => {
+    if (selectedId !== null) {
+      await deleteLocation(selectedId)
+    }
     setDialogOpen(false)
     setSelectedId(null)
   }
@@ -65,10 +68,10 @@ export default function LocationsView() {
         <h2 className="text-2xl font-bold tracking-tight">Lista de Ubicaciones</h2>
         <p className="text-muted-foreground">Todas las ubicaciones registradas en el sistema</p>
       </div>
-      <Card className="w-[1200px] min-w-[1200px] max-w-[1200px] mx-auto">
+      <Card className="w-[1200px] mx-auto">
         <CardHeader className="px-4 md:px-8 pb-0">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto py-2 mb-4">
               <input
                 type="text"
                 placeholder="Buscar por nombre, tipo, edificio o piso..."
