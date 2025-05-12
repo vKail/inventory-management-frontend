@@ -33,7 +33,7 @@ export default function LocationsView() {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const handleEdit = (id: number) => {
-    router.push(`/dashboard/locations/${id}/edit`)
+    router.push(`/locations/${id}/edit`)
   }
 
   const handleDelete = (id: number) => {
@@ -77,7 +77,7 @@ export default function LocationsView() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button onClick={() => router.push('/dashboard/locations/new')}>
+            <Button onClick={() => router.push('/locations/new')}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Nueva Ubicación
             </Button>

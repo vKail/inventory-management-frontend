@@ -1,4 +1,4 @@
-import { UserRole } from '@/features/users/data/enums/user-roles.enums';
+import { UserRole } from '@/features/users/data/enums/user-roles.enums'
 import {
   Barcode,
   Boxes,
@@ -14,7 +14,7 @@ import {
   User,
   Users,
   Warehouse,
-} from 'lucide-react';
+} from 'lucide-react'
 
 export const sidebarItems = [
   {
@@ -40,7 +40,7 @@ export const sidebarItems = [
         ],
       },
       {
-        title: 'Prestamos',
+        title: 'Préstamos',
         icon: Users,
         roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
         subItems: [
@@ -51,7 +51,7 @@ export const sidebarItems = [
             href: '/loans',
           },
           {
-            title: 'Nuevo prestamo',
+            title: 'Nuevo préstamo',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/loans/new',
@@ -118,7 +118,7 @@ export const sidebarItems = [
             href: '/colors',
           },
           {
-            title: 'Nueva color',
+            title: 'Nuevo color',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/colors/new',
@@ -220,7 +220,6 @@ export const sidebarItems = [
           },
         ],
       },
-
       {
         title: 'Estados',
         icon: Package,
@@ -242,4 +241,4 @@ export const sidebarItems = [
       },
     ],
   },
-];
+]
