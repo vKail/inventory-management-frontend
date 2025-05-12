@@ -1,5 +1,5 @@
 import { UserRole } from "@/features/users/data/enums/user-roles.enums";
-import { Barcode, Home, PackageSearch, User, Users } from "lucide-react";
+import { Barcode, Home, PackageSearch, Settings, User, Users } from "lucide-react";
 
 export const sidebarItems = [
     {
@@ -26,4 +26,10 @@ export const sidebarItems = [
         roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
         href: "/loans/request",
     },
+     {
+    title: "Estados",
+    icon: Settings, // cambia por otro si prefieres
+    roles: [UserRole.ADMIN],
+    href: "/states",
+  },
 ]
