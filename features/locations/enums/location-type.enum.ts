@@ -1,7 +1,7 @@
 export enum LocationType {
-  Warehouse = "Almacén",
-  Office = "Oficina",
-  Laboratory = "Laboratorio",
-  ServerRoom = "Sala de Servidores",
-  Maintenance = "Área de Mantenimiento",
+  WAREHOUSE = 'WAREHOUSE',
+  OFFICE = 'OFFICE',
+  LABORATORY = 'LABORATORY',
+  SERVER_ROOM = 'SERVER_ROOM',
+  MAINTENANCE = 'MAINTENANCE',
 }
