@@ -23,15 +23,21 @@ export function useLocationForm() {
         }
       })
 
-      // Ajustes obligatorios y de formato
-      cleanedPayload.parentLocationId =
-        values.parentLocationId === 0 || values.parentLocationId === null
-          ? null
-          : Number(values.parentLocationId)
+
+      cleanedPayload.parentLocationId = 2 
 
       cleanedPayload.warehouseId = Number(values.warehouseId)
-      cleanedPayload.capacity = Number(values.capacity)
-      cleanedPayload.occupancy = Number(values.occupancy)
+
+      cleanedPayload.capacity =
+        values.capacity !== undefined && values.capacity !== null
+          ? Number(values.capacity)
+          : null
+
+      cleanedPayload.occupancy =
+        values.occupancy !== undefined && values.occupancy !== null
+          ? Number(values.occupancy)
+          : null
+
       cleanedPayload.active = Boolean(values.active)
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}locations`, {

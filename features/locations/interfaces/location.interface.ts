@@ -8,14 +8,13 @@ export interface Location {
   building?: string;
   floor?: string;
   reference?: string;
-  capacity?: number;
+  capacity?: number | null; 
   capacityUnit?: string;
-  occupancy?: number;
+  occupancy?: number | null; 
   qrCode?: string;
   coordinates?: string;
   notes?: string;
   active?: boolean;
 }
 
-// ✅ Interfaz para crear sin 'id'
 export type CreateLocation = Omit<Location, 'id'>;

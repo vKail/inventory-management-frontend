@@ -30,9 +30,18 @@ export function useLocationEditForm(id: number) {
           : Number(values.parentLocationId)
 
       cleanedPayload.warehouseId = Number(values.warehouseId)
-      cleanedPayload.capacity = Number(values.capacity)
-      cleanedPayload.occupancy = Number(values.occupancy)
-      cleanedPayload.active = Boolean(values.active)
+
+      if (values.capacity !== undefined) {
+        cleanedPayload.capacity = values.capacity === null ? null : Number(values.capacity)
+      }
+
+      if (values.occupancy !== undefined) {
+        cleanedPayload.occupancy = values.occupancy === null ? null : Number(values.occupancy)
+      }
+
+      if (typeof values.active === 'boolean') {
+        cleanedPayload.active = values.active
+      }
 
       await locationService.update(id, cleanedPayload as CreateLocation)
       router.push('/locations')

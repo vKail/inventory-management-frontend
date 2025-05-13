@@ -49,7 +49,7 @@ export default function LocationEditView() {
       name: '',
       description: '',
       warehouseId: 1,
-      parentLocationId: null,
+      parentLocationId: 2, // <- DEFAULT FIJO
       type: '',
       building: '',
       floor: '',
@@ -72,7 +72,10 @@ export default function LocationEditView() {
       const location = await locationService.getById(id)
       form.reset({
         ...location,
-        active: Boolean(location.active),
+        parentLocationId: location.parentLocationId ?? 2, // <- APLICA DEFAULT SI NULL
+        capacity: location.capacity ?? 0,
+        occupancy: location.occupancy ?? 0,
+        active: !!location.active,
       })
     } catch (error) {
       console.error('Error al cargar ubicación:', error)
