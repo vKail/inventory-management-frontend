@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { getStates } from "../../services/state.service";
 import { deleteState } from "@/features/states/services/state.service";
+import { toast } from "sonner";
 // Mock data (puedes reemplazarlo por llamada a API luego)
 interface State {
   id: number;
@@ -87,17 +88,23 @@ const handleEdit = (id: number) => {
 
 
 const handleDelete = async (id: number) => {
-  const confirmDelete = window.confirm("¿Estás seguro de eliminar este estado?");
-  if (!confirmDelete) return;
+  toast.message("¿Estás seguro?", {
+    description: "Esta acción no se puede deshacer.",
+    action: {
+      label: "Eliminar",
+      onClick: async () => {
 
   try {
     await deleteState(id); 
     setStates((prev) => prev.filter((state) => state.id !== id)); 
+    toast.success("Estado eliminado correctamente");
   } catch (error) {
     console.error("Error al eliminar el estado:", error);
-    alert("No se pudo eliminar el estado. Intenta nuevamente.");
+           toast.error("No se pudo eliminar el estado");
   }
-};
+},
+    },});
+  };
 
   return (
     <div className="flex flex-col items-center space-y-6 px-6 md:px-12 w-full">
