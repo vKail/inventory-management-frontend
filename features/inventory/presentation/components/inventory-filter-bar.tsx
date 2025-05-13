@@ -15,7 +15,7 @@ import { useState } from "react";
 interface Props {
   onFilterChange: (filters: InventoryFilters) => void;
   onClear: () => void;
-  viewMode: "grid" | "list";
+  viewMode: "grid" | "list" | "table";
   setViewMode: (mode: "grid" | "list") => void;
 }
 
