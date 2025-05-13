@@ -54,7 +54,7 @@ export const sidebarItems = [
             title: 'Nuevo préstamo',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/loans/new',
+            href: '/loans/request',
           },
         ],
       },
