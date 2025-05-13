@@ -10,6 +10,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loan } from '@/features/loans/data/interfaces/loan.interface';
 import { format } from 'date-fns';
+import { ClipboardCopy } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LoanDetailModalProps {
   open: boolean;
@@ -17,7 +19,6 @@ interface LoanDetailModalProps {
   onClose: () => void;
 }
 
-// Función para traducir estado a español
 function getEstadoEnEspanol(status: string): string {
   switch (status) {
     case 'active':
@@ -31,14 +32,51 @@ function getEstadoEnEspanol(status: string): string {
   }
 }
 
+function generarTextoDetalle(loan: Loan): string {
+  const detalles: string[] = [];
+
+  detalles.push(`Producto: ${loan.product?.name ?? '-'}`);
+  detalles.push(`Código: ${loan.product?.barcode ?? '-'}`);
+  detalles.push(`Usuario: ${loan.user?.name ?? '-'}`);
+  if (loan.user?.studentId) detalles.push(`Carné: ${loan.user.studentId}`);
+  detalles.push(`Correo: ${loan.user?.email ?? '-'}`);
+  detalles.push(`Inicio: ${format(new Date(loan.startDate), 'dd/MM/yyyy')}`);
+  detalles.push(`Vencimiento: ${format(new Date(loan.dueDate), 'dd/MM/yyyy')}`);
+  if (loan.returnDate)
+    detalles.push(`Devuelto el: ${format(new Date(loan.returnDate), 'dd/MM/yyyy')}`);
+  if (loan.notes) detalles.push(`Notas: ${loan.notes}`);
+  detalles.push(`Estado: ${getEstadoEnEspanol(loan.status)}`);
+
+  return detalles.join('\n');
+}
+
 export function LoanDetailModal({ open, loan, onClose }: LoanDetailModalProps) {
   if (!loan) return null;
+
+  const handleCopy = () => {
+    const texto = generarTextoDetalle(loan);
+    navigator.clipboard.writeText(texto).then(() => {
+      toast.success('Detalle copiado al portapapeles');
+    }).catch(() => {
+      toast.error('Error al copiar al portapapeles');
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Detalle del préstamo</DialogTitle>
+          <div className="flex justify-between items-center">
+            <DialogTitle>Detalle del préstamo</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCopy}
+              title="Copiar al portapapeles"
+            >
+              <ClipboardCopy className="w-5 h-5" />
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-2 text-sm">
