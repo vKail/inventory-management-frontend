@@ -1,8 +1,8 @@
-// features/inventory/presentation/components/inventory-table-view.tsx
+// features/inventory/presentation/components/InventoryTableView.tsx
 "use client";
 
-import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";
-import { ProductStatus } from "@/features/inventory/data/interfaces/inventory.interface";
+import { useState } from "react";
+import { InventoryItem, ProductStatus } from "@/features/inventory/data/interfaces/inventory.interface";
 import {
   Table,
   TableBody,
@@ -11,11 +11,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Package } from "lucide-react";
+import { EditProductModal } from "./edit-product-modal";
 
 interface Props {
   items: InventoryItem[];
@@ -24,10 +30,13 @@ interface Props {
 }
 
 export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
+
   const statusColors = {
     [ProductStatus.AVAILABLE]: "bg-green-100 text-green-800",
-    [ProductStatus.IN_USE]: "bg-blue-100 text-blue-800",
-    [ProductStatus.MAINTENANCE]: "bg-yellow-100 text-yellow-800",
+    [ProductStatus.IN_USE]: "bg-yellow-100 text-yellow-800",
+    [ProductStatus.MAINTENANCE]: "bg-blue-100 text-blue-800",
     [ProductStatus.DAMAGED]: "bg-red-100 text-red-800",
   };
 
@@ -38,29 +47,36 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
     [ProductStatus.DAMAGED]: "Dañado",
   };
 
+  const handleEditClick = (item: InventoryItem) => {
+    setSelectedProduct(item);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-gray-50">
           <TableRow>
-            <TableHead>Nombre</TableHead>
+            <TableHead className="w-[200px]">Producto</TableHead>
             <TableHead>Código</TableHead>
             <TableHead>Categoría</TableHead>
             <TableHead>Departamento</TableHead>
             <TableHead>Cantidad</TableHead>
             <TableHead>Estado</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
+            <TableRow key={item.id} className="hover:bg-gray-50">
               <TableCell className="font-medium">
-                <div className="flex flex-col">
-                  <span>{item.name}</span>
-                  <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                    {item.description}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{item.name}</span>
+                    <span className="text-xs text-muted-foreground line-clamp-1">
+                      {item.description}
+                    </span>
+                  </div>
                 </div>
               </TableCell>
               <TableCell>{item.barcode}</TableCell>
@@ -69,14 +85,14 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
               <TableCell>{item.quantity}</TableCell>
               <TableCell>
                 <Badge
-                  className={`${statusColors[item.status]} text-xs px-2 py-1 rounded-full`}
+                  className={`${statusColors[item.status]} px-2 py-1 rounded-full text-xs`}
                   variant="outline"
                 >
                   {statusLabels[item.status]}
                 </Badge>
               </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -84,24 +100,25 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
                   >
                     Ver
                   </Button>
-                  {item.status === ProductStatus.AVAILABLE && (
-                    <Button
-                      size="sm"
-                      onClick={() => onLoanClick?.(item)}
-                    >
-                      Solicitar
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => onLoanClick?.(item)}
+                    disabled={item.status !== ProductStatus.AVAILABLE}
+                  >
+                    Solicitar
+                  </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditClick(item)}>Editar</DropdownMenuItem>
                       <DropdownMenuItem>Historial</DropdownMenuItem>
-                      <DropdownMenuItem>Eliminar</DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600">
+                        Eliminar
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -110,6 +127,11 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
           ))}
         </TableBody>
       </Table>
+      <EditProductModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        product={selectedProduct}
+      />
     </div>
   );
 };

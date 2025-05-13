@@ -35,7 +35,7 @@ export const sidebarItems = [
             title: 'Nuevo bien',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/products/new',
+            href: '/inventory/add-product',
           },
         ],
       },
