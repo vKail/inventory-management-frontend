@@ -1,20 +1,28 @@
 export interface RegisterFormData {
-    codigoBien: string;
-    nombreBien: string;
-    colorBien: string;
-    codigoAnterior?: string;
-    serieIdentificacion: string;
-    materialPrincipal: string;
-    identificadorUnico: string;
-    modeloCaracteristicas: string;
-    dimensiones: string;
-    numeroActaMatriz: string;
-    marcaOtrosDatos: string;
-    fechaIngreso: Date;
-    nombreCustodio: string;
-    numeroItemRegion: string;
-    codigoCuentaContable: string;
-    valorContable: number;
-    ubicacionFisica: string;
-    oficinaLaboratorio: string;
-  }
+  // === Sección 1: Identificación y Códigos ===
+  codigoBien: string;
+  codigoAnterior?: string; // opcional
+  identificador: string;
+  nroActaMatriz: string;
+  bldBca: "BLD" | "BCA"; // enum-like
+
+  // === Sección 2: Características del Bien ===
+  bien: string;
+  serieIdentificacion: string;
+  modeloCaracteristicas: string;
+  marcaRazaOtros: string;
+  color: string;
+  material: string;
+  dimensiones: string;
+
+  // === Sección 3: Ubicación y Responsable ===
+  custodioActual: string;
+  ubicacion: string;
+  oficinaLaboratorio: string;
+
+  // === Sección 4: Información Contable ===
+  itemRenglon: string;
+  cuentaContable: string;
+  fechaIngreso: Date;
+  valorContable: number;
+}
