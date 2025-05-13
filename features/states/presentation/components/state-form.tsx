@@ -38,7 +38,9 @@ import {
     createState,
     updateState,
     getStateById,
-} from "@/features/states/data/services/state.service";
+} from "@/features/states/services/state.service";
+import { UpdateStateDTO } from "../../data/interfaces/state.interface";
+import { deleteState } from "@/features/states/services/state.service";
 
 const stateSchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
@@ -75,26 +77,30 @@ export default function StateForm() {
                     console.error("Error fetching state:", error);
                 }
             };
-            fetchState();   
+            fetchState();
         }
     }, [id, form]);
 
     const onSubmit = async (data: StateFormValues) => {
         setLoading(true);
         try {
+            const { active, ...cleanedData } = data;
+
             if (id) {
-                await updateState(Number(id), data);
+                await updateState(Number(id), cleanedData as UpdateStateDTO);
             } else {
-                const { active, ...cleanedData } = data;
                 await createState(cleanedData);
             }
+
             router.push("/states");
         } catch (error) {
-            console.error("Error saving state:", error);
+            console.error(" Error saving state:", error);
         } finally {
             setLoading(false);
         }
     };
+
+
 
 
     return (
@@ -183,7 +189,13 @@ export default function StateForm() {
                                                     </FormDescription>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={(checked) => {
+                                                            field.onChange(checked);
+                                                            field.onBlur();
+                                                        }}
+                                                    />
                                                 </FormControl>
                                             </FormItem>
                                         )}
@@ -201,7 +213,13 @@ export default function StateForm() {
                                                     </FormDescription>
                                                 </div>
                                                 <FormControl>
-                                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                                    <Switch
+                                                        checked={Boolean(field.value)} 
+                                                        onCheckedChange={(checked) => {
+                                                            field.onChange(checked);
+                                                            field.onBlur();
+                                                        }}
+                                                    />
                                                 </FormControl>
                                             </FormItem>
                                         )}

@@ -71,9 +71,14 @@ export default function StateTable({ data, loading, onEdit, onDelete }: Props) {
                 <Button variant="ghost" size="icon" onClick={() => onEdit(state.id)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => onDelete(state.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(state.id)}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+
               </div>
             </TableCell>
           </TableRow>

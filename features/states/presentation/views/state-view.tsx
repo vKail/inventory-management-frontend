@@ -22,8 +22,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getStates } from "../../data/services/state.service";
-
+import { getStates } from "../../services/state.service";
+import { deleteState } from "@/features/states/services/state.service";
 // Mock data (puedes reemplazarlo por llamada a API luego)
 interface State {
   id: number;
@@ -86,11 +86,18 @@ const handleEdit = (id: number) => {
 };
 
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("¿Estás seguro de eliminar este estado?")) {
-      setStates(states.filter((state) => state.id !== id));
-    }
-  };
+const handleDelete = async (id: number) => {
+  const confirmDelete = window.confirm("¿Estás seguro de eliminar este estado?");
+  if (!confirmDelete) return;
+
+  try {
+    await deleteState(id); 
+    setStates((prev) => prev.filter((state) => state.id !== id)); 
+  } catch (error) {
+    console.error("Error al eliminar el estado:", error);
+    alert("No se pudo eliminar el estado. Intenta nuevamente.");
+  }
+};
 
   return (
     <div className="flex flex-col items-center space-y-6 px-6 md:px-12 w-full">

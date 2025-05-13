@@ -1,18 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-interface State {
-  id: number;
-  name: string;
-  description: string;
-  requiresMaintenance: boolean;
-  active: boolean;
-}
-
-export type CreateStateDTO = {
-  name: string;
-  description?: string;
-  requiresMaintenance?: boolean;
-};
+import { State, CreateStateDTO, UpdateStateDTO } from "../data/interfaces/state.interface";
 
 interface PaginatedResponse<T> {
   records: T[];
@@ -74,7 +61,7 @@ export async function createState(data: CreateStateDTO): Promise<State> {
 }
 
 
-export async function updateState(id: number, data: Omit<State, "id">): Promise<State> {
+export async function updateState(id: number, data: UpdateStateDTO): Promise<State> {
   const res = await fetch(`${API_URL}states/${id}`, {
     method: "PATCH",
     headers: await getAuthHeaders(),
@@ -99,3 +86,4 @@ export async function deleteState(id: number): Promise<void> {
     throw new Error("Failed to delete state");
   }
 }
+
