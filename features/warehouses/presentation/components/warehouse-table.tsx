@@ -45,21 +45,23 @@ export default function WarehouseTable({ warehouses, onDelete }: Props) {
                 {w.active ? 'Activo' : 'Inactivo'}
               </Badge>
             </TableCell>
-            <TableCell className="text-right space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.push(`/dashboard/warehouses/form?id=${w.id}`)}
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(w.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+            <TableCell className="text-right">
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => router.push(`/dashboard/warehouses/form?id=${w.id}`)}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(w.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}

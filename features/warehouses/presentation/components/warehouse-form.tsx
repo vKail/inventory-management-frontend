@@ -22,16 +22,9 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { fetchWarehouseById, createWarehouse, updateWarehouse } from '../../services/warehouse.service'
+import { warehouseSchema, WarehouseFormValues } from '../../data/schemas/warehouse-schema'
+import { toast } from 'sonner'
 
-const schema = z.object({
-  name: z.string().min(1, 'Required'),
-  location: z.string().min(1, 'Required'),
-  responsibleId: z.number(),
-  description: z.string().min(1, 'Required'),
-  active: z.boolean().default(true).optional(),
-})
-
-type FormValues = z.infer<typeof schema>
 
 const responsibles = [
   { id: 1, name: 'Juan Pérez' },
@@ -44,8 +37,8 @@ export default function WarehouseForm() {
   const id = searchParams.get('id')
   const [loading, setLoading] = useState(false)
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+ const form = useForm<WarehouseFormValues>({
+  resolver: zodResolver(warehouseSchema),
     defaultValues: {
       name: '',
       location: '',
@@ -73,19 +66,22 @@ export default function WarehouseForm() {
     loadData()
   }, [id, form])
 
-const onSubmit = async (data: FormValues) => {
+const onSubmit = async (data: WarehouseFormValues) => {
   setLoading(true)
   try {
     const { active, ...dataToSend } = data
 
     if (id) {
       await updateWarehouse(id, dataToSend)
+         toast.success('Almacén actualizado exitosamente')
     } else {
       await createWarehouse(dataToSend)
+        toast.success('Almacén creado exitosamente')
     }
 
-    router.push('/warehouses')
+    setTimeout(() => router.push('/warehouses'), 1500)
   } catch (error) {
+    toast.error('Ocurrió un error al guardar el almacén')
     console.error('Error submitting form:', error)
   } finally {
     setLoading(false)

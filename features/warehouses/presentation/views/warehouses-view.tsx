@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function WarehousesView() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([])
@@ -29,14 +30,30 @@ export default function WarehousesView() {
     fetchData()
   }, [])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Deseas eliminar este almacén?')) return
-    try {
-      await deleteWarehouse(id)
-      setWarehouses(prev => prev.filter(w => w.id !== id))
-    } catch (error) {
-      console.error('Error deleting warehouse:', error)
-    }
+  const handleDelete = (id: string) => {
+    const toastId = toast('¿Deseas eliminar este almacén?', {
+      action: {
+        label: 'Eliminar',
+        onClick: async () => {
+          try {
+            await deleteWarehouse(id)
+            setWarehouses(prev => prev.filter(w => w.id !== id))
+            toast.success('Almacén eliminado exitosamente')
+          } catch (error) {
+            toast.error('No se pudo eliminar el almacén')
+            console.error(error)
+          } finally {
+            toast.dismiss(toastId)
+          }
+        },
+      },
+      cancel: {
+        label: 'Cancelar',
+        onClick: () => {
+          toast.dismiss(toastId)
+        },
+      },
+    })
   }
 
   return (
@@ -65,13 +82,13 @@ export default function WarehousesView() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       Cargando...
                     </TableCell>
                   </TableRow>
                 ) : warehouses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       No hay almacenes registrados.
                     </TableCell>
                   </TableRow>
@@ -87,17 +104,23 @@ export default function WarehousesView() {
                           {w.active ? 'Activo' : 'Inactivo'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => router.push(`/warehouses/form?id=${w.id}`)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(w.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                      <TableCell className="text-right align-middle">
+                        <div className="inline-flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => router.push(`/warehouses/form?id=${w.id}`)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(w.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
