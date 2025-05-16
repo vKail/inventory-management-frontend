@@ -57,7 +57,7 @@ export default function ItemTypeForm() {
         await createItemType(payload)
         toast.success('Tipo de item creado')
       }
-      router.push('/dashboard/item-types')
+      router.push('/item-types')
     } catch (err) {
       toast.error('Ocurrió un error al guardar')
       console.error(err)

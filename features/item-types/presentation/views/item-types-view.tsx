@@ -60,7 +60,7 @@ export default function ItemTypesView() {
         <Card>
           <CardHeader className="flex justify-between items-center">
             <CardTitle>Tipos de Items</CardTitle>
-            <Button onClick={() => router.push('/dashboard/item-types/form')}>
+            <Button onClick={() => router.push('/item-types/form')}>
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Tipo
             </Button>
@@ -102,7 +102,7 @@ export default function ItemTypesView() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => router.push(`/dashboard/item-types/form?id=${item.id}`)}
+                          onClick={() => router.push(`/item-types/form?id=${item.id}`)}
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>

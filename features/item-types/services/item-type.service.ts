@@ -1,6 +1,6 @@
 import { ApiResponse, ItemType, PaginatedItemTypes } from '../data/interfaces/item-type.interface'
 
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}/item-types`
+const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}item-types`
 
 export async function fetchItemTypes(): Promise<PaginatedItemTypes> {
   const res = await fetch(BASE_URL)
