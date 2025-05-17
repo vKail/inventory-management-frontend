@@ -3,6 +3,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { loanRequestSchema } from "../data/schemas/loan-request-schema";
 
+const MOCK_PRODUCTS = [
+  { id: "1", nombre: "MacBook Pro 16''", barcode: "6972011062725" },
+  { id: "2", nombre: "Monitor Dell UltraSharp 27''", barcode: "78929395" },
+  { id: "3", nombre: "Arduino Starter Kit", barcode: "TEC-003" },
+];
+
 export const useNewLoanForm = () => {
   const router = useRouter();
 
@@ -24,10 +30,10 @@ export const useNewLoanForm = () => {
   });
 
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -61,12 +67,7 @@ export const useNewLoanForm = () => {
   };
 
   const handleSearchBien = () => {
-    // Simular búsqueda
-    setSearchResults([
-      { id: "1", nombre: "MacBook Pro 16''", barcode: "TEC-001" },
-      { id: "2", nombre: "Monitor Dell UltraSharp 27''", barcode: "TEC-002" },
-      { id: "3", nombre: "Arduino Starter Kit", barcode: "TEC-003" },
-    ]);
+    setSearchResults(MOCK_PRODUCTS);
     setShowResults(true);
   };
 
@@ -77,6 +78,25 @@ export const useNewLoanForm = () => {
       bienNombre: bien.nombre,
     }));
     setShowResults(false);
+  };
+
+  const handleScanBien = (barcode: string) => {
+    const bien = MOCK_PRODUCTS.find((item) => item.barcode === barcode);
+
+    if (bien) {
+      setFormData((prev) => ({
+        ...prev,
+        bienId: bien.id,
+        bienNombre: bien.nombre,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        bienId: "",
+        bienNombre: "",
+      }));
+    }
+    setScanOpen(false);
   };
 
   const onSubmit = (e: React.FormEvent) => {
@@ -101,9 +121,11 @@ export const useNewLoanForm = () => {
       return;
     }
 
-    toast.success("Solicitud de préstamo enviada correctamente.");
+    // Serialize form data to JSON and log to console
+    const jsonData = JSON.stringify(formData, null, 2);
+    console.log("Data to be sent:", jsonData);
 
-    // Aquí iría tu lógica para enviar los datos (fetch/axios, etc.)
+    toast.success("Solicitud de préstamo enviada correctamente");
 
     setTimeout(() => {
       router.push("/loans");
@@ -120,15 +142,18 @@ export const useNewLoanForm = () => {
     searchQuery,
     searchResults,
     showResults,
+    scanOpen,
     setFormData,
     handleSearchBien,
     handleSelectBien,
+    handleScanBien,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
     handleCheckboxChange,
     onSubmit,
     setSearchQuery,
+    setScanOpen,
     handleCancel,
   };
 };
