@@ -1,6 +1,5 @@
 import { AxiosClient } from "@/core/infrestucture/AxiosClient";
 import { IUserResponse } from "@/features/users/data/interfaces/user.interface";
-import { get } from "http";
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AuthService } from "../services/auth.service";

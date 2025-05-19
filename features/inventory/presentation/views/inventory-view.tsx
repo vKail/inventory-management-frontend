@@ -1,4 +1,3 @@
-// features/inventory/presentation/views/inventory-view.tsx
 "use client";
 
 import { useEffect, useState } from "react";
