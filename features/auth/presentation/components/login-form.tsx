@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -22,8 +21,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LoginFormValues, loginSchema } from "../../data/schemas/login-schema";
 import { useAuth } from "../../hooks/use-login-form";
+import { useState } from "react";
 
 export default function LoginForm() {
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -33,9 +34,11 @@ export default function LoginForm() {
   });
 
   const { onSubmit } = useAuth();
-  
-  const handleSubmit = form.handleSubmit((data) => {
-    onSubmit(data);
+
+  const handleSubmit = form.handleSubmit(async (data) => {
+    setIsLoading(true);
+    await onSubmit(data);
+    setIsLoading(false);
   });
 
   return (
@@ -46,7 +49,7 @@ export default function LoginForm() {
           Sistema de gestión de inventario para talleres tecnológicos
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -63,7 +66,7 @@ export default function LoginForm() {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="password"
@@ -77,14 +80,14 @@ export default function LoginForm() {
                 </FormItem>
               )}
             />
-            
-            <Button type="submit" className="w-full">
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
               Ingresar
             </Button>
           </form>
         </Form>
       </CardContent>
-      
+
       <CardFooter className="flex flex-col space-y-2">
         <div className="text-sm text-muted-foreground text-center w-full">
           <a href="#" className="hover:underline">

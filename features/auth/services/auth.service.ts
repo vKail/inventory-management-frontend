@@ -38,8 +38,7 @@ export class AuthService implements AuthServiceProps {
 
       return data;
     } catch (error) {
-      console.error('Error during login:', error);
-      throw error;
+      console.log('Error during login:', error);
     }
   }
 

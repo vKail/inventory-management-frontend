@@ -1,6 +1,6 @@
-// /features/inventory/components/register-form-fields.tsx
 "use client";
 
+import { useState } from "react";
 import { Control } from "react-hook-form";
 import {
   FormControl,
@@ -10,7 +10,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,80 +17,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-
+import { ScanLine } from "lucide-react";
 import { RegisterFormSchema } from "@/features/inventory/data/schemas/register-schema";
-
-// Mocks para selects
-const mockColors = [
-  { id: 1, name: "Rojo" },
-  { id: 2, name: "Azul" },
-  { id: 3, name: "Verde" },
-  { id: 4, name: "Amarillo" },
-];
-
-const mockMaterials = [
-  { id: 1, name: "Madera" },
-  { id: 2, name: "Acero" },
-  { id: 3, name: "Plástico" },
-];
-
-const mockLocations = [
-  { id: 1, name: "Ubicación Central" },
-  { id: 2, name: "Almacén Secundario" },
-];
-
-const mockOffices = [
-  { id: 1, name: "Oficina 101" },
-  { id: 2, name: "Laboratorio A" },
-];
+import { ScanModal } from "./scan-modal";
 
 interface RegisterFormFieldsProps {
   control: Control<RegisterFormSchema>;
 }
 
 export const RegisterFormFields = ({ control }: RegisterFormFieldsProps) => {
+  const [scanOpen, setScanOpen] = useState(false);
+  const [onScan, setOnScan] = useState<(code: string) => void>(() => () => {});
+
   return (
     <>
-      {/* Sección 1: Identificación y Códigos */}
+      <ScanModal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onScanComplete={(value) => {
+          onScan(value);
+          setScanOpen(false);
+        }}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Código del Bien con botón de escanear */}
         <FormField
           control={control}
           name="codigoBien"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Código del Bien</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Código único del bien" />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Input {...field} placeholder="Código único del bien" />
+                </FormControl>
+                <ScanLine
+                  size={18}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground cursor-pointer"
+                  onClick={() => {
+                    setOnScan(() => field.onChange);
+                    setScanOpen(true);
+                  }}
+                />
+              </div>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={control}
-          name="codigoAnterior"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Código Anterior</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Código anterior del bien" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
+        {/* Identificador */}
         <FormField
           control={control}
           name="identificador"
@@ -106,6 +81,7 @@ export const RegisterFormFields = ({ control }: RegisterFormFieldsProps) => {
           )}
         />
 
+        {/* Nro de Acta/Matriz */}
         <FormField
           control={control}
           name="nroActaMatriz"
@@ -120,6 +96,7 @@ export const RegisterFormFields = ({ control }: RegisterFormFieldsProps) => {
           )}
         />
 
+        {/* BLD o BCA */}
         <FormField
           control={control}
           name="bldBca"
