@@ -1,11 +1,9 @@
-/* eslint-disable react/react-in-jsx-scope */
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CategoryFormValues, categorySchema } from '@/features/categories/data/schemas/category.schema';
+import { categorySchema } from '@/features/categories/data/schemas/category.schema';
 import { useCategoryStore } from '@/features/categories/context/category-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,25 +13,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ICategory } from '../../data/interfaces/category.interface';
 
+type CategoryFormValues = {
+  code: string;
+  name: string;
+  description: string;
+  parentCategoryId: number | null;
+  standardUsefulLife: number;
+  depreciationPercentage: string;
+  active: boolean;
+};
+
 export default function CategoryForm() {
   const router = useRouter();
   const params = useParams();
   const categoryId = params?.id ? Number(params.id) : undefined;
   const isEdit = !!categoryId;
 
-  const { getCategoryById, getCategories, addCategory, updateCategory } = useCategoryStore();
+  const { getCategoryById, getCategories, updateCategory } = useCategoryStore();
   const [parentCategories, setParentCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(true);
-
-  type CategoryFormValues = {
-    code: string;
-    name: string;
-    description: string;
-    parentCategoryId: number | null;
-    standardUsefulLife: number;
-    depreciationPercentage: string;
-    active: boolean;
-  };
 
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -53,24 +51,28 @@ export default function CategoryForm() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const categoriesData = await getCategories(1, 100);
-        if (categoriesData) {
-          const parents = categoriesData.records.filter(cat => !cat.parentCategoryId);
+        // 1. Cargar categorías padre
+        const categoriesResponse = await getCategories(1, 100);
+        if (categoriesResponse) {
+          const parents = categoriesResponse.records.filter(cat => !cat.parentCategoryId);
           setParentCategories(parents);
+        }
 
-          if (isEdit && categoryId) {
-            const category = await getCategoryById(categoryId);
-            if (category) {
-              form.reset({
-                code: category.code,
-                name: category.name,
-                description: category.description,
-                parentCategoryId: category.parentCategoryId,
-                standardUsefulLife: category.standardUsefulLife,
-                depreciationPercentage: category.depreciationPercentage,
-                active: category.active
-              });
-            }
+        // 2. Si es edición, cargar los datos de la categoría
+        if (isEdit && categoryId) {
+          const category = await getCategoryById(categoryId);
+          console.log('Category loaded:', category);
+          if (category) {
+            // Esperar a que el formulario esté listo antes de resetear
+            await form.reset({
+              code: category.code,
+              name: category.name,
+              description: category.description,
+              parentCategoryId: category.parentCategoryId,
+              standardUsefulLife: category.standardUsefulLife,
+              depreciationPercentage: category.depreciationPercentage,
+              active: category.active
+            });
           }
         }
       } catch (error) {
@@ -83,16 +85,14 @@ export default function CategoryForm() {
     loadData();
   }, [isEdit, categoryId, form, getCategories, getCategoryById]);
 
-  const onSubmit = async (data: CategoryFormValues) => { // Especifica el tipo
+  const onSubmit = async (data: CategoryFormValues) => {
     setLoading(true);
     try {
       if (isEdit && categoryId) {
         await updateCategory(categoryId, data);
-      } else {
-        await addCategory(data);
+        router.push('/categories');
+        router.refresh();
       }
-      await getCategories(1, 10);
-      router.push('/categories');
     } catch (error) {
       console.error('Error saving category:', error);
     } finally {
@@ -116,6 +116,7 @@ export default function CategoryForm() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Campo Código */}
             <FormField
               control={form.control}
               name="code"
@@ -130,6 +131,7 @@ export default function CategoryForm() {
               )}
             />
 
+            {/* Campo Nombre */}
             <FormField
               control={form.control}
               name="name"
@@ -252,19 +254,11 @@ export default function CategoryForm() {
 
         {/* Botones de acción */}
         <div className="flex justify-end gap-4 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push('/categories')}
-          >
+          <Button type="button" variant="outline" onClick={() => router.push('/categories')}>
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            className="bg-red-600 hover:bg-red-700"
-            disabled={loading}
-          >
-            {isEdit ? "Actualizar" : "Guardar"}
+          <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={loading}>
+            Actualizar
           </Button>
         </div>
       </form>

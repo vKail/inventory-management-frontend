@@ -56,12 +56,16 @@ export const useCategoryStore = create<CategoryStore>()(
         await get().getCategories();
       },
 
-      updateCategory: async (id: number, category: ICategory) => {
+      updateCategory: async (id: number, category: Partial<ICategory>) => {
         try {
-          await CategoryService.getInstance().updateCategory(id, category);
+          // Find the existing category to merge with the partial update
+          const existingCategory = get().categories.find(c => c.id === id);
+          if (!existingCategory) throw new Error('Category not found');
+          const updatedCategory: ICategory = { ...existingCategory, ...category, id };
+          await CategoryService.getInstance().updateCategory(id, updatedCategory);
           // Actualizar el estado local
           const updatedCategories = get().categories.map(c =>
-            c.id === id ? { ...c, ...category } : c
+            c.id === id ? updatedCategory : c
           );
           set({ categories: updatedCategories });
         } catch (error) {
