@@ -1,0 +1,149 @@
+'use client'
+
+import { IColorResponse } from '../../data/interfaces/color.interface'
+import { Button } from '@/components/ui/button'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
+import { Pencil, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+interface ColorTableProps {
+    colors: IColorResponse[]
+    onDelete: (id: number) => void
+    loading: boolean
+    onSearch?: (searchTerm: string) => void
+    onPageChange?: (page: number) => void
+    pagination?: {
+        page: number
+        pages: number
+        limit: number
+        total: number
+    }
+}
+
+export default function ColorTable({
+    colors,
+    onDelete,
+    loading,
+    onSearch,
+    onPageChange,
+    pagination,
+}: ColorTableProps) {
+    const router = useRouter()
+
+    return (
+        <div className="space-y-4">
+            <div className="rounded-md border min-h-[500px]">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead>Color</TableHead>
+                            <TableHead>Código HEX</TableHead>
+                            <TableHead>Descripción</TableHead>
+                            <TableHead className="w-28 text-center">Acciones</TableHead>
+                        </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="py-8 text-center">
+                                    <div className="flex items-center justify-center">
+                                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
+                                        <span className="ml-2">Cargando...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : colors.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="py-8 text-center">
+                                    No hay colores registrados o que coincidan con la búsqueda.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            colors.map((color) => (
+                                <TableRow key={color.id} className="hover:bg-gray-50">
+                                    <TableCell className="font-medium">{color.name}</TableCell>
+                                    <TableCell>
+                                        <div
+                                            className="h-8 w-8 rounded-full border border-gray-300"
+                                            style={{ backgroundColor: color.hexCode }}
+                                        />
+                                    </TableCell>
+                                    <TableCell>{color.hexCode}</TableCell>
+                                    <TableCell>{color.description}</TableCell>
+                                    <TableCell className="px-2">
+                                        <div className="flex justify-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                                                onClick={() => router.push(`/colors/edit/${color.id}`)}
+                                            >
+                                                <Pencil className="mr-1 h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-red-600 text-red-600 hover:bg-red-50"
+                                                onClick={() => onDelete(color.id)}
+                                            >
+                                                <Trash2 className="mr-1 h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {!loading && pagination && pagination.pages > 0 && (
+                <div className="mt-4 flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                        Página {pagination.page} de {pagination.pages}
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => onPageChange?.(pagination.page - 1)}
+                            disabled={pagination.page <= 1}
+                        >
+                            Anterior
+                        </Button>
+
+                        {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
+                            <Button
+                                key={page}
+                                variant={page === pagination.page ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => onPageChange?.(page)}
+                                className={
+                                    page === pagination.page ? 'bg-red-600 hover:bg-red-700' : ''
+                                }
+                            >
+                                {page}
+                            </Button>
+                        ))}
+
+                        <Button
+                            variant="outline"
+                            onClick={() => onPageChange?.(pagination.page + 1)}
+                            disabled={pagination.page >= pagination.pages}
+                        >
+                            Siguiente
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
