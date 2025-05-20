@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useNewLoanForm } from "../../hooks/use-new-loan-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Search } from "lucide-react";
+import { CalendarIcon, Search, ScanBarcode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -29,111 +29,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "sonner";
 import { format } from "date-fns";
-import { loanRequestSchema } from "../../data/schemas/loan-request-schema";
+import { ScanModal } from "./scan-modal";
 
 export default function NewLoanForm() {
-  const router = useRouter();
+  const {
+    formData,
+    formErrors,
+    searchQuery,
+    searchResults,
+    showResults,
+    scanOpen,
+    setFormData,
+    handleSearchBien,
+    handleSelectBien,
+    handleScanBien,
+    handleInputChange,
+    handleSelectChange,
+    handleDateChange,
+    handleCheckboxChange,
+    onSubmit,
+    setSearchQuery,
+    setScanOpen,
+    handleCancel,
+  } = useNewLoanForm();
 
-  const [formData, setFormData] = useState({
-    nombres: "",
-    apellidos: "",
-    correo: "",
-    telefono: "",
-    rol: "",
-    cedula: "",
-    bienId: "",
-    bienNombre: "",
-    motivo: "",
-    eventoAsociado: "",
-    ubicacionExterna: "",
-    fechaDevolucion: null as Date | null,
-    notas: "",
-    aceptaResponsabilidad: false,
-  });
-
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [showResults, setShowResults] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDateChange = (date: Date | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      fechaDevolucion: (date ?? null) as Date | null,
-    }));
-  };
-  
-  
-
-
-  const handleCheckboxChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, aceptaResponsabilidad: checked }));
-  };
-
-  const handleSearchBien = () => {
-    // Simular búsqueda
-    setSearchResults([
-      { id: "1", nombre: "MacBook Pro 16''", barcode: "TEC-001" },
-      { id: "2", nombre: "Monitor Dell UltraSharp 27''", barcode: "TEC-002" },
-      { id: "3", nombre: "Arduino Starter Kit", barcode: "TEC-003" },
-    ]);
-    setShowResults(true);
-  };
-
-  const handleSelectBien = (bien: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      bienId: bien.id,
-      bienNombre: bien.nombre,
-    }));
-    setShowResults(false);
-  };
-
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const parsed = loanRequestSchema.safeParse({
-      ...formData,
-      fechaDevolucion: formData.fechaDevolucion || undefined,
-    });
-
-    if (!parsed.success) {
-      const errors: { [key: string]: string } = {};
-      const errorMap = parsed.error.format();
-      for (const key in errorMap) {
-        const err = errorMap[key as keyof typeof errorMap];
-        if (err && (err as any)._errors?.length) {
-          errors[key] = (err as any)._errors[0];
-        }
-      }
-      setFormErrors(errors);
-      toast.error("Por favor corrige los errores del formulario.");
-      return;
-    }
-
-    toast.success("Solicitud de préstamo enviada correctamente.");
-    // Aquí iría tu lógica para enviar los datos, por ejemplo fetch() o axios.
-
-    setTimeout(() => {
-      router.push("/loans");
-    }, 3000);
-  };
+  useEffect(() => {
+    // Ensure focus is set on mount for accessibility
+    const timeout = setTimeout(() => {
+      const firstInput = document.querySelector<HTMLInputElement>("input[name='nombres']");
+      firstInput?.focus();
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto">
-      
+      <ScanModal
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onScanComplete={handleScanBien}
+      />
+      <Card>
         <CardHeader>
           <CardTitle>Solicitud de Préstamo de Bien</CardTitle>
         </CardHeader>
@@ -153,7 +90,9 @@ export default function NewLoanForm() {
                       value={formData.nombres}
                       onChange={handleInputChange}
                     />
-                    {formErrors.nombres && <p className="text-red-500 text-sm">{formErrors.nombres}</p>}
+                    {formErrors.nombres && (
+                      <p className="text-red-500 text-sm">{formErrors.nombres}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -164,7 +103,9 @@ export default function NewLoanForm() {
                       value={formData.apellidos}
                       onChange={handleInputChange}
                     />
-                    {formErrors.apellidos && <p className="text-red-500 text-sm">{formErrors.apellidos}</p>}
+                    {formErrors.apellidos && (
+                      <p className="text-red-500 text-sm">{formErrors.apellidos}</p>
+                    )}
                   </div>
                 </div>
 
@@ -176,7 +117,9 @@ export default function NewLoanForm() {
                     value={formData.correo}
                     onChange={handleInputChange}
                   />
-                  {formErrors.correo && <p className="text-red-500 text-sm">{formErrors.correo}</p>}
+                  {formErrors.correo && (
+                    <p className="text-red-500 text-sm">{formErrors.correo}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -188,7 +131,9 @@ export default function NewLoanForm() {
                       value={formData.telefono}
                       onChange={handleInputChange}
                     />
-                    {formErrors.telefono && <p className="text-red-500 text-sm">{formErrors.telefono}</p>}
+                    {formErrors.telefono && (
+                      <p className="text-red-500 text-sm">{formErrors.telefono}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -199,7 +144,9 @@ export default function NewLoanForm() {
                       value={formData.cedula}
                       onChange={handleInputChange}
                     />
-                    {formErrors.cedula && <p className="text-red-500 text-sm">{formErrors.cedula}</p>}
+                    {formErrors.cedula && (
+                      <p className="text-red-500 text-sm">{formErrors.cedula}</p>
+                    )}
                   </div>
                 </div>
 
@@ -218,7 +165,9 @@ export default function NewLoanForm() {
                       <SelectItem value="administrativo">Administrativo</SelectItem>
                     </SelectContent>
                   </Select>
-                  {formErrors.rol && <p className="text-red-500 text-sm">{formErrors.rol}</p>}
+                  {formErrors.rol && (
+                    <p className="text-red-500 text-sm">{formErrors.rol}</p>
+                  )}
                 </div>
               </div>
 
@@ -261,13 +210,22 @@ export default function NewLoanForm() {
                     <Button type="button" onClick={handleSearchBien}>
                       Buscar
                     </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setScanOpen(true)}
+                    >
+                      <ScanBarcode className="mr-2 h-4 w-4" /> Escanear
+                    </Button>
                   </div>
                   {formData.bienNombre && (
                     <div className="mt-2 p-2 bg-muted rounded-md">
                       <p className="font-medium">{formData.bienNombre}</p>
                     </div>
                   )}
-                  {formErrors.bienId && <p className="text-red-500 text-sm">{formErrors.bienId}</p>}
+                  {formErrors.bienId && (
+                    <p className="text-red-500 text-sm">{formErrors.bienId}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -278,7 +236,9 @@ export default function NewLoanForm() {
                     value={formData.motivo}
                     onChange={handleInputChange}
                   />
-                  {formErrors.motivo && <p className="text-red-500 text-sm">{formErrors.motivo}</p>}
+                  {formErrors.motivo && (
+                    <p className="text-red-500 text-sm">{formErrors.motivo}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -292,7 +252,9 @@ export default function NewLoanForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="ubicacionExterna">Ubicación Externa (opcional)</Label>
+                  <Label htmlFor="ubicacionExterna">
+                    Ubicación Externa (opcional)
+                  </Label>
                   <Input
                     id="ubicacionExterna"
                     name="ubicacionExterna"
@@ -330,7 +292,9 @@ export default function NewLoanForm() {
                       />
                     </PopoverContent>
                   </Popover>
-                  {formErrors.fechaDevolucion && <p className="text-red-500 text-sm">{formErrors.fechaDevolucion}</p>}
+                  {formErrors.fechaDevolucion && (
+                    <p className="text-red-500 text-sm">{formErrors.fechaDevolucion}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -349,7 +313,10 @@ export default function NewLoanForm() {
                     checked={formData.aceptaResponsabilidad}
                     onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
                   />
-                  <Label htmlFor="aceptaResponsabilidad" className="text-sm font-medium leading-none">
+                  <Label
+                    htmlFor="aceptaResponsabilidad"
+                    className="text-sm font-medium leading-none"
+                  >
                     Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
                   </Label>
                 </div>
@@ -360,23 +327,16 @@ export default function NewLoanForm() {
             </div>
 
             <CardFooter className="flex justify-end gap-2 pt-6 px-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/loans")}
-              >
+              <Button type="button" variant="outline" onClick={handleCancel}>
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={!formData.aceptaResponsabilidad}
-              >
+              <Button type="submit" disabled={!formData.aceptaResponsabilidad}>
                 Solicitar Préstamo
               </Button>
             </CardFooter>
           </form>
         </CardContent>
-    
+      </Card>
     </div>
   );
 }
