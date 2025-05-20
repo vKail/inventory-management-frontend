@@ -22,11 +22,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, Icon, LogOut } from 'lucide-react';
 import { tr } from 'date-fns/locale';
+import { useState } from 'react';
 
 export const DashboardSidebar = () => {
   const { logout } = useAuthStore();
   const router = useRouter();
   const { state, setOpen } = useSidebar();
+  const [isSelected, setIsSelected] = useState();
 
   return (
     <Sidebar className="w-64" collapsible="icon">
@@ -70,7 +72,7 @@ export const DashboardSidebar = () => {
 
                       <CollapsibleContent>
                         {subItem.subItems.map(subSubItem => (
-                          <SidebarMenuSub>
+                          <SidebarMenuSub key={subSubItem.title}>
                             <SidebarMenuSubItem key={subSubItem.title}>
                               <SidebarMenuButton
                                 onClick={() => {

@@ -1,5 +1,18 @@
-import { UserRole } from '@/features/users/data/enums/user-roles.enums'
-import {Boxes,CirclePlus,List,MapPin,Package,PackageSearch,Palette,ShieldCheck,Tag,User,Users,Warehouse } from 'lucide-react'
+import { UserRole } from '@/features/users/data/enums/user-roles.enums';
+import {
+  Boxes,
+  CirclePlus,
+  List,
+  MapPin,
+  Package,
+  PackageSearch,
+  Palette,
+  ShieldCheck,
+  Tag,
+  User,
+  Users,
+  Warehouse,
+} from 'lucide-react';
 
 export const sidebarItems = [
   {

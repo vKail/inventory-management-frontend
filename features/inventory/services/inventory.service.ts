@@ -14,7 +14,7 @@ export const getInventoryItems = async (): Promise<InventoryItem[]> => {
     return [
       {
         id: '1',
-        barcode: 'TEC-001',
+        barcode: '78929395',
         name: "MacBook Pro 16''",
         category: ProductCategory.TECHNOLOGY,
         department: Department.COMPUTING,
@@ -29,7 +29,7 @@ export const getInventoryItems = async (): Promise<InventoryItem[]> => {
       },
       {
         id: '2',
-        barcode: 'TEC-002',
+        barcode: '6972011062725',
         name: "Monitor Dell UltraSharp 27''",
         category: ProductCategory.ELECTRONICS,
         department: Department.COMPUTING,
