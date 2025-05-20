@@ -14,7 +14,7 @@ import { Handshake } from 'lucide-react';
 
 export default function LoanRequestView() {
   return (
-    <div className="max-w-4xl mx-auto py-8 space-y-4">
+    <div className="w-full mx-auto py-8 space-y-4">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
