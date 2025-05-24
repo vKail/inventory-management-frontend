@@ -4,7 +4,7 @@ import { ApiResponse, ICategory, PaginatedCategories } from '../data/interfaces/
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 interface CategoryServiceProps {
-  getCategories: (page?: number, limit?: number, search?: string) => Promise<PaginatedCategories>;
+  getCategories: (page?: number, limit?: number, search?: string) => Promise<ICategory[]>;
   getCategoryById: (id: number) => Promise<ICategory | undefined>;
   createCategory: (category: ICategory) => Promise<ICategory | undefined>;
   updateCategory: (id: number, category: ICategory) => Promise<ICategory | undefined>;
@@ -32,25 +32,17 @@ export class CategoryService implements CategoryServiceProps {
       const response = await this.httpClient.get<ApiResponse<PaginatedCategories>>(
         `${CategoryService.url}?page=${page}&limit=${limit}`
       );
-      return response.data.data; // Extraemos los datos paginados
+      return response.data;
     } catch (error) {
       console.error('Error fetching categories:', error);
-      return {
-        records: [],
-        total: 0,
-        limit,
-        page,
-        pages: 0,
-      };
+      throw error;
     }
   }
 
   public async getCategoryById(id: number): Promise<ICategory | undefined> {
     try {
-      const response = await this.httpClient.get<ApiResponse<ICategory>>(
-        `${CategoryService.url}/${id}`
-      );
-      return response.data.data; // Extraemos los datos del objeto data
+      const response = await this.httpClient.get<ICategory>(`${CategoryService.url}/${id}`);
+      return response.data;
     } catch (error) {
       console.error('Error fetching category:', error);
       return undefined;
@@ -59,14 +51,12 @@ export class CategoryService implements CategoryServiceProps {
 
   public async createCategory(category: ICategory): Promise<ICategory | undefined> {
     try {
-      // Exclude 'active' property from the category object
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { active, ...categoryWithoutActive } = category;
-      const { data } = await this.httpClient.post<{ data: ICategory }>(
+      const response = await this.httpClient.post<ICategory>(
         CategoryService.url,
         categoryWithoutActive
       );
-      return data.data;
+      return response.data;
     } catch (error) {
       console.error('Error creating category:', error);
       throw error;
@@ -75,11 +65,11 @@ export class CategoryService implements CategoryServiceProps {
 
   public async updateCategory(id: number, category: ICategory): Promise<ICategory | undefined> {
     try {
-      const { data } = await this.httpClient.patch<{ data: ICategory }>(
+      const response = await this.httpClient.patch<ICategory>(
         `${CategoryService.url}/${id}`,
         category
       );
-      return data.data;
+      return response.data;
     } catch (error) {
       console.error('Error updating category:', error);
       throw error;
