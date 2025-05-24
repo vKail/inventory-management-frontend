@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getMaterials, deleteMaterial } from '../services/material.service';
-import { Material } from '../data/interfaces/material.interface';
+import { Record } from '../data/interfaces/material.interface';
 
 export const useMaterials = () => {
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [materials, setMaterials] = useState<Record[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchMaterials = async () => {

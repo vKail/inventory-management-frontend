@@ -1,17 +1,31 @@
-export interface Material {
-  id: number;
-  name: string;
-  description: string;
-  materialType: string;
-  active: boolean;
+export interface MaterialAPIResponse {
+  success: boolean;
+  message: Message;
+  data:    Material;
 }
 
-export interface MaterialResponse extends Material {}
+export interface Material {
+  records: Record[];
+  total:   number;
+  limit:   number;
+  page:    number;
+  pages:   number;
+}
 
-export interface PaginatedMaterials {
-  total: number;
-  limit: number;
-  page: number;
-  pages: number;
-  records: Material[];
+export interface Record {
+  id:           number;
+  name:         string;
+  description:  string;
+  materialType: MaterialType;
+}
+
+export enum MaterialType {
+  Madera = "Madera",
+  Metal = "Metal",
+  Plástico = "Plástico",
+}
+
+export interface Message {
+  content:     string[];
+  displayable: boolean;
 }

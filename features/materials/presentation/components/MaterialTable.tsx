@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Material } from '../../data/interfaces/material.interface'
+import { Record } from '../../data/interfaces/material.interface'
 import { Pencil, Trash2, PackagePlus, Package } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -15,9 +15,9 @@ import {
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
 interface Props {
-  materials: Material[]
+  materials: Record[]
   onDelete: (id: number) => void
-  onEdit: (material: Material) => void
+  onEdit: (material: Record) => void
   loading?: boolean
 }
 
@@ -26,26 +26,22 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
 
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const pageSize = 8
 
-  // Filtrado según búsqueda, tipo y estado
+  // Filtrado según búsqueda y tipo
   const filteredMaterials = materials.filter(material =>
     (!search ||
       material.name.toLowerCase().includes(search.toLowerCase()) ||
       material.description.toLowerCase().includes(search.toLowerCase())
     ) &&
-    (typeFilter === 'all' || material.materialType === typeFilter) &&
-    (statusFilter === 'all' ||
-      (statusFilter === 'active' && material.active) ||
-      (statusFilter === 'inactive' && !material.active))
+    (typeFilter === 'all' || material.materialType === typeFilter)
   )
 
   const totalPages = Math.max(1, Math.ceil(filteredMaterials.length / pageSize))
   const paginatedMaterials = filteredMaterials.slice((page - 1) * pageSize, page * pageSize)
 
-  useEffect(() => { setPage(1) }, [search, typeFilter, statusFilter])
+  useEffect(() => { setPage(1) }, [search, typeFilter])
 
   return (
     <div className="flex flex-col items-center space-y-6 px-6 md:px-12 w-full">
@@ -89,16 +85,6 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
                   <SelectItem value="Plástico">Plástico</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-56">
-                  <SelectValue placeholder="Todos los estados" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="inactive">Inactivos</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <Button onClick={() => router.push('/materials/new')}>
               <PackagePlus className="mr-2 h-4 w-4" />
@@ -115,20 +101,19 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
                   <TableHead>Nombre</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Descripción</TableHead>
-                  <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={4} className="text-center">
                       <span className="text-muted-foreground">Cargando...</span>
                     </TableCell>
                   </TableRow>
                 ) : paginatedMaterials.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-20 text-center text-muted-foreground">
+                    <TableCell colSpan={4} className="py-20 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
                         <Package className="h-10 w-10 opacity-30" />
                         <span>No hay materiales para mostrar</span>
@@ -143,11 +128,6 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
                         <Badge variant="outline">{material.materialType}</Badge>
                       </TableCell>
                       <TableCell>{material.description}</TableCell>
-                      <TableCell>
-                        <Badge variant={material.active ? "default" : "secondary"}>
-                          {material.active ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
