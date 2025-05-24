@@ -62,7 +62,7 @@ export default function EditMaterialPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto py-6 max-w-2xl">
       <Button
         variant="ghost"
         className="mb-6"

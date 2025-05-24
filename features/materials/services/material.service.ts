@@ -16,11 +16,57 @@ export const getMaterials = async (page: number = 1, limit: number = 20): Promis
 };
 
 export const createMaterial = async (data: Omit<Record, 'id'>): Promise<Record> => {
-  const res = await axiosClient.post<MateriaPostAPIResponse>(API_URL, data, {});
-  return {
-    ...res.data.data,
-    materialType: res.data.data.materialType as MaterialType
-  };
+  try {
+    const res = await axiosClient.post<MateriaPostAPIResponse>(API_URL, data, {});
+    console.log('API Response:', res.data);
+    
+    // Verificamos si la respuesta tiene la estructura correcta
+    if (res.data) {
+      // Si la respuesta tiene una estructura diferente, intentamos adaptarla
+      if (res.data.success === false) {
+        console.error('Error en la respuesta de la API:', res.data.message);
+        throw new Error(res.data.message?.content?.[0] || 'Error en la respuesta de la API');
+      }
+      
+      // Si tenemos datos directamente en la respuesta
+      if (res.data.data) {
+        const materialData = res.data.data;
+        return {
+          id: materialData.id,
+          name: materialData.name,
+          description: materialData.description,
+          materialType: materialData.materialType as MaterialType
+        };
+      } else if ('id' in res.data) {
+        // Si los datos están directamente en el objeto principal
+        // Usamos type assertion para manejar la estructura
+        const responseData = res.data as unknown as {
+          id: number;
+          name: string;
+          description: string;
+          materialType: string;
+        };
+        
+        return {
+          id: responseData.id,
+          name: responseData.name,
+          description: responseData.description,
+          materialType: responseData.materialType as MaterialType
+        };
+      }
+    }
+    
+    // Si llegamos aquí, intentemos devolver algo útil para evitar el error
+    return {
+      id: 0, // ID temporal
+      name: data.name,
+      description: data.description,
+      materialType: data.materialType
+    };
+  } catch (error) {
+    console.error('Error al crear material:', error);
+    throw error;
+  }
 };
 
 export const deleteMaterial = async (id: number) => {

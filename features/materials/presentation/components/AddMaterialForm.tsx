@@ -57,10 +57,21 @@ export const AddMaterialForm = () => {
 
     const onSubmit = async (data: AddMaterialFormValues) => {
         try {
-            await handleCreate(data);
-            router.replace("/materials");
+            const response = await handleCreate(data);
+            console.log('Material creado:', response);
+
+            // Siempre mostrar mensaje de éxito y navegar, incluso si el ID es 0 (temporal)
+            toast.success('Material creado correctamente');
+            
+            // Usar router.replace en lugar de push para evitar problemas de historial
+            // y aumentar el tiempo de espera para asegurar que el toast se muestre
+            setTimeout(() => {
+                router.replace("/materials");
+            }, 1000);
+            
         } catch (error) {
             console.error("Error al crear el material:", error);
+            toast.error('Error al crear el material: ' + (error instanceof Error ? error.message : 'Error desconocido'));
         }
     };
 

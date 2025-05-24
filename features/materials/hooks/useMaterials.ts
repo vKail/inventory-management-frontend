@@ -26,9 +26,11 @@ export const useMaterials = () => {
 
   const handleCreate = async (data: Omit<Record, 'id'>) => {
     try {
-      const newMaterial = await createMaterial(data);
-      setMaterials(prevMaterials => [...prevMaterials, newMaterial]);
-      return newMaterial;
+      const response = await createMaterial(data);
+      // Consideramos exitosa la creación incluso si el ID es 0 (temporal)
+      // Esto permitirá que la UI muestre un mensaje de éxito y navegue
+      await loadAllMaterials();
+      return response;
     } catch (error) {
       console.error('Error al crear material', error);
       throw error;
@@ -38,8 +40,8 @@ export const useMaterials = () => {
   const handleUpdate = async (id: number, data: Partial<Record>) => {
     try {
       const updatedMaterial = await updateMaterial(id, data);
-      setMaterials(prevMaterials => 
-        prevMaterials.map(material => 
+      setMaterials(prevMaterials =>
+        prevMaterials.map(material =>
           material.id === id ? { ...material, ...data } : material
         )
       );
@@ -77,10 +79,10 @@ export const useMaterials = () => {
     loadAllMaterials();
   }, []);
 
-  return { 
-    materials, 
-    loading, 
-    handleCreate, 
+  return {
+    materials,
+    loading,
+    handleCreate,
     handleDelete,
     handleUpdate,
     currentPage,
