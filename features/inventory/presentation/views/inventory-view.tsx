@@ -12,7 +12,6 @@ import { useNavigateToAddProduct } from "@/features/inventory/hooks/use-navigate
 import { ScanProductModal } from "../components/scan-product-modal";
 import { EditProductModal } from "../components/edit-product-modal";
 import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";
-import { updateInventoryItem } from "@/features/inventory/services/inventory.service";
 import { toast } from "sonner";
 
 export const InventoryView = () => {
@@ -24,6 +23,7 @@ export const InventoryView = () => {
     fetchItems,
     viewMode,
     setViewMode,
+    updateItem,
   } = useInventoryStore();
 
   const [scanModalOpen, setScanModalOpen] = useState(false);
@@ -35,17 +35,9 @@ export const InventoryView = () => {
     fetchItems();
   }, [fetchItems]);
 
-  const handleSaveProduct = async (updatedProduct: InventoryItem) => {
+  const handleSaveProduct = async (updatedProduct: InventoryItem, originalProduct: InventoryItem) => {
     try {
-      const updated = await updateInventoryItem(updatedProduct.id, updatedProduct);
-      useInventoryStore.setState((state) => ({
-        items: state.items.map((item) =>
-          item.id === updated.id ? updated : item
-        ),
-        filteredItems: state.filteredItems.map((item) =>
-          item.id === updated.id ? updated : item
-        ),
-      }));
+      await updateItem(updatedProduct, originalProduct);
       toast.success("Producto actualizado correctamente");
       setEditModalOpen(false);
     } catch (error) {
@@ -57,8 +49,8 @@ export const InventoryView = () => {
   if (isLoading) return <div>Cargando inventario...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
-  const itemsArray = Array.isArray(items) ? items : []; // Usamos items (sin filtrar) para la tabla
-  const filteredItemsArray = Array.isArray(filteredItems) ? filteredItems : []; // Para las vistas grid y list
+  const itemsArray = Array.isArray(items) ? items : [];
+  const filteredItemsArray = Array.isArray(filteredItems) ? filteredItems : [];
 
   return (
     <div className="space-y-6">
@@ -184,4 +176,4 @@ export const InventoryView = () => {
       />
     </div>
   );
-};
+}

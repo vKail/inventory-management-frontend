@@ -20,7 +20,7 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EditProductModal } from "./edit-product-modal";
-import { updateInventoryItem, deleteInventoryItem } from "@/features/inventory/services/inventory.service";
+import { deleteInventoryItem } from "@/features/inventory/services/inventory.service";
 import { useInventoryStore } from "@/features/inventory/context/inventory-store";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ interface Props {
 export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
+  const { updateItem } = useInventoryStore();
 
   const statusColors = {
     [ProductStatus.AVAILABLE]: "bg-green-100 text-green-800",
@@ -53,17 +54,9 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
     setIsModalOpen(true);
   };
 
-  const handleSaveProduct = async (updatedProduct: InventoryItem) => {
+  const handleSaveProduct = async (updatedProduct: InventoryItem, originalProduct: InventoryItem) => {
     try {
-      const updated = await updateInventoryItem(updatedProduct.id, updatedProduct); // Usamos id directamente
-      useInventoryStore.setState((state) => ({
-        items: state.items.map((item) =>
-          item.id === updated.id ? updated : item
-        ),
-        filteredItems: state.filteredItems.map((item) =>
-          item.id === updated.id ? updated : item
-        ),
-      }));
+      await updateItem(updatedProduct, originalProduct);
       toast.success("Producto actualizado correctamente");
       setIsModalOpen(false);
     } catch (error) {
@@ -74,7 +67,7 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
 
   const handleDeleteClick = async (item: InventoryItem) => {
     try {
-      await deleteInventoryItem(item.id); // Usamos id directamente
+      await deleteInventoryItem(item.id);
       useInventoryStore.setState((state) => ({
         items: state.items.filter((i) => i.id !== item.id),
         filteredItems: state.filteredItems.filter((i) => i.id !== item.id),
@@ -174,4 +167,4 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
       />
     </div>
   );
-};
+}

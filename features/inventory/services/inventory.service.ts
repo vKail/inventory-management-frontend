@@ -7,13 +7,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const apiClient = AxiosClient.getInstance();
 
-export const getInventoryItems = async (page: number = 1, limit: number = 20): Promise<IHttpResponse<InventoryItem[]>> => {
+export const getInventoryItems = async (page: number = 1, limit: number = 20): Promise<IHttpResponse<any>> => {
   if (!API_URL) {
     throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
   }
 
   try {
-    const response = await apiClient.get<IHttpResponse<InventoryItem[]>>(`/items`, {
+    const response = await apiClient.get<IHttpResponse<any>>(`/items`, {
       params: { page, limit },
     });
     if (!response.success) {
@@ -33,13 +33,13 @@ export const getInventoryItems = async (page: number = 1, limit: number = 20): P
   }
 };
 
-export const getInventoryItemById = async (id: number): Promise<IHttpResponse<InventoryItem>> => {
+export const getInventoryItemById = async (id: number): Promise<IHttpResponse<any>> => {
   if (!API_URL) {
     throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
   }
 
   try {
-    const response = await apiClient.get<IHttpResponse<InventoryItem>>(`/items/${id}`);
+    const response = await apiClient.get<IHttpResponse<any>>(`/items/${id}`);
     if (!response.success) {
       throw new Error(response.message.content[0] || "Error al cargar el ítem por ID");
     }
@@ -81,13 +81,13 @@ export const createInventoryItem = async (item: Partial<InventoryItem>): Promise
   }
 };
 
-export const updateInventoryItem = async (id: number, item: Partial<InventoryItem>): Promise<IHttpResponse<InventoryItem>> => {
+export const updateInventoryItem = async (id: number, item: Partial<any>): Promise<IHttpResponse<any>> => {
   if (!API_URL) {
     throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
   }
 
   try {
-    const response = await apiClient.patch<IHttpResponse<InventoryItem>>(`/items/${id}`, item);
+    const response = await apiClient.patch<IHttpResponse<any>>(`/items/${id}`, item);
     if (!response.success) {
       throw new Error(response.message.content[0] || "Error al actualizar el ítem de inventario");
     }
