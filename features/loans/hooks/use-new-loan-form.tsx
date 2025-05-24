@@ -24,6 +24,7 @@ export const useNewLoanForm = () => {
     motivo: "",
     eventoAsociado: "",
     ubicacionExterna: "",
+    fechaPrestamo: new Date(),
     fechaDevolucion: null as Date | null,
     notas: "",
     aceptaResponsabilidad: false,
@@ -58,6 +59,13 @@ export const useNewLoanForm = () => {
       fechaDevolucion: (date ?? null) as Date | null,
     }));
   };
+
+  const handleTimeChange = (time: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      handleTimeChange: time,
+    }));
+  }
 
   const handleCheckboxChange = (checked: boolean) => {
     setFormData((prev) => ({
@@ -150,6 +158,7 @@ export const useNewLoanForm = () => {
     handleInputChange,
     handleSelectChange,
     handleDateChange,
+    handleTimeChange,
     handleCheckboxChange,
     onSubmit,
     setSearchQuery,

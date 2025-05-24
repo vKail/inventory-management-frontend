@@ -10,6 +10,9 @@ export interface Product {
   status: string;
   description: string;
   cost: number;
+  handleTimeChange?: (time: number) => void;
+  fechaPrestamo?: Date;
+  fechaDevolucion?: Date;
   imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;

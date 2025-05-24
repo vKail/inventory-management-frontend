@@ -1,29 +1,27 @@
-import axios from "axios";
+import axios from 'axios';
 
-let inMemoryToken: string | null = null;
-
-export const setToken = (token: string) => {
-  inMemoryToken = token;
-}
-
-export const getToken = () => {
-  if (inMemoryToken) {
-    return inMemoryToken;
+export const getToken = async () => {
+  try {
+    const response = await axios.get('/api/auth/get-token');
+    return response.data.token || null;
+  } catch (error) {
+    console.error('Error al obtener token:', error);
+    return null;
   }
-  
-  return null;
-}
+};
 
 export const removeToken = async () => {
-  inMemoryToken = null;
-  
   try {
-    (await axios.post('/api/auth/remove-cookie', {}, {
+    await axios.post(
+      '/api/auth/remove-cookie',
+      {},
+      {
         headers: {
-            "Content-Type": "application/json"
-        }
-    }));
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error al eliminar la cookie:', error);
   }
-}
+};

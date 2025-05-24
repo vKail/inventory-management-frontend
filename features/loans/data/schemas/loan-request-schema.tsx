@@ -10,6 +10,7 @@ export const loanRequestSchema = z.object({
   bienId: z.string().min(1, "Debe seleccionar un bien"),
   bienNombre: z.string().optional(),
   motivo: z.string().min(1, "Motivo requerido"),
+  handleTimeChange: z.function().optional(),
   eventoAsociado: z.string().optional(),
   ubicacionExterna: z.string().optional(),
   fechaDevolucion: z.date().nullable(),

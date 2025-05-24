@@ -3,7 +3,6 @@ import { ILogin, ILoginResponse } from '../data/interfaces/login.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 import { API_ROUTES } from '@/core/data/constants/api-routes';
 import axios from 'axios';
-import { waitForDebugger } from 'inspector';
 
 interface AuthServiceProps {
   login: (user: ILogin) => Promise<ILoginResponse | undefined>;

@@ -1,5 +1,7 @@
-import CategoryFormView from '@/features/categories/presentation/views/CategoryFormView';
+import CategoryFormView from "@/features/categories/presentation/views/category-form-view";
 
-export default function EditCategoryPage({ params }: { params: { id: string } }) {
-  return <CategoryFormView params={params} />;
+export default function CategoryFormEdit({ params }: { params: { id?: string } }) {
+  return (
+    <CategoryFormView params={{ id: params.id }} />
+  );
 }
