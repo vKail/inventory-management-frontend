@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
 import { getMaterials, deleteMaterial, createMaterial } from '../services/material.service';
-import { Record } from '../data/interfaces/material.interface';
+import { Record, MaterialAPIResponse } from '../data/interfaces/material.interface';
 
 export const useMaterials = () => {
   const [materials, setMaterials] = useState<Record[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const fetchMaterials = async () => {
+  const fetchMaterials = async (page: number = 1) => {
     setLoading(true);
     try {
-      const data = await getMaterials();
-      setMaterials(data);
+      const response = await getMaterials(page, 20);
+      setMaterials(response.data.records);
+      setTotalPages(response.data.pages);
+      setTotalItems(response.data.total);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Error al obtener materiales', error);
     } finally {
@@ -38,9 +44,32 @@ export const useMaterials = () => {
     }
   };
 
+  const loadAllMaterials = async () => {
+    setLoading(true);
+    try {
+      const response = await getMaterials(1, 100); // Usamos un límite alto para traer todos los datos
+      setMaterials(response.data.records);
+      setTotalPages(response.data.pages);
+      setTotalItems(response.data.total);
+    } catch (error) {
+      console.error('Error al cargar todos los materiales', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchMaterials();
+    loadAllMaterials();
   }, []);
 
-  return { materials, loading, handleCreate, handleDelete };
+  return { 
+    materials, 
+    loading, 
+    handleCreate, 
+    handleDelete,
+    currentPage,
+    totalPages,
+    totalItems,
+    fetchMaterials
+  };
 };

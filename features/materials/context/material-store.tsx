@@ -1,9 +1,13 @@
 import { createContext, useContext } from 'react';
-import { Material } from '../data/interfaces/material.interface';
+import { Record } from '../data/interfaces/material.interface';
 
 interface MaterialContextProps {
-  materials: Material[];
+  materials: Record[];
   refreshMaterials: () => void;
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  loading: boolean;
 }
 
 export const MaterialContext = createContext<MaterialContextProps | undefined>(undefined);

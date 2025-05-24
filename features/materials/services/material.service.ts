@@ -6,9 +6,13 @@ const API_URL = 'https://gitt-api-3tw6.onrender.com/api/v1/materials';
 
 const axiosClient = AxiosClient.getInstance();
 
-export const getMaterials = async (): Promise<Record[]> => {
-  const res = await axiosClient.get<MaterialAPIResponse>(`${API_URL}?page=1&limit=10`, {});
-  return res.data.records;
+export const getMaterials = async (page: number = 1, limit: number = 20): Promise<MaterialAPIResponse> => {
+  const res = await axiosClient.get<MaterialAPIResponse>(`${API_URL}?page=${page}&limit=${limit}`, {});
+  return {
+    success: true,
+    message: { content: [], displayable: true },
+    data: res.data
+  };
 };
 
 export const createMaterial = async (data: Omit<Record, 'id'>): Promise<Data> => {
