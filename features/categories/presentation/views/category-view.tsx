@@ -9,7 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb';
-import CategoryTable from '../components/CategoryTable';
+import CategoryTable from '../components/category-table';
 
 export default function CategoryView() {
   return (
