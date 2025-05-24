@@ -37,11 +37,8 @@ export function middleware(request: NextRequest) {
 
     if (matchingRoute) {
       const [routeBase, allowedRoles] = matchingRoute;
-      console.log(`Route ${routeBase} requires roles:`, allowedRoles);
-      console.log(`User role: ${decoded.role}`);
 
       if (!allowedRoles.includes(decoded.role)) {
-        console.log('Access denied, redirecting to forbidden page');
         return NextResponse.redirect(new URL('/forbidden-page', request.url));
       }
     } else {
@@ -50,7 +47,6 @@ export function middleware(request: NextRequest) {
 
     return NextResponse.next();
   } catch (error) {
-    console.error('JWT decode error:', error);
     return NextResponse.redirect(new URL('/login', request.url));
   }
 }

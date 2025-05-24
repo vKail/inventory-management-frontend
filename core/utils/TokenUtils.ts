@@ -1,11 +1,13 @@
 import axios from 'axios';
 
-export const getToken = () => {
-  const token = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('auth_token='))
-    ?.split('=')[1];
-  return token ? decodeURIComponent(token) : null;
+export const getToken = async () => {
+  try {
+    const response = await axios.get('/api/auth/get-token');
+    return response.data.token || null;
+  } catch (error) {
+    console.error('Error al obtener token:', error);
+    return null;
+  }
 };
 
 export const removeToken = async () => {

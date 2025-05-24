@@ -16,12 +16,10 @@ export class AxiosClient implements HttpHandler {
       },
     });
 
-    this.axiosInstance.interceptors.request.use(config => {
-      const token = getToken();
+    this.axiosInstance.interceptors.request.use(async config => {
+      const token = await getToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token.replaceAll('"', '')}`;
-      } else {
-        document.dispatchEvent(new CustomEvent('unauthorized'));
       }
       return config;
     });
