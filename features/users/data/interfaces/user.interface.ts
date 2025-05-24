@@ -12,6 +12,7 @@ export interface Person {
 export interface User {
   id: number;
   userName: string;
+  password:string;
   career: string;
   userType: string;
   status: string;

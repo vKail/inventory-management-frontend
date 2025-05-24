@@ -49,3 +49,11 @@ export async function updateUser(id: string, data: Partial<User>): Promise<User>
   const json: ApiResponse<User> = await res.json()
   return json.data
 }
+export async function changeUserStatus(id: string, status: 'ACTIVE' | 'INACTIVE'): Promise<void> {
+  const res = await fetch(`${BASE_URL}/change-status/${id}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ status }),
+  })
+  if (!res.ok) throw new Error('Error changing user status')
+}
