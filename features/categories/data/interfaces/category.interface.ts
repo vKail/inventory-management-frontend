@@ -13,6 +13,7 @@ export interface ICategory {
   name: string;
   description: string;
   parentCategoryId: number | null;
+  parentCategory?: ICategory | null;
   standardUsefulLife: number;
   depreciationPercentage: string;
   active: boolean;

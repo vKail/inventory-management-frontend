@@ -1,65 +1,156 @@
-/* eslint-disable react/react-in-jsx-scope */
 'use client';
 
-import { Tags } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useCategoryStore } from '@/features/categories/context/category-store';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { ICategory } from '@/features/categories/data/interfaces/category.interface';
 import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
-import CategoryForm from '../components/CategoryForm';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export default function CategoryFormView({ params }: { params: { id?: string } }) {
-  const isEdit = !!params.id;
+export default function CategoryForm({ params }: { params: { id?: string } }) {
+  const router = useRouter();
+  const isEdit = params.id !== undefined && params.id !== 'new';
+
+  const {
+    getCategoryById,
+    getCategories,
+    addCategory,
+    updateCategory,
+    loading,
+    categories: availableCategories
+  } = useCategoryStore();
+
+  const [formData, setFormData] = useState<Omit<ICategory, 'id' | 'active'>>({
+    code: '',
+    name: '',
+    description: '',
+    parentCategory: null,
+    standardUsefulLife: 0,
+    depreciationPercentage: '0.00'
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      await getCategories();
+
+      if (isEdit && params.id) {
+        const category = await getCategoryById(Number(params.id));
+        if (category) {
+          const { id, ...rest } = category;
+          setFormData(rest);
+        }
+      }
+    };
+    loadData();
+  }, [isEdit, params.id, getCategories, getCategoryById]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' || name === 'standardUsefulLife'
+        ? Number(value)
+        : value
+    }));
+  };
+
+  const handleParentCategoryChange = (value: string) => {
+    if (value === "null") {
+      setFormData(prev => ({
+        ...prev,
+        parentCategory: null
+      }));
+      return;
+    }
+
+    const selectedCategory = availableCategories.find(cat => cat.id.toString() === value);
+    setFormData(prev => ({
+      ...prev,
+      parentCategory: selectedCategory || null
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      if (isEdit && params.id) {
+        // Preparar los datos para la actualización
+        const updateData: Partial<ICategory> = {
+          code: formData.code,
+          name: formData.name,
+          description: formData.description,
+          parentCategory: formData.parentCategory,
+          standardUsefulLife: formData.standardUsefulLife,
+          depreciationPercentage: formData.depreciationPercentage
+        };
+
+        await updateCategory(Number(params.id), updateData);
+        console.log('Categoría actualizada exitosamente');
+      } else {
+        await addCategory(formData as ICategory);
+        console.log('Categoría creada exitosamente');
+      }
+      router.push('/categories');
+    } catch (error) {
+      console.error('Error al guardar la categoría:', error);
+    }
+  };
 
   return (
-    <div className="flex w-full flex-col items-center px-6">
-      <div className="w-full max-w-[1200px]">
-        <Breadcrumb className="mb-6">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="#">Configuración</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/categories">
-                <div className="flex items-center">
-                  <Tags className="w-4 h-4 text-red-600 mr-1" />
-                  Categorías
-                </div>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                {isEdit ? "Editar Categoría" : "Nueva Categoría"}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <div className="sticky top-6">
-              <h2 className="text-xl font-bold mb-2">
-                {isEdit ? "Editar categoría" : "Nueva categoría"}
-              </h2>
-              <p className="text-gray-500 text-sm">
-                {isEdit
-                  ? "Modifique los detalles de la categoría"
-                  : "Complete todos los campos para crear una nueva categoría"}
-              </p>
-            </div>
-          </div>
-
-          <div className="md:col-span-2">
-            <CategoryForm params={params} />
-          </div>
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="code">Código</Label>
+        <Input id="code" name="code" value={formData.code} onChange={handleChange} required />
       </div>
-    </div>
+      <div>
+        <Label htmlFor="name">Nombre</Label>
+        <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
+      </div>
+      <div>
+        <Label htmlFor="description">Descripción</Label>
+        <Input id="description" name="description" value={formData.description} onChange={handleChange} required />
+      </div>
+      <div>
+        <Label htmlFor="parentCategory">Categoría Padre</Label>
+        <Select
+          value={formData.parentCategory?.id?.toString() || "null"}
+          onValueChange={handleParentCategoryChange}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecciona una categoría padre" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="null">Ninguna</SelectItem>
+            {availableCategories
+              .filter(cat => cat.id !== Number(params.id)) // Excluir la categoría actual
+              .map((category) => (
+                <SelectItem key={category.id} value={category.id.toString()}>
+                  {category.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="standardUsefulLife">Vida útil estándar (años)</Label>
+        <Input id="standardUsefulLife" name="standardUsefulLife" type="number" value={formData.standardUsefulLife} onChange={handleChange} />
+      </div>
+      <div>
+        <Label htmlFor="depreciationPercentage">Porcentaje de depreciación</Label>
+        <Input id="depreciationPercentage" name="depreciationPercentage" value={formData.depreciationPercentage} onChange={handleChange} />
+      </div>
+      <Button type="submit" disabled={loading}>
+        {loading ? 'Guardando...' : isEdit ? 'Actualizar' : 'Crear'}
+      </Button>
+    </form>
   );
 }

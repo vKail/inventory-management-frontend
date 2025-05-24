@@ -1,11 +1,23 @@
+/* eslint-disable react/react-in-jsx-scope */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNewLoanForm } from "../../hooks/use-new-loan-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon, Handshake, ScanBarcode, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -13,24 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Search, ScanBarcode } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { format } from "date-fns";
+import { Breadcrumb, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage, BreadcrumbItem, BreadcrumbList } from "@/components/ui/breadcrumb";
 import { ScanModal } from "./scan-modal";
+import { BlackListModal } from "./black-list-modal";
 
 export default function NewLoanForm() {
   const {
@@ -40,19 +37,22 @@ export default function NewLoanForm() {
     searchResults,
     showResults,
     scanOpen,
-    setFormData,
     handleSearchBien,
     handleSelectBien,
     handleScanBien,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
+    handleTimeChange,
     handleCheckboxChange,
     onSubmit,
     setSearchQuery,
     setScanOpen,
     handleCancel,
   } = useNewLoanForm();
+
+  // Estado para el modal de la lista negra
+  const [blackListModalOpen, setBlackListModalOpen] = useState(false);
 
   useEffect(() => {
     // Ensure focus is set on mount for accessibility
@@ -64,279 +64,360 @@ export default function NewLoanForm() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full p-4">
+      {/* Breadcrumb y botón Lista Negra */}
+      <div className="flex justify-between items-center mb-6">
+        <Button
+          variant="destructive"
+          className="flex items-center gap-2"
+          onClick={() => setBlackListModalOpen(true)}
+        >
+          <AlertCircle className="h-4 w-4" />
+          Lista Negra
+        </Button>
+      </div>
+
+      {/* Modales */}
       <ScanModal
         open={scanOpen}
         onClose={() => setScanOpen(false)}
         onScanComplete={handleScanBien}
       />
-      <Card>
-        <CardHeader>
-          <CardTitle>Solicitud de Préstamo de Bien</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Información del Solicitante */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Información del Solicitante</h3>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nombres">Nombres</Label>
-                    <Input
-                      id="nombres"
-                      name="nombres"
-                      value={formData.nombres}
-                      onChange={handleInputChange}
-                    />
-                    {formErrors.nombres && (
-                      <p className="text-red-500 text-sm">{formErrors.nombres}</p>
-                    )}
+      <BlackListModal
+        open={blackListModalOpen}
+        onClose={() => setBlackListModalOpen(false)}
+      />
+
+      <form onSubmit={onSubmit}>
+        <div className="space-y-10">
+          {/* Sección Solicitante */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            <div className="pt-2">
+              <h2 className="text-lg font-bold">Solicitante</h2>
+              <p className="text-muted-foreground text-sm">Datos personales y de contacto del solicitante del préstamo.</p>
+            </div>
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Información del Solicitante</CardTitle>
+                  <p className="text-muted-foreground">Complete los datos del solicitante.</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="w-full px-0">
+                    <div className="grid grid-cols-1 gap-6 w-full">
+                      <div className="space-y-4 w-full">
+                        <div className="grid grid-cols-2 gap-4 w-full">
+                          <div>
+                            <label className="block mb-1 font-medium" htmlFor="nombres">Nombres</label>
+                            <Input
+                              id="nombres"
+                              name="nombres"
+                              value={formData.nombres}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full"
+                            />
+                            {formErrors.nombres && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.nombres}</p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block mb-1 font-medium" htmlFor="apellidos">Apellidos</label>
+                            <Input
+                              id="apellidos"
+                              name="apellidos"
+                              value={formData.apellidos}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full"
+                            />
+                            {formErrors.apellidos && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.apellidos}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block mb-1 font-medium" htmlFor="correo">Correo Electrónico</label>
+                          <Input
+                            id="correo"
+                            name="correo"
+                            type="email"
+                            value={formData.correo}
+                            onChange={handleInputChange}
+                            required
+                            className="w-full"
+                          />
+                          {formErrors.correo && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.correo}</p>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 w-full">
+                          <div>
+                            <label className="block mb-1 font-medium" htmlFor="telefono">Número de Teléfono</label>
+                            <Input
+                              id="telefono"
+                              name="telefono"
+                              value={formData.telefono}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full"
+                            />
+                            {formErrors.telefono && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.telefono}</p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block mb-1 font-medium" htmlFor="cedula">Cédula</label>
+                            <Input
+                              id="cedula"
+                              name="cedula"
+                              value={formData.cedula}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full"
+                            />
+                            {formErrors.cedula && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.cedula}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block mb-1 font-medium" htmlFor="rol">Rol</label>
+                          <Select
+                            value={formData.rol}
+                            onValueChange={(v) => handleSelectChange("rol", v)}
+                          >
+                            <SelectTrigger id="rol" className="w-full">
+                              <SelectValue placeholder="Seleccionar rol" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="estudiante">Estudiante</SelectItem>
+                              <SelectItem value="docente">Docente</SelectItem>
+                              <SelectItem value="administrativo">Administrativo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {formErrors.rol && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.rol}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="apellidos">Apellidos</Label>
-                    <Input
-                      id="apellidos"
-                      name="apellidos"
-                      value={formData.apellidos}
-                      onChange={handleInputChange}
-                    />
-                    {formErrors.apellidos && (
-                      <p className="text-red-500 text-sm">{formErrors.apellidos}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="correo">Correo Electrónico</Label>
-                  <Input
-                    id="correo"
-                    name="correo"
-                    value={formData.correo}
-                    onChange={handleInputChange}
-                  />
-                  {formErrors.correo && (
-                    <p className="text-red-500 text-sm">{formErrors.correo}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="telefono">Teléfono</Label>
-                    <Input
-                      id="telefono"
-                      name="telefono"
-                      value={formData.telefono}
-                      onChange={handleInputChange}
-                    />
-                    {formErrors.telefono && (
-                      <p className="text-red-500 text-sm">{formErrors.telefono}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cedula">Cédula</Label>
-                    <Input
-                      id="cedula"
-                      name="cedula"
-                      value={formData.cedula}
-                      onChange={handleInputChange}
-                    />
-                    {formErrors.cedula && (
-                      <p className="text-red-500 text-sm">{formErrors.cedula}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Rol</Label>
-                  <Select
-                    onValueChange={(value) => handleSelectChange("rol", value)}
-                    value={formData.rol}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar rol" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="estudiante">Estudiante</SelectItem>
-                      <SelectItem value="docente">Docente</SelectItem>
-                      <SelectItem value="administrativo">Administrativo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {formErrors.rol && (
-                    <p className="text-red-500 text-sm">{formErrors.rol}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Información del Préstamo */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Información del Préstamo</h3>
-
-                {/* Bien */}
-                <div className="space-y-2">
-                  <Label>Bien a solicitar</Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-grow">
-                      <Input
-                        placeholder="Buscar bien por nombre o código"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9"
-                      />
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-
-                      {showResults && searchResults.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white rounded-md border shadow-lg">
-                          <ul className="py-1">
-                            {searchResults.map((bien) => (
-                              <li
-                                key={bien.id}
-                                className="px-4 py-2 hover:bg-muted cursor-pointer"
-                                onClick={() => handleSelectBien(bien)}
-                              >
-                                <div className="font-medium">{bien.nombre}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  Código: {bien.barcode}
+          {/* Sección Préstamo */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            <div className="pt-2">
+              <h2 className="text-lg font-bold">Préstamo</h2>
+              <p className="text-muted-foreground text-sm">Información del bien, motivo y detalles del préstamo solicitado.</p>
+            </div>
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Información del Préstamo</CardTitle>
+                  <p className="text-muted-foreground">Complete los datos del bien y el préstamo.</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-4 w-full">
+                      <div className="flex gap-2 w-full">
+                        <div className="relative flex-grow">
+                          <Input
+                            placeholder="Buscar bien por nombre o código"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full"
+                          />
+                          {showResults && searchResults.length > 0 && (
+                            <div className="bg-muted rounded p-2 mt-1 absolute z-10 w-full">
+                              {searchResults.map((bien) => (
+                                <div
+                                  key={bien.id}
+                                  className="cursor-pointer hover:bg-accent px-2 py-1 rounded"
+                                  onClick={() => handleSelectBien(bien)}
+                                >
+                                  {bien.nombre} <span className="text-xs text-muted-foreground">({bien.barcode})</span>
                                 </div>
-                              </li>
-                            ))}
-                          </ul>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <Button type="button" variant="destructive" onClick={handleSearchBien}>
+                          Buscar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setScanOpen(true)}
+                        >
+                          <ScanBarcode className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {formData.bienNombre && (
+                        <div className="mt-2 p-2 bg-muted rounded-md">
+                          <p className="font-medium">{formData.bienNombre}</p>
                         </div>
                       )}
+                      {formErrors.bienId && (
+                        <p className="text-red-500 text-sm">{formErrors.bienId}</p>
+                      )}
+
+                      <div>
+                        <label className="block mb-1 font-medium" htmlFor="motivo">Motivo del Préstamo</label>
+                        <Textarea
+                          id="motivo"
+                          name="motivo"
+                          value={formData.motivo}
+                          onChange={handleInputChange}
+                          required
+                          className="w-full"
+                        />
+                        {formErrors.motivo && (
+                          <p className="text-red-500 text-sm mt-1">{formErrors.motivo}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block mb-1 font-medium" htmlFor="eventoAsociado">Evento Asociado (opcional)</label>
+                        <Input
+                          id="eventoAsociado"
+                          name="eventoAsociado"
+                          value={formData.eventoAsociado}
+                          onChange={handleInputChange}
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1 font-medium" htmlFor="ubicacionExterna">Ubicación de Uso (opcional)</label>
+                        <Input
+                          id="ubicacionExterna"
+                          name="ubicacionExterna"
+                          value={formData.ubicacionExterna}
+                          onChange={handleInputChange}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Fecha de Préstamo con hora */}
+                        <div className="flex flex-col h-full justify-between">
+                          <label className="block mb-1 font-medium">Fecha y Hora de Préstamo</label>
+                          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full sm:w-auto justify-start text-left font-normal",
+                                    !formData.fechaPrestamo && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {formData.fechaPrestamo ? format(formData.fechaPrestamo, "PPP") : <span>Seleccionar fecha</span>}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                  mode="single"
+                                  selected={formData.fechaPrestamo}
+                                  onSelect={(date) => handleDateChange(date, "fechaPrestamo")}
+                                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <Input
+                              type="time"
+                              value={format(formData.fechaPrestamo, "HH:mm")}
+                              onChange={(e) => handleTimeChange(e.target.value, "fechaPrestamo")}
+                              className="w-full sm:w-32"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Fecha de Devolución con hora */}
+                        <div className="flex flex-col h-full justify-between">
+                          <label className="block mb-1 font-medium">Fecha y Hora de Devolución Programada</label>
+                          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full sm:w-auto justify-start text-left font-normal",
+                                    !formData.fechaDevolucion && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {formData.fechaDevolucion ? format(formData.fechaDevolucion, "PPP") : <span>Seleccionar fecha</span>}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                  mode="single"
+                                  selected={formData.fechaDevolucion ?? undefined}
+                                  onSelect={(date) => handleDateChange(date, "fechaDevolucion")}
+                                  disabled={(date) => date < formData.fechaPrestamo}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <Input
+                              type="time"
+                              value={formData.fechaDevolucion ? format(formData.fechaDevolucion, "HH:mm") : ""}
+                              onChange={(e) => handleTimeChange(e.target.value, "fechaDevolucion")}
+                              className="w-full sm:w-32"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block mb-1 font-medium" htmlFor="notas">Notas Adicionales</label>
+                        <Textarea
+                          id="notas"
+                          name="notas"
+                          value={formData.notas}
+                          onChange={handleInputChange}
+                          className="w-full"
+                        />
+                      </div>
                     </div>
-                    <Button type="button" onClick={handleSearchBien}>
-                      Buscar
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setScanOpen(true)}
-                    >
-                      <ScanBarcode className="mr-2 h-4 w-4" /> Escanear
-                    </Button>
                   </div>
-                  {formData.bienNombre && (
-                    <div className="mt-2 p-2 bg-muted rounded-md">
-                      <p className="font-medium">{formData.bienNombre}</p>
-                    </div>
-                  )}
-                  {formErrors.bienId && (
-                    <p className="text-red-500 text-sm">{formErrors.bienId}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="motivo">Motivo del Préstamo</Label>
-                  <Textarea
-                    id="motivo"
-                    name="motivo"
-                    value={formData.motivo}
-                    onChange={handleInputChange}
-                  />
-                  {formErrors.motivo && (
-                    <p className="text-red-500 text-sm">{formErrors.motivo}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="eventoAsociado">Evento Asociado (opcional)</Label>
-                  <Input
-                    id="eventoAsociado"
-                    name="eventoAsociado"
-                    value={formData.eventoAsociado}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="ubicacionExterna">
-                    Ubicación Externa (opcional)
-                  </Label>
-                  <Input
-                    id="ubicacionExterna"
-                    name="ubicacionExterna"
-                    value={formData.ubicacionExterna}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Fecha de Devolución</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !formData.fechaDevolucion && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.fechaDevolucion ? (
-                          format(formData.fechaDevolucion, "PPP")
-                        ) : (
-                          <span>Seleccionar fecha</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={formData.fechaDevolucion ?? undefined}
-                        onSelect={handleDateChange}
-                        initialFocus
-                        disabled={(date) => date < new Date()}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {formErrors.fechaDevolucion && (
-                    <p className="text-red-500 text-sm">{formErrors.fechaDevolucion}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notas">Notas Adicionales</Label>
-                  <Textarea
-                    id="notas"
-                    name="notas"
-                    value={formData.notas}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2 pt-4">
-                  <Checkbox
-                    id="aceptaResponsabilidad"
-                    checked={formData.aceptaResponsabilidad}
-                    onCheckedChange={(checked) => handleCheckboxChange(checked as boolean)}
-                  />
-                  <Label
-                    htmlFor="aceptaResponsabilidad"
-                    className="text-sm font-medium leading-none"
-                  >
-                    Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
-                  </Label>
-                </div>
-                {formErrors.aceptaResponsabilidad && (
-                  <p className="text-red-500 text-sm">{formErrors.aceptaResponsabilidad}</p>
-                )}
-              </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
 
-            <CardFooter className="flex justify-end gap-2 pt-6 px-0">
-              <Button type="button" variant="outline" onClick={handleCancel}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={!formData.aceptaResponsabilidad}>
+          {/* Checkbox y acciones */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="aceptaResponsabilidad"
+                checked={formData.aceptaResponsabilidad}
+                onCheckedChange={(checked) => handleCheckboxChange(checked)}
+              />
+              <label htmlFor="aceptaResponsabilidad" className="text-sm">
+                Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
+              </label>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={handleCancel}>Cancelar</Button>
+              <Button
+                type="submit"
+                disabled={!formData.aceptaResponsabilidad}
+                className="bg-primary text-white"
+              >
                 Solicitar Préstamo
               </Button>
-            </CardFooter>
-          </form>
-        </CardContent>
-      </Card>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
