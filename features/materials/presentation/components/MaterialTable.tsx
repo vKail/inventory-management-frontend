@@ -98,7 +98,6 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>#</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Descripción</TableHead>
@@ -124,7 +123,6 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
                 ) : (
                   paginatedMaterials.map((material, index) => (
                     <TableRow key={material.id}>
-                      <TableCell className="font-medium">{index + 1}</TableCell>
                       <TableCell className="font-medium">{material.name}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{material.materialType}</Badge>
@@ -135,7 +133,7 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => onEdit(material)}
+                            onClick={() => router.push(`/materials/edit/${material.id}`)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>

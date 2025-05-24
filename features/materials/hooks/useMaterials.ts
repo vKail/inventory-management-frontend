@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getMaterials, deleteMaterial, createMaterial } from '../services/material.service';
+import { getMaterials, deleteMaterial, createMaterial, updateMaterial } from '../services/material.service';
 import { Record, MaterialAPIResponse } from '../data/interfaces/material.interface';
 
 export const useMaterials = () => {
@@ -35,6 +35,21 @@ export const useMaterials = () => {
     }
   };
 
+  const handleUpdate = async (id: number, data: Partial<Record>) => {
+    try {
+      const updatedMaterial = await updateMaterial(id, data);
+      setMaterials(prevMaterials => 
+        prevMaterials.map(material => 
+          material.id === id ? { ...material, ...data } : material
+        )
+      );
+      return updatedMaterial;
+    } catch (error) {
+      console.error('Error al actualizar material', error);
+      throw error;
+    }
+  };
+
   const handleDelete = async (id: number) => {
     try {
       await deleteMaterial(id);
@@ -47,7 +62,7 @@ export const useMaterials = () => {
   const loadAllMaterials = async () => {
     setLoading(true);
     try {
-      const response = await getMaterials(1, 100); // Usamos un límite alto para traer todos los datos
+      const response = await getMaterials(1, 100);
       setMaterials(response.data.records);
       setTotalPages(response.data.pages);
       setTotalItems(response.data.total);
@@ -67,6 +82,7 @@ export const useMaterials = () => {
     loading, 
     handleCreate, 
     handleDelete,
+    handleUpdate,
     currentPage,
     totalPages,
     totalItems,

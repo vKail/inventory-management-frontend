@@ -130,7 +130,7 @@ export const AddMaterialForm = () => {
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Ingrese una descripción detallada del material..."
-                                                className="min-h-[100px]"
+                                                className="min-h-[100px] resize-none"
                                                 {...field}
                                             />
                                         </FormControl>

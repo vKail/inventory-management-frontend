@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useMaterials } from '../../hooks/useMaterials';
 import { MaterialTable } from '../components/MaterialTable';
-import { EditMaterialForm } from '../components/EditMaterialForm';
 import { Material } from '../../data/interfaces/material.interface';
 
 export const MaterialListView = () => {
@@ -16,16 +15,8 @@ export const MaterialListView = () => {
       <MaterialTable
         materials={materials}
         onDelete={handleDelete}
-        onEdit={(mat) => setEditMaterial(mat)}
+        onEdit={(mat) => console.log(mat)}
       />
-
-      {editMaterial && (
-        <EditMaterialForm
-          initialData={editMaterial}
-          materialId={editMaterial.id}
-          onSuccess={() => setEditMaterial(null)}
-        />
-      )}
     </div>
   );
 };

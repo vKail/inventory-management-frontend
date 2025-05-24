@@ -1,5 +1,5 @@
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
-import { MaterialAPIResponse, Record } from '../data/interfaces/material.interface';
+import { MaterialAPIResponse, Record, MaterialType } from '../data/interfaces/material.interface';
 import { Data, MateriaPostAPIResponse } from '../data/interfaces/materialPost.interface';
 
 const API_URL = 'https://gitt-api-3tw6.onrender.com/api/v1/materials';
@@ -15,9 +15,12 @@ export const getMaterials = async (page: number = 1, limit: number = 20): Promis
   };
 };
 
-export const createMaterial = async (data: Omit<Record, 'id'>): Promise<Data> => {
+export const createMaterial = async (data: Omit<Record, 'id'>): Promise<Record> => {
   const res = await axiosClient.post<MateriaPostAPIResponse>(API_URL, data, {});
-  return res.data.data;
+  return {
+    ...res.data.data,
+    materialType: res.data.data.materialType as MaterialType
+  };
 };
 
 export const deleteMaterial = async (id: number) => {
