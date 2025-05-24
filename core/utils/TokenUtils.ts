@@ -13,14 +13,18 @@ export const getToken = () => {
 
 export const removeToken = async () => {
   localStorage.removeItem(TOKEN_KEY);
-  
+
   try {
-    (await axios.post('/api/auth/remove-cookie', {}, {
+    await axios.post(
+      '/api/auth/remove-cookie',
+      {},
+      {
         headers: {
-            "Content-Type": "application/json"
-        }
-    }));
+          'Content-Type': 'application/json',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error al eliminar la cookie:', error);
   }
-}
+};

@@ -16,19 +16,15 @@ import {
 } from '@/components/ui/sidebar';
 import { sidebarItems } from '../data/sidebar-items';
 import { useAuthStore } from '@/features/auth/context/auth-store';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Icon, LogOut } from 'lucide-react';
-import { tr } from 'date-fns/locale';
-import { useState } from 'react';
+import { ChevronDown, LogOut } from 'lucide-react';
 
 export const DashboardSidebar = () => {
   const { logout } = useAuthStore();
   const router = useRouter();
   const { state, setOpen } = useSidebar();
-  const [isSelected, setIsSelected] = useState();
 
   return (
     <Sidebar className="w-64" collapsible="icon">
@@ -100,8 +96,8 @@ export const DashboardSidebar = () => {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={() => {
-                logout();
+              onClick={async () => {
+                await logout();
                 router.push('/login');
               }}
               className="flex w-full items-center px-6 py-2 hover:bg-primary/10 text-muted-foreground hover:text-primary"

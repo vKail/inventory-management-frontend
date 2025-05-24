@@ -13,8 +13,6 @@ export function middleware(request: NextRequest) {
 
   if (token && authExclusivePaths.includes(pathname)) {
     try {
-      const decoded = jwtDecode<JWTPayload>(token);
-      console.log('Usuario ya autenticado intentando acceder a:', pathname);
       return NextResponse.redirect(new URL('/inventory', request.url));
     } catch (error) {
       console.error('Error al decodificar JWT:', error);
@@ -27,13 +25,11 @@ export function middleware(request: NextRequest) {
   }
 
   if (!token) {
-    console.log('No token found, redirecting to login');
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   try {
     const decoded = jwtDecode<JWTPayload>(token);
-    console.log('Token decoded:', decoded);
 
     const matchingRoute = Object.entries(userRoutes).find(([routeBase]) => {
       return pathname.startsWith(routeBase);
@@ -41,21 +37,16 @@ export function middleware(request: NextRequest) {
 
     if (matchingRoute) {
       const [routeBase, allowedRoles] = matchingRoute;
-      console.log(`Route ${routeBase} requires roles:`, allowedRoles);
-      console.log(`User role: ${decoded.role}`);
 
       if (!allowedRoles.includes(decoded.role)) {
-        console.log('Access denied, redirecting to forbidden page');
         return NextResponse.redirect(new URL('/forbidden-page', request.url));
       }
-      console.log('Access granted');
     } else {
       console.log('No matching protected route found, general access granted');
     }
 
     return NextResponse.next();
   } catch (error) {
-    console.error('JWT decode error:', error);
     return NextResponse.redirect(new URL('/login', request.url));
   }
 }

@@ -18,4 +18,3 @@ interface IHttpMessage {
     content: string[],
     dispayable: boolean,
 }
-
