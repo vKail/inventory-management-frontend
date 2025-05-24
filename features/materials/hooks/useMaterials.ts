@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getMaterials, deleteMaterial } from '../services/material.service';
+import { getMaterials, deleteMaterial, createMaterial } from '../services/material.service';
 import { Record } from '../data/interfaces/material.interface';
 
 export const useMaterials = () => {
@@ -18,6 +18,17 @@ export const useMaterials = () => {
     }
   };
 
+  const handleCreate = async (data: Omit<Record, 'id'>) => {
+    try {
+      const newMaterial = await createMaterial(data);
+      setMaterials(prevMaterials => [...prevMaterials, newMaterial]);
+      return newMaterial;
+    } catch (error) {
+      console.error('Error al crear material', error);
+      throw error;
+    }
+  };
+
   const handleDelete = async (id: number) => {
     try {
       await deleteMaterial(id);
@@ -31,5 +42,5 @@ export const useMaterials = () => {
     fetchMaterials();
   }, []);
 
-  return { materials, loading, handleDelete };
+  return { materials, loading, handleCreate, handleDelete };
 };

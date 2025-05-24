@@ -86,7 +86,7 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={() => router.push('/materials/new')}>
+            <Button onClick={() => router.push('/materials/add-material')}>
               <PackagePlus className="mr-2 h-4 w-4" />
               Nuevo Material
             </Button>
@@ -98,6 +98,7 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>#</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Descripción</TableHead>
@@ -121,8 +122,9 @@ export const MaterialTable: React.FC<Props> = ({ materials, onDelete, onEdit, lo
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedMaterials.map((material) => (
+                  paginatedMaterials.map((material, index) => (
                     <TableRow key={material.id}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
                       <TableCell className="font-medium">{material.name}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{material.materialType}</Badge>
