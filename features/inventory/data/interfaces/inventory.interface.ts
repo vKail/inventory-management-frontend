@@ -83,3 +83,8 @@ export enum ProductStatus {
   MAINTENANCE = 'maintenance',
   DAMAGED = 'damaged',
 }
+export interface LocationOption {
+  id: number;
+  name: string;
+  type: string;
+}

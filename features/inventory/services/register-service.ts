@@ -7,14 +7,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const apiClient = AxiosClient.getInstance();
 
+function getAuthHeaders() {
+  return {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
+    },
+  };
+}
 export class RegisterService {
+
+  
   static async registerItem(data: RegisterFormData): Promise<boolean> {
     if (!API_URL) {
       throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
     }
 
     try {
-      const response = await apiClient.post<IHttpResponse<void>>("/inventory/register", data);
+      const response = await apiClient.post<IHttpResponse<void>>("/inventory/register", data
+        ,getAuthHeaders()
+
+      );
       if (!response.success) {
         throw new Error(response.message.content[0] || "Error al registrar el ítem");
       }

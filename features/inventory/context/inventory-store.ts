@@ -258,9 +258,10 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
     if (filters.search) {
       filtered = filtered.filter((item) =>
-        item.name.toLowerCase().includes(filters.search.toLowerCase())
+        item.name.toLowerCase().includes(filters.search?.toLowerCase() || '')
       );
     }
+
 
     if (filters.category) {
       filtered = filtered.filter((item) => item.category === filters.category);

@@ -43,25 +43,36 @@ export const RegisterForm = () => {
   const [materials, setMaterials] = useState<FilterOption[]>([]);
   const [locations, setLocations] = useState<FilterOption[]>([]);
   const [offices, setOffices] = useState<FilterOption[]>([]);
-
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const fetchedColors = await InventoryFilterService.getCategories();
+        const fetchedColors = await InventoryFilterService.getColors();
         const fetchedMaterials = await InventoryFilterService.getCategories();
         const fetchedLocations = await InventoryFilterService.getLocations();
-        const fetchedOffices = await InventoryFilterService.getLocations();
+
+
+
+        const tiposUnicos = Array.from(
+          new Set(fetchedLocations.map((loc) => loc.type))
+        ).map((type, index) => ({
+          id: index + 1,
+          name: type,
+        }));
+
         setColors(fetchedColors);
         setMaterials(fetchedMaterials);
         setLocations(fetchedLocations);
-        setOffices(fetchedOffices);
+        setOffices(tiposUnicos);
       } catch (error) {
         console.error("Error fetching options:", error);
         toast.error("Error al cargar las opciones del formulario");
       }
     };
+
     fetchOptions();
   }, []);
+
+
 
   const form = useForm<RegisterFormSchema>({
     resolver: zodResolver(registerSchema),
@@ -302,7 +313,7 @@ export const RegisterForm = () => {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleccione una oficina" />
+                          <SelectValue placeholder="Seleccione una opción" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -312,11 +323,13 @@ export const RegisterForm = () => {
                           </SelectItem>
                         ))}
                       </SelectContent>
+
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
             </div>
           </CardContent>
         </Card>
