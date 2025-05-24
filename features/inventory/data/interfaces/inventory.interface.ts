@@ -1,17 +1,17 @@
 // Inventory item interface
 export interface InventoryItem {
-  id: string;
+  id: number; // Cambiado de string a number para coincidir con el backend
   barcode: string;
   name: string;
   category: string;
   department: string;
   quantity: number;
   description: string;
-  imageUrl: string;
-  cost: number;
+  imageUrl?: string; // Opcional, ya que no viene en la respuesta del backend
+  cost?: number; // Opcional, ya que no viene en la respuesta del backend
   status: ProductStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date; // Opcional, ya que no viene en la respuesta del backend
+  updatedAt?: Date; // Opcional, ya que no viene en la respuesta del backend
 }
 
 // Inventory filters interface
@@ -54,7 +54,3 @@ export enum ProductStatus {
   MAINTENANCE = 'maintenance',
   DAMAGED = 'damaged',
 }
-
-
-
-

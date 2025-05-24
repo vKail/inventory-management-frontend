@@ -12,6 +12,8 @@ import { useNavigateToAddProduct } from "@/features/inventory/hooks/use-navigate
 import { ScanProductModal } from "../components/scan-product-modal";
 import { EditProductModal } from "../components/edit-product-modal";
 import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";
+import { updateInventoryItem } from "@/features/inventory/services/inventory.service";
+import { toast } from "sonner";
 
 export const InventoryView = () => {
   const {
@@ -20,21 +22,43 @@ export const InventoryView = () => {
     isLoading,
     error,
     fetchItems,
+    viewMode,
+    setViewMode,
   } = useInventoryStore();
-
-  const [viewMode, setViewMode] = useState<"table" | "list" | "grid">("table");
-  const { navigateToAddProduct } = useNavigateToAddProduct();
 
   const [scanModalOpen, setScanModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<InventoryItem | null>(null);
+  const { navigateToAddProduct } = useNavigateToAddProduct();
 
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
 
+  const handleSaveProduct = async (updatedProduct: InventoryItem) => {
+    try {
+      const updated = await updateInventoryItem(updatedProduct.id, updatedProduct);
+      useInventoryStore.setState((state) => ({
+        items: state.items.map((item) =>
+          item.id === updated.id ? updated : item
+        ),
+        filteredItems: state.filteredItems.map((item) =>
+          item.id === updated.id ? updated : item
+        ),
+      }));
+      toast.success("Producto actualizado correctamente");
+      setEditModalOpen(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error al actualizar el producto";
+      toast.error(errorMessage);
+    }
+  };
+
   if (isLoading) return <div>Cargando inventario...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
+
+  const itemsArray = Array.isArray(items) ? items : []; // Usamos items (sin filtrar) para la tabla
+  const filteredItemsArray = Array.isArray(filteredItems) ? filteredItems : []; // Para las vistas grid y list
 
   return (
     <div className="space-y-6">
@@ -99,13 +123,13 @@ export const InventoryView = () => {
 
       {viewMode === "table" ? (
         <InventoryTableView
-          items={filteredItems}
+          items={itemsArray}
           onViewClick={(item) => console.log("Ver detalles", item)}
           onLoanClick={(item) => console.log("Solicitar", item)}
         />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
+          {filteredItemsArray.map((item) => (
             <InventoryCard
               key={item.id}
               item={item}
@@ -116,7 +140,7 @@ export const InventoryView = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredItems.map((item) => (
+          {filteredItemsArray.map((item) => (
             <InventoryListItem
               key={item.id}
               product={item}
@@ -126,15 +150,22 @@ export const InventoryView = () => {
         </div>
       )}
 
-      {filteredItems.length === 0 && (
+      {viewMode === "table" && itemsArray.length === 0 && (
         <div className="text-center py-10">
           <p className="text-muted-foreground">
-            No se encontraron productos que coincidan con los filtros
+            No hay productos en el inventario.
           </p>
         </div>
       )}
 
-      {/* ✅ Modal de escaneo */}
+      {(viewMode === "grid" || viewMode === "list") && filteredItemsArray.length === 0 && (
+        <div className="text-center py-10">
+          <p className="text-muted-foreground">
+            No se encontraron productos que coincidan con los filtros.
+          </p>
+        </div>
+      )}
+
       <ScanProductModal
         open={scanModalOpen}
         onClose={() => setScanModalOpen(false)}
@@ -145,15 +176,11 @@ export const InventoryView = () => {
         }}
       />
 
-      {/* ✅ Modal de edición */}
       <EditProductModal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
         product={productToEdit}
-        onSave={(updatedProduct) => {
-          setEditModalOpen(false);
-          // Puedes actualizar el estado global o hacer un refetch si lo deseas
-        }}
+        onSave={handleSaveProduct}
       />
     </div>
   );

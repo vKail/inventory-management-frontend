@@ -1,4 +1,3 @@
-// features/inventory/presentation/components/InventoryTableView.tsx
 "use client";
 
 import { useState } from "react";
@@ -12,16 +11,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Package } from "lucide-react";
 import { EditProductModal } from "./edit-product-modal";
+import { updateInventoryItem, deleteInventoryItem } from "@/features/inventory/services/inventory.service";
+import { useInventoryStore } from "@/features/inventory/context/inventory-store";
+import { toast } from "sonner";
 
 interface Props {
   items: InventoryItem[];
@@ -52,6 +53,41 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
     setIsModalOpen(true);
   };
 
+  const handleSaveProduct = async (updatedProduct: InventoryItem) => {
+    try {
+      const updated = await updateInventoryItem(updatedProduct.id, updatedProduct); // Usamos id directamente
+      useInventoryStore.setState((state) => ({
+        items: state.items.map((item) =>
+          item.id === updated.id ? updated : item
+        ),
+        filteredItems: state.filteredItems.map((item) =>
+          item.id === updated.id ? updated : item
+        ),
+      }));
+      toast.success("Producto actualizado correctamente");
+      setIsModalOpen(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error al actualizar el producto";
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleDeleteClick = async (item: InventoryItem) => {
+    try {
+      await deleteInventoryItem(item.id); // Usamos id directamente
+      useInventoryStore.setState((state) => ({
+        items: state.items.filter((i) => i.id !== item.id),
+        filteredItems: state.filteredItems.filter((i) => i.id !== item.id),
+      }));
+      toast.success("Producto eliminado correctamente");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error al eliminar el producto";
+      toast.error(errorMessage);
+    }
+  };
+
+  const itemsArray = Array.isArray(items) ? items : [];
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -67,7 +103,7 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item) => (
+          {itemsArray.map((item) => (
             <TableRow key={item.id} className="hover:bg-gray-50">
               <TableCell className="font-medium">
                 <div className="flex items-center gap-3">
@@ -116,7 +152,10 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleEditClick(item)}>Editar</DropdownMenuItem>
                       <DropdownMenuItem>Historial</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDeleteClick(item)}
+                      >
                         Eliminar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -131,6 +170,7 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         product={selectedProduct}
+        onSave={handleSaveProduct}
       />
     </div>
   );
