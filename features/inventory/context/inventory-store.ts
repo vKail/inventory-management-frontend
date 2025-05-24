@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { InventoryItem, ProductStatus, InventoryFilters, ProductCategory, Department } from '../data/interfaces/inventory.interface';
-import { getInventoryItems, updateInventoryItem } from '../services/inventory.service';
+import { getInventoryItems, updateInventoryItem, deleteInventoryItem } from '../services/inventory.service';
 
 // Mapeo de statusId a ProductStatus
 const mapStatusIdToProductStatus = (statusId: number): ProductStatus => {
@@ -170,6 +170,7 @@ interface InventoryState {
   error: string | null;
   fetchItems: () => Promise<void>;
   updateItem: (updatedItem: InventoryItem, originalItem: InventoryItem) => Promise<void>;
+  deleteItem: (id: number) => Promise<void>;
   setViewMode: (mode: 'grid' | 'list' | 'table') => void;
   setFilters: (filters: InventoryFilters) => void;
   clearFilters: () => void;
@@ -217,6 +218,22 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al actualizar el ítem';
+      set({ error: errorMessage, isLoading: false });
+      throw error; // Propagar el error para que el componente lo maneje
+    }
+  },
+
+  deleteItem: async (id: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      await deleteInventoryItem(id);
+      set((state) => ({
+        items: state.items.filter((item) => item.id !== id),
+        filteredItems: state.filteredItems.filter((item) => item.id !== id),
+        isLoading: false,
+      }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al eliminar el ítem';
       set({ error: errorMessage, isLoading: false });
       throw error; // Propagar el error para que el componente lo maneje
     }

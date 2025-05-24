@@ -20,9 +20,18 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EditProductModal } from "./edit-product-modal";
-import { deleteInventoryItem } from "@/features/inventory/services/inventory.service";
 import { useInventoryStore } from "@/features/inventory/context/inventory-store";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   items: InventoryItem[];
@@ -33,7 +42,9 @@ interface Props {
 export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
-  const { updateItem } = useInventoryStore();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<InventoryItem | null>(null);
+  const { updateItem, deleteItem } = useInventoryStore();
 
   const statusColors = {
     [ProductStatus.AVAILABLE]: "bg-green-100 text-green-800",
@@ -65,17 +76,24 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
     }
   };
 
-  const handleDeleteClick = async (item: InventoryItem) => {
-    try {
-      await deleteInventoryItem(item.id);
-      useInventoryStore.setState((state) => ({
-        items: state.items.filter((i) => i.id !== item.id),
-        filteredItems: state.filteredItems.filter((i) => i.id !== item.id),
-      }));
-      toast.success("Producto eliminado correctamente");
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Error al eliminar el producto";
-      toast.error(errorMessage);
+  const handleDeleteClick = (item: InventoryItem) => {
+    setProductToDelete(item);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (productToDelete) {
+      try {
+        await deleteItem(productToDelete.id);
+        toast.success("Producto eliminado correctamente");
+        setIsDeleteDialogOpen(false);
+        setProductToDelete(null);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Error al eliminar el producto";
+        toast.error(errorMessage);
+        setIsDeleteDialogOpen(false);
+        setProductToDelete(null);
+      }
     }
   };
 
@@ -165,6 +183,22 @@ export const InventoryTableView = ({ items, onViewClick, onLoanClick }: Props) =
         product={selectedProduct}
         onSave={handleSaveProduct}
       />
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar eliminación</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar el producto "{productToDelete?.name}"? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 text-white hover:bg-red-700">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
