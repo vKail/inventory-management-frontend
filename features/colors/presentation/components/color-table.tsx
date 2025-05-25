@@ -12,28 +12,24 @@ import {
 } from '@/components/ui/table'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { ColorPagination } from './color-pagination'
 
 interface ColorTableProps {
     colors: IColorResponse[]
     onDelete: (id: number) => void
     loading: boolean
-    onSearch?: (searchTerm: string) => void
-    onPageChange?: (page: number) => void
-    pagination?: {
-        page: number
-        pages: number
-        limit: number
-        total: number
-    }
+    currentPage: number
+    totalPages: number
+    onPageChange: (page: number) => void
 }
 
 export default function ColorTable({
     colors,
     onDelete,
     loading,
-    onSearch,
+    currentPage,
+    totalPages,
     onPageChange,
-    pagination,
 }: ColorTableProps) {
     const router = useRouter()
 
@@ -50,7 +46,6 @@ export default function ColorTable({
                             <TableHead className="w-28 text-center">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
-
                     <TableBody>
                         {loading ? (
                             <TableRow>
@@ -79,7 +74,7 @@ export default function ColorTable({
                                     </TableCell>
                                     <TableCell>{color.hexCode}</TableCell>
                                     <TableCell>{color.description}</TableCell>
-                                    <TableCell className="px-2">
+                                    <TableCell>
                                         <div className="flex justify-center gap-2">
                                             <Button
                                                 variant="outline"
@@ -105,45 +100,15 @@ export default function ColorTable({
                     </TableBody>
                 </Table>
             </div>
-
-            {!loading && pagination && pagination.pages > 0 && (
-                <div className="mt-4 flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                        Página {pagination.page} de {pagination.pages}
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => onPageChange?.(pagination.page - 1)}
-                            disabled={pagination.page <= 1}
-                        >
-                            Anterior
-                        </Button>
-
-                        {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((page) => (
-                            <Button
-                                key={page}
-                                variant={page === pagination.page ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => onPageChange?.(page)}
-                                className={
-                                    page === pagination.page ? 'bg-red-600 hover:bg-red-700' : ''
-                                }
-                            >
-                                {page}
-                            </Button>
-                        ))}
-
-                        <Button
-                            variant="outline"
-                            onClick={() => onPageChange?.(pagination.page + 1)}
-                            disabled={pagination.page >= pagination.pages}
-                        >
-                            Siguiente
-                        </Button>
-                    </div>
+            {!loading && colors.length > 0 && (
+                <div className="mt-4">
+                    <ColorPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={onPageChange}
+                    />
                 </div>
             )}
         </div>
-    )
+    );
 }

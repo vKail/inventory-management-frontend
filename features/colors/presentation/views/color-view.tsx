@@ -25,114 +25,107 @@ export default function ColorView() {
         loading,
         getColors,
         deleteColor,
+        currentPage,
+        totalPages,
     } = useColorStore();
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pagination, setPagination] = useState({
-        page: 1, pages: 1, limit: 10, total: 0
-    });
-
     const [openDialog, setOpenDialog] = useState(false);
-    const [colorIdToDelete, setColorIdToDelete] = useState<string | null>(null);
+    const [colorIdToDelete, setColorIdToDelete] = useState<number | null>(null);
 
     const router = useRouter();
 
-    const loadColors = async (page = 1) => {
-        const data = await getColors(page, 10);
-        if (data) {
-            setPagination({
-                page: data.page,
-                pages: data.pages,
-                limit: data.limit,
-                total: data.total
-            });
-        } else {
+    useEffect(() => {
+        loadColors();
+    }, [currentPage]);
+
+    const loadColors = async () => {
+        try {
+            await getColors(currentPage, 10);
+        } catch (error) {
             toast.error('Error al cargar los colores');
         }
     };
 
-    useEffect(() => {
-        loadColors(currentPage);
-    }, [currentPage]);
-
-    const askDelete = (id: string) => {
-        setColorIdToDelete(id);
-        setOpenDialog(true);
+    const handlePageChange = async (page: number) => {
+        try {
+            await getColors(page, 10);
+        } catch (error) {
+            toast.error('Error al cambiar de página');
+        }
     };
 
-    const confirmDelete = async () => {
-        if (!colorIdToDelete) return;
+    const handleDelete = async (id: number) => {
         try {
-            await deleteColor(colorIdToDelete);
+            await deleteColor(id);
             toast.success('Color eliminado exitosamente');
-            loadColors(currentPage);
+            await loadColors();
         } catch (error) {
-            toast.error('No se pudo eliminar el color');
-            console.error(error);
-        } finally {
-            setOpenDialog(false);
-            setColorIdToDelete(null);
+            toast.error('Error al eliminar el color');
         }
     };
 
     return (
-        <>
-            <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar color?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. El color se eliminará permanentemente.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete}>Eliminar</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            <div className="flex w-full flex-col items-center px-6">
-                <div className="w-full max-w-[1200px]">
-
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbLink href="#">Configuración</BreadcrumbLink>
+                                <span className="text-muted-foreground font-medium">Configuración</span>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <PaletteIcon className="w-4 h-4 text-red-600 mr-1" />
+                                <PaletteIcon className="h-4 w-4 text-primary" />
                                 <BreadcrumbPage>Colores</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
-
-                    <div className="mb-6 mt-4">
-                        <h1 className="text-3xl font-bold">Lista de Colores</h1>
-                        <p className="text-gray-500 mt-1">Todos los colores registrados en el sistema</p>
-                    </div>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-end">
-                            <Button onClick={() => router.push('/colors/new')}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nuevo Color
-                            </Button>
-                        </CardHeader>
-
-                        <CardContent>
-                            <ColorTable
-                                colors={colors}
-                                onDelete={askDelete}
-                                loading={loading}
-                                onPageChange={(p) => setCurrentPage(p)}
-                                pagination={pagination}
-                            />
-                        </CardContent>
-                    </Card>
+                    <h2 className="text-2xl font-bold tracking-tight mt-2">Lista de Colores</h2>
                 </div>
+                <Button onClick={() => router.push('/colors/new')} className="bg-red-600 hover:bg-red-700">
+                    <Plus className="mr-2 h-4 w-4" /> Nuevo Color
+                </Button>
             </div>
-        </>
-    )
+
+            <Card>
+                <CardContent className="p-6">
+                    <ColorTable
+                        colors={colors}
+                        onDelete={handleDelete}
+                        loading={loading}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                </CardContent>
+            </Card>
+
+            <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Se eliminará permanentemente el color.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setOpenDialog(false)}>
+                            Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (colorIdToDelete !== null) {
+                                    handleDelete(colorIdToDelete);
+                                    setOpenDialog(false);
+                                }
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Eliminar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div>
+    );
 }
