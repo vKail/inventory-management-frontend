@@ -22,9 +22,9 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { AlertCircle } from "lucide-react";
 import { stateSchema, StateFormValues } from '../../data/schemas/state.schema';
 import { IState } from '../../data/interfaces/state.interface';
+import { useEffect } from "react";
 
 interface StateFormProps {
     initialData?: IState;
@@ -44,6 +44,16 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
         },
     });
 
+    useEffect(() => {
+        if (initialData) {
+            form.reset({
+                name: initialData.name,
+                description: initialData.description,
+                active: initialData.active,
+            });
+        }
+    }, [initialData, form]);
+
     const handleSubmit: SubmitHandler<StateFormValues> = async (data) => {
         try {
             await onSubmit(data);
@@ -54,8 +64,9 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
     };
 
     return (
-        <div className="flex flex-col items-center space-y-6 px-6 md:px-12 w-full">
-            <div className="flex flex-col md:flex-row gap-x-8 gap-y-8 w-[1200px] mx-auto">
+        <div className="flex flex-col items-center w-full">
+
+            <div className="flex flex-col md:flex-row gap-8 w-full">
                 <div className="md:w-1/3">
                     <h3 className="text-lg font-semibold mb-1">Detalles del estado</h3>
                     <p className="text-muted-foreground text-sm">

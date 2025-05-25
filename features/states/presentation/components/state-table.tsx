@@ -89,7 +89,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Estados</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Lista de Estados</h2>
           <p className="text-sm text-muted-foreground">
             Gestiona los estados de los equipos
           </p>
@@ -97,7 +97,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
         <Button
           onClick={() => router.push('/states/new')}
           className="bg-red-600 hover:bg-red-700"
-        >
+          >
           <PlusCircle className="mr-2 h-4 w-4" />
           Nuevo Estado
         </Button>
@@ -128,7 +128,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
                       variant="outline"
                       size="icon"
                       onClick={() => handleEdit(state.id)}
-                    >
+                      >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <AlertDialog>

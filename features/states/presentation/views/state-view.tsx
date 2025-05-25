@@ -44,10 +44,6 @@ export default function StateView() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <h2 className="text-2xl font-bold tracking-tight mb-2">Lista de Estados</h2>
-        <p className="text-muted-foreground">
-          Todos los estados registrados en el sistema
-        </p>
       </div>
 
       <div className="space-y-4">

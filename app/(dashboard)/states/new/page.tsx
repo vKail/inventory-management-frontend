@@ -1,20 +1,7 @@
 'use client';
 
-import { StateForm } from '@/features/states/presentation/components/state-form';
-import { useStateStore } from '@/features/states/context/state-store';
-import { StateFormValues } from '@/features/states/data/schemas/state.schema';
+import StateFormView from '@/features/states/presentation/views/state-form-view';
 
 export default function NewStatePage() {
-    const { addState, loading } = useStateStore();
-
-    const handleSubmit = async (data: StateFormValues) => {
-        await addState(data);
-    };
-
-    return (
-        <StateForm
-            onSubmit={handleSubmit}
-            isLoading={loading}
-        />
-    );
-} 
+    return <StateFormView />;
+}
