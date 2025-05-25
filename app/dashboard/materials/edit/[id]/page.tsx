@@ -6,12 +6,14 @@ import { MaterialForm } from '@/features/materials/presentation/components/mater
 import { useMaterialStore } from '@/features/materials/context/material-store';
 import { IMaterial } from '@/features/materials/data/interfaces/material.interface';
 import { toast } from 'sonner';
+import { MaterialFormValues } from '@/features/materials/data/schemas/material.schema';
 
 export default function EditMaterialPage() {
     const router = useRouter();
     const params = useParams();
     const { getMaterialById, updateMaterial, loading } = useMaterialStore();
     const [material, setMaterial] = useState<IMaterial | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const loadMaterial = async () => {
@@ -41,16 +43,19 @@ export default function EditMaterialPage() {
         loadMaterial();
     }, [params.id, getMaterialById, router]);
 
-    const handleSubmit = async (formData: Partial<IMaterial>) => {
-        try {
-            if (!material?.id) return;
+    const handleSubmit = async (formData: MaterialFormValues) => {
+        if (!material?.id) return;
 
+        setIsSubmitting(true);
+        try {
             await updateMaterial(material.id, formData);
             toast.success('Material actualizado exitosamente');
             router.push('/materials');
         } catch (error) {
             console.error('Error updating material:', error);
             toast.error('Error al actualizar el material');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -78,6 +83,7 @@ export default function EditMaterialPage() {
                     onSubmit={handleSubmit}
                     isEditing={true}
                     id={material.id}
+                    isLoading={isSubmitting}
                 />
             )}
         </div>

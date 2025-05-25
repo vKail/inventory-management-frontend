@@ -1,16 +1,19 @@
-import axios from 'axios';
+import axios from "axios";
 
-export const getToken = async () => {
-  try {
-    const response = await axios.get('/api/auth/get-token');
-    return response.data.token || null;
-  } catch (error) {
-    console.error('Error al obtener token:', error);
-    return null;
-  }
-};
+const TOKEN_KEY = 'auth_token';
+
+export const setToken = (token: string) => {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export const getToken = () => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
+}
 
 export const removeToken = async () => {
+  localStorage.removeItem(TOKEN_KEY);
+
   try {
     await axios.post(
       '/api/auth/remove-cookie',
