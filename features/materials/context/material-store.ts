@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { IMaterial } from '../data/interfaces/material.interface';
+import { IMaterial, PaginatedMaterials } from '../data/interfaces/material.interface';
 import { MaterialService } from '../services/material.service';
 
 interface MaterialState {
     materials: IMaterial[];
     loading: boolean;
     error: string | null;
+    currentPage: number;
+    totalPages: number;
     getMaterials: (page?: number, limit?: number) => Promise<void>;
     getMaterialById: (materialId: number) => Promise<IMaterial | undefined>;
     addMaterial: (material: Partial<IMaterial>) => Promise<void>;
@@ -22,13 +24,17 @@ export const useMaterialStore = create<MaterialState>()(
             materials: [],
             loading: false,
             error: null,
+            currentPage: 1,
+            totalPages: 1,
 
             getMaterials: async (page = 1, limit = 10) => {
                 set({ loading: true });
                 try {
-                    const { records } = await MaterialService.getInstance().getMaterials(page, limit);
+                    const response = await MaterialService.getInstance().getMaterials(page, limit);
                     set({
-                        materials: records,
+                        materials: response.records,
+                        currentPage: response.page,
+                        totalPages: response.pages,
                         loading: false,
                         error: null
                     });
