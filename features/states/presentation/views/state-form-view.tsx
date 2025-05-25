@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useStateStore } from '@/features/states/context/state-store';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { IState } from '@/features/states/data/interfaces/state.interface';
 import { StateForm } from '../components/state-form';
 import { StateFormValues } from '../../data/schemas/state.schema';
@@ -17,15 +17,11 @@ import {
 } from '@/components/ui/breadcrumb';
 import { AlertCircle } from 'lucide-react';
 
-interface StateFormViewProps {
-    params: {
-        id?: string;
-    };
-}
-
-export default function StateFormView({ params }: StateFormViewProps) {
+export default function StateFormView() {
     const router = useRouter();
-    const isEdit = params.id !== undefined && params.id !== 'new';
+    const params = useParams();
+    const id = params?.id as string | undefined;
+    const isEdit = id !== undefined && id !== 'new';
 
     const {
         getStateById,
@@ -38,20 +34,20 @@ export default function StateFormView({ params }: StateFormViewProps) {
 
     useEffect(() => {
         const loadData = async () => {
-            if (isEdit && params.id) {
-                const state = await getStateById(Number(params.id));
+            if (isEdit && id) {
+                const state = await getStateById(Number(id));
                 if (state) {
                     setInitialData(state);
                 }
             }
         };
         loadData();
-    }, [isEdit, params.id, getStateById]);
+    }, [isEdit, id, getStateById]);
 
     const handleSubmit = async (data: StateFormValues) => {
         try {
-            if (isEdit && params.id) {
-                await updateState(Number(params.id), data);
+            if (isEdit && id) {
+                await updateState(Number(id), data);
                 toast.success('Estado actualizado exitosamente');
             } else {
                 await addState(data);
@@ -66,7 +62,7 @@ export default function StateFormView({ params }: StateFormViewProps) {
 
     return (
         <div className="flex flex-col items-center space-y-6 px-6 md:px-12 w-full">
-            <div className="mb-2 w-[1200px] mx-auto">
+            <div className="mb-2 w-full max-w-[1200px] mx-auto">
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
                         <BreadcrumbItem>

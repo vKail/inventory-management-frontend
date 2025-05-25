@@ -1,26 +1,41 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { toast } from 'sonner'
-
-import { itemTypeSchema, ItemTypeFormValues } from '../../data/schemas/item-type-schema'
-import { createItemType, fetchItemTypeById, updateItemType } from '../../services/item-type.service'
-
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Button } from '@/components/ui/button'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { toast } from 'sonner'
+import { ItemType } from '../../data/interfaces/item-type.interface'
+import { itemTypeSchema, type ItemTypeFormValues } from '../../data/schemas/item-type.schema'
+import { useItemTypeStore } from '../../context/item-types-store'
 
-export default function ItemTypeForm() {
-  const searchParams = useSearchParams()
+interface ItemTypeFormProps {
+  id?: string
+}
+
+export default function ItemTypeForm({ id }: ItemTypeFormProps) {
   const router = useRouter()
-  const id = searchParams.get('id')
   const [loading, setLoading] = useState(false)
+  const { getItemTypeById, addItemType, updateItemType } = useItemTypeStore()
 
   const form = useForm<ItemTypeFormValues>({
     resolver: zodResolver(itemTypeSchema),
@@ -33,120 +48,162 @@ export default function ItemTypeForm() {
   })
 
   useEffect(() => {
-    const load = async () => {
+    const loadData = async () => {
       if (id) {
         try {
-          const itemType = await fetchItemTypeById(id)
-          form.reset({ ...itemType, active: itemType.active ?? true })
+          const itemType = await getItemTypeById(id)
+          if (itemType) {
+            form.reset({
+              code: itemType.code,
+              name: itemType.name,
+              description: itemType.description,
+              active: itemType.active,
+            })
+          }
         } catch (err) {
-          toast.error('Error loading item type')
+          console.error('Error loading item type:', err)
+          toast.error('Error al cargar el tipo de item')
         }
       }
     }
-    load()
-  }, [id, form])
+    loadData()
+  }, [id, form, getItemTypeById])
 
   const onSubmit = async (data: ItemTypeFormValues) => {
     setLoading(true)
     try {
-      const { active, ...payload } = data
+      const { active, ...dataToSend } = data
+
       if (id) {
-        await updateItemType(id, payload)
-        toast.success('Tipo de item actualizado')
+        await updateItemType(id, dataToSend)
+        toast.success('Tipo de item actualizado exitosamente')
       } else {
-        await createItemType(payload)
-        toast.success('Tipo de item creado')
+        await addItemType(dataToSend)
+        toast.success('Tipo de item creado exitosamente')
       }
       router.push('/item-types')
-    } catch (err) {
-      toast.error('Ocurrió un error al guardar')
-      console.error(err)
+    } catch (error) {
+      toast.error('Ocurrió un error al guardar el tipo de item')
+      console.error('Error submitting form:', error)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col items-center px-6 md:px-12 w-full">
-      <div className="w-full max-w-[1200px]">
-        <Card>
-          <CardHeader>
-            <CardTitle>{id ? 'Editar Tipo de Item' : 'Nuevo Tipo de Item'}</CardTitle>
-            <CardDescription>
-              {id
-                ? 'Edita la información del tipo de item.'
-                : 'Completa los datos para registrar un tipo de item.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Código</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Código del tipo" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Nombre del tipo" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descripción</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Descripción" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="active"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between border p-4 rounded-md">
-                      <div>
-                        <FormLabel>Estado</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+    <div className="container mx-auto py-10">
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="md:w-1/3">
+          <h3 className="text-lg font-semibold mb-1">Detalles del tipo de item</h3>
+          <p className="text-muted-foreground text-sm">
+            Ingresa la información general del tipo de item.
+          </p>
+        </div>
+        <div className="md:w-2/3">
+          <Card>
+            <CardHeader>
+              <CardTitle>{id ? 'Editar Tipo de Item' : 'Nuevo Tipo de Item'}</CardTitle>
+              <CardDescription>
+                {id
+                  ? 'Modifica los datos del tipo de item'
+                  : 'Complete los datos para crear un nuevo tipo de item'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Código</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Código del tipo de item" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => router.back()}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? 'Guardando...' : id ? 'Actualizar' : 'Crear'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre del tipo de item" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descripción</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Descripción del tipo de item"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="active"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between space-x-2">
+                          <div className="space-y-0.5">
+                            <FormLabel>Estado Activo</FormLabel>
+                            <p className="text-sm text-muted-foreground">
+                              Determina si el tipo de item está activo en el sistema
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-4 justify-end mt-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => router.push('/item-types')}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Guardando...
+                        </>
+                      ) : (
+                        'Guardar'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

@@ -88,7 +88,7 @@ export default function MaterialTable() {
     };
 
     return (
-        <Card className="w-full max-w-[1200px]">
+        <Card className="w-full max-w-[1200px] mx-auto">
             <CardHeader className="px-4 md:px-8 pb-0">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
@@ -109,7 +109,7 @@ export default function MaterialTable() {
                 <hr className="border-t border-muted mt-4" />
             </CardHeader>
 
-            <CardContent className="px-4 md:px-8 pb-6">
+            <CardContent className="px-4 md:px-8 pb-6 overflow-x-auto">
                 <div className="min-h-[400px] flex flex-col justify-between">
                     <Table>
                         <TableHeader>

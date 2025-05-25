@@ -1,46 +1,102 @@
-import { ApiResponse, ItemType, PaginatedItemTypes } from '../data/interfaces/item-type.interface'
+import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
+import { AxiosClient } from '@/core/infrestucture/AxiosClient';
+import { ApiResponse, ItemType, PaginatedItemTypes } from '../data/interfaces/item-type.interface';
 
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}item-types`
-
-export async function fetchItemTypes(): Promise<PaginatedItemTypes> {
-  const res = await fetch(BASE_URL)
-  if (!res.ok) throw new Error('Error fetching item types')
-  const json: ApiResponse<PaginatedItemTypes> = await res.json()
-  return json.data
+interface ItemTypeServiceProps {
+  getItemTypes: (page?: number, limit?: number) => Promise<PaginatedItemTypes>;
+  getItemTypeById: (id: string) => Promise<ItemType | undefined>;
+  createItemType: (itemType: Omit<ItemType, 'id' | 'active'>) => Promise<ItemType | undefined>;
+  updateItemType: (id: string, itemType: Partial<Omit<ItemType, 'id' | 'active'>>) => Promise<ItemType | undefined>;
+  deleteItemType: (id: string) => Promise<void>;
 }
 
-export async function fetchItemTypeById(id: string): Promise<ItemType> {
-  const res = await fetch(`${BASE_URL}/${id}`)
-  if (!res.ok) throw new Error('Error fetching item type')
-  const json: ApiResponse<ItemType> = await res.json()
-  return json.data
+export class ItemTypeService implements ItemTypeServiceProps {
+  private static instance: ItemTypeService;
+  private httpClient: HttpHandler;
+  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}item-types`;
+
+  private constructor() {
+    this.httpClient = AxiosClient.getInstance();
+  }
+
+  public static getInstance(): ItemTypeService {
+    if (!ItemTypeService.instance) {
+      ItemTypeService.instance = new ItemTypeService();
+    }
+    return ItemTypeService.instance;
+  }
+
+  public async getItemTypes(page = 1, limit = 10): Promise<PaginatedItemTypes> {
+    try {
+      const response = await this.httpClient.get<ApiResponse<PaginatedItemTypes>>(
+        `${ItemTypeService.url}?page=${page}&limit=${limit}`
+      );
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error) {
+      console.error('Error fetching item types:', error);
+      throw error;
+    }
+  }
+
+  public async getItemTypeById(id: string): Promise<ItemType | undefined> {
+    try {
+      const response = await this.httpClient.get<ApiResponse<ItemType>>(`${ItemTypeService.url}/${id}`);
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error) {
+      console.error('Error fetching item type:', error);
+      return undefined;
+    }
+  }
+
+  public async createItemType(itemType: Omit<ItemType, 'id' | 'active'>): Promise<ItemType | undefined> {
+    try {
+      const response = await this.httpClient.post<ApiResponse<ItemType>>(
+        ItemTypeService.url,
+        itemType
+      );
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error) {
+      console.error('Error creating item type:', error);
+      throw error;
+    }
+  }
+
+  public async updateItemType(id: string, itemType: Partial<Omit<ItemType, 'id' | 'active'>>): Promise<ItemType | undefined> {
+    try {
+      const response = await this.httpClient.patch<ApiResponse<ItemType>>(
+        `${ItemTypeService.url}/${id}`,
+        itemType
+      );
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error) {
+      console.error('Error updating item type:', error);
+      throw error;
+    }
+  }
+
+  public async deleteItemType(id: string): Promise<void> {
+    try {
+      const response = await this.httpClient.delete<ApiResponse<void>>(`${ItemTypeService.url}/${id}`);
+      if (!response.data.success) {
+        throw new Error(response.data.message.content.join(', '));
+      }
+    } catch (error) {
+      console.error('Error deleting item type:', error);
+      throw error;
+    }
+  }
 }
 
-export async function createItemType(data: Omit<ItemType, 'id' | 'active'>): Promise<ItemType> {
-  const res = await fetch(BASE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Error creating item type')
-  const json: ApiResponse<ItemType> = await res.json()
-  return json.data
-}
-
-export async function updateItemType(id: string, data: Partial<Omit<ItemType, 'id' | 'active'>>): Promise<ItemType> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Error updating item type')
-  const json: ApiResponse<ItemType> = await res.json()
-  return json.data
-}
-
-export async function deleteItemType(id: string): Promise<ItemType> {
-  const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE' })
-  if (!res.ok) throw new Error('Error deleting item type')
-  const json: ApiResponse<ItemType> = await res.json()
-  return json.data
-}
+export const itemTypeService = ItemTypeService.getInstance();
