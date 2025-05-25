@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-
+import { warehouseService } from '../../services/warehouse.service'
+import { warehouseSchema, type WarehouseFormValues } from '../../data/schemas/warehouse-schema'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -13,32 +14,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { fetchWarehouseById, createWarehouse, updateWarehouse } from '../../services/warehouse.service'
-import { warehouseSchema, WarehouseFormValues } from '../../data/schemas/warehouse-schema'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { toast } from 'sonner'
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from '@/components/ui/breadcrumb'
+import { Building2 } from 'lucide-react'
 
+interface WarehouseFormProps {
+  id?: string
+}
 
-const responsibles = [
-  { id: 1, name: 'Juan Pérez' },
-  { id: 2, name: 'María García' },
-]
-
-export default function WarehouseForm() {
-  const searchParams = useSearchParams()
+export default function WarehouseForm({ id }: WarehouseFormProps) {
   const router = useRouter()
-  const id = searchParams.get('id')
   const [loading, setLoading] = useState(false)
 
- const form = useForm<WarehouseFormValues>({
-  resolver: zodResolver(warehouseSchema),
+  const form = useForm<WarehouseFormValues>({
+    resolver: zodResolver(warehouseSchema),
     defaultValues: {
       name: '',
       location: '',
@@ -52,57 +52,88 @@ export default function WarehouseForm() {
     const loadData = async () => {
       if (id) {
         try {
-          const warehouse = await fetchWarehouseById(id)
-          form.reset({
-            ...warehouse,
-            responsibleId: Number(warehouse.responsibleId),
-            active: warehouse.active ?? true,
-          })
+          const warehouse = await warehouseService.getWarehouseById(id)
+          if (warehouse) {
+            form.reset({
+              ...warehouse,
+              responsibleId: Number(warehouse.responsibleId),
+              active: warehouse.active ?? true,
+            })
+          }
         } catch (err) {
           console.error('Error loading warehouse:', err)
+          toast.error('Error al cargar el almacén')
         }
       }
     }
     loadData()
   }, [id, form])
 
-const onSubmit = async (data: WarehouseFormValues) => {
-  setLoading(true)
-  try {
-    const { active, ...dataToSend } = data
+  const onSubmit = async (data: WarehouseFormValues) => {
+    setLoading(true)
+    try {
+      const { active, ...dataToSend } = data
 
-    if (id) {
-      await updateWarehouse(id, dataToSend)
-         toast.success('Almacén actualizado exitosamente')
-    } else {
-      await createWarehouse(dataToSend)
+      if (id) {
+        await warehouseService.updateWarehouse(id, dataToSend)
+        toast.success('Almacén actualizado exitosamente')
+      } else {
+        await warehouseService.createWarehouse(dataToSend)
         toast.success('Almacén creado exitosamente')
+      }
+      router.push('/warehouses')
+    } catch (error) {
+      toast.error('Ocurrió un error al guardar el almacén')
+      console.error('Error submitting form:', error)
+    } finally {
+      setLoading(false)
     }
-
-    setTimeout(() => router.push('/warehouses'), 1500)
-  } catch (error) {
-    toast.error('Ocurrió un error al guardar el almacén')
-    console.error('Error submitting form:', error)
-  } finally {
-    setLoading(false)
   }
-}
-
 
   return (
-    <div className="flex flex-col items-center w-full px-6 md:px-12">
-      <div className="w-full max-w-[1200px]">
-        <Card>
-          <CardHeader>
-            <CardTitle>{id ? 'Editar Almacén' : 'Nuevo Almacén'}</CardTitle>
-            <CardDescription>
-              {id ? 'Edita los datos del almacén.' : 'Completa los datos para registrar un almacén.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-6">
+      <div>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/settings">Configuración</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/warehouses" className="flex items-center">
+                <Building2 className="h-4 w-4 text-primary mr-1" />
+                Almacenes
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{id ? 'Editar Almacén' : 'Nuevo Almacén'}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <h2 className="text-2xl font-bold tracking-tight mt-2">{id ? 'Editar Almacén' : 'Nuevo Almacén'}</h2>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="md:w-1/3">
+          <h3 className="text-lg font-semibold mb-1">Detalles del almacén</h3>
+          <p className="text-muted-foreground text-sm">
+            Ingresa la información general del almacén.
+          </p>
+        </div>
+        <div className="md:w-2/3">
+          <Card>
+            <CardHeader>
+              <CardTitle>{id ? 'Editar Almacén' : 'Nuevo Almacén'}</CardTitle>
+              <CardDescription>
+                {id
+                  ? 'Modifica los datos del almacén'
+                  : 'Complete los datos para crear un nuevo almacén'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   <FormField
                     control={form.control}
                     name="name"
@@ -110,7 +141,7 @@ const onSubmit = async (data: WarehouseFormValues) => {
                       <FormItem>
                         <FormLabel>Nombre</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Nombre del almacén" />
+                          <Input placeholder="Nombre del almacén" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -124,7 +155,7 @@ const onSubmit = async (data: WarehouseFormValues) => {
                       <FormItem>
                         <FormLabel>Ubicación</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Dirección" />
+                          <Input placeholder="Ubicación del almacén" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -133,75 +164,68 @@ const onSubmit = async (data: WarehouseFormValues) => {
 
                   <FormField
                     control={form.control}
-                    name="responsibleId"
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Responsable</FormLabel>
-                        <Select
-                          defaultValue={field.value?.toString()}
-                          onValueChange={(val) => field.onChange(Number(val))}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecciona un responsable" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {responsibles.map((r) => (
-                              <SelectItem key={r.id} value={r.id.toString()}>
-                                {r.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Descripción</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Descripción del almacén"
+                            {...field}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descripción</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Descripción del almacén" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="active"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between space-x-2">
+                          <div className="space-y-0.5">
+                            <FormLabel>Estado Activo</FormLabel>
+                            <p className="text-sm text-muted-foreground">
+                              Determina si el almacén está activo en el sistema
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="active"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between border p-4 rounded-md">
-                      <div>
-                        <FormLabel className="text-base">Estado</FormLabel>
-                        <FormDescription>Indica si el almacén está activo</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => router.back()}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={loading}>
-                    {loading ? 'Guardando...' : id ? 'Actualizar' : 'Crear'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                  <div className="flex gap-4 justify-end mt-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => router.push('/warehouses')}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Guardando...
+                        </>
+                      ) : (
+                        'Guardar'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
