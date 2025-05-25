@@ -1,7 +1,7 @@
 'use client';
 
-import { MaterialListView } from '@/features/materials/presentation/views/MaterialListView';
+import MaterialView from '@/features/materials/presentation/views/material-view';
 
 export default function MaterialsPage() {
-  return <MaterialListView />;
+  return <MaterialView />;
 }

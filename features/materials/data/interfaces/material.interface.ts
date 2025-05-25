@@ -1,28 +1,33 @@
-export interface MaterialAPIResponse {
+export interface ApiResponse<T> {
   success: boolean;
-  message: Message;
-  data: Material;
+  message: {
+    content: string[];
+    displayable: boolean;
+  };
+  data: T;
 }
 
-export interface Material {
-  records: Record[];
-  total: number;
-  limit: number;
-  page: number;
-  pages: number;
-}
-
-export interface Record {
+export interface IMaterial {
   id: number;
   name: string;
   description: string;
   materialType: MaterialType;
 }
 
-export enum MaterialType {
-  Madera = "Madera",
-  Metal = "Metal",
-  Plástico = "Plástico",
+export const MaterialTypes = {
+  CONSUMABLE: 'CONSUMABLE',
+  TOOL: 'TOOL',
+  EQUIPMENT: 'EQUIPMENT'
+} as const;
+
+export type MaterialType = typeof MaterialTypes[keyof typeof MaterialTypes];
+
+export interface PaginatedMaterials {
+  records: IMaterial[];
+  total: number;
+  limit: number;
+  page: number;
+  pages: number;
 }
 
 export interface Message {

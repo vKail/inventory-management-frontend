@@ -1,78 +1,89 @@
+import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
+import { ApiResponse, IMaterial, PaginatedMaterials } from '../data/interfaces/material.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
-import { MaterialAPIResponse, Record, MaterialType } from '../data/interfaces/material.interface';
-import { Data, MateriaPostAPIResponse } from '../data/interfaces/materialPost.interface';
 
-const API_URL = 'https://gitt-api-3tw6.onrender.com/api/v1/materials';
+interface MaterialServiceProps {
+  getMaterials: (page?: number, limit?: number) => Promise<PaginatedMaterials>;
+  getMaterialById: (id: number) => Promise<IMaterial | undefined>;
+  createMaterial: (material: Partial<IMaterial>) => Promise<IMaterial | undefined>;
+  updateMaterial: (id: number, material: Partial<IMaterial>) => Promise<IMaterial | undefined>;
+  deleteMaterial: (id: number) => Promise<void>;
+}
 
-const axiosClient = AxiosClient.getInstance();
+export class MaterialService implements MaterialServiceProps {
+  private static instance: MaterialService;
+  private httpClient: HttpHandler;
+  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}materials`;
 
-export const getMaterials = async (page: number = 1, limit: number = 20): Promise<MaterialAPIResponse> => {
-  const res = await axiosClient.get<MaterialAPIResponse>(`${API_URL}?page=${page}&limit=${limit}`, {});
-  return {
-    success: true,
-    message: { content: [], displayable: true },
-    data: res.data
-  };
-};
-
-export const createMaterial = async (data: Omit<Record, 'id'>): Promise<Record> => {
-  try {
-    const res = await axiosClient.post<MateriaPostAPIResponse>(API_URL, data, {});
-    console.log('API Response:', res.data);
-    
-    // Verificamos si la respuesta tiene la estructura correcta
-    if (res.data) {
-      // Si la respuesta tiene una estructura diferente, intentamos adaptarla
-      if (res.data.success === false) {
-        console.error('Error en la respuesta de la API:', res.data.message);
-        throw new Error(res.data.message?.content?.[0] || 'Error en la respuesta de la API');
-      }
-      
-      // Si tenemos datos directamente en la respuesta
-      if (res.data.data) {
-        const materialData = res.data.data;
-        return {
-          id: materialData.id,
-          name: materialData.name,
-          description: materialData.description,
-          materialType: materialData.materialType as MaterialType
-        };
-      } else if ('id' in res.data) {
-        // Si los datos están directamente en el objeto principal
-        // Usamos type assertion para manejar la estructura
-        const responseData = res.data as unknown as {
-          id: number;
-          name: string;
-          description: string;
-          materialType: string;
-        };
-        
-        return {
-          id: responseData.id,
-          name: responseData.name,
-          description: responseData.description,
-          materialType: responseData.materialType as MaterialType
-        };
-      }
-    }
-    
-    // Si llegamos aquí, intentemos devolver algo útil para evitar el error
-    return {
-      id: 0, // ID temporal
-      name: data.name,
-      description: data.description,
-      materialType: data.materialType
-    };
-  } catch (error) {
-    console.error('Error al crear material:', error);
-    throw error;
+  private constructor() {
+    this.httpClient = AxiosClient.getInstance();
   }
-};
 
-export const deleteMaterial = async (id: number) => {
-  return await axiosClient.delete(`${API_URL}/${id}`, {});
-};
+  public static getInstance(): MaterialService {
+    if (!MaterialService.instance) {
+      MaterialService.instance = new MaterialService();
+    }
+    return MaterialService.instance;
+  }
 
-export const updateMaterial = async (id: number, data: Partial<Record>) => {
-  return await axiosClient.patch(`${API_URL}/${id}`, data, {});
-};
+  public async getMaterials(page = 1, limit = 10): Promise<PaginatedMaterials> {
+    try {
+      const response = await this.httpClient.get<ApiResponse<PaginatedMaterials>>(
+        `${MaterialService.url}?page=${page}&limit=${limit}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching materials:', error);
+      throw error;
+    }
+  }
+
+  public async getMaterialById(id: number): Promise<IMaterial | undefined> {
+    try {
+      const response = await this.httpClient.get<ApiResponse<IMaterial>>(`${MaterialService.url}/${id}`);
+      console.log(response.data)
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching material:', error);
+      return undefined;
+    }
+  }
+
+  public async createMaterial(material: Partial<IMaterial>): Promise<IMaterial | undefined> {
+    try {
+      const response = await this.httpClient.post<ApiResponse<IMaterial>>(
+        MaterialService.url,
+        material
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error creating material:', error);
+      throw error;
+    }
+  }
+
+  public async updateMaterial(id: number, material: Partial<IMaterial>): Promise<IMaterial | undefined> {
+    try {
+      const response = await this.httpClient.patch<ApiResponse<IMaterial>>(
+        `${MaterialService.url}/${id}`,
+        material
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating material:', error);
+      throw error;
+    }
+  }
+
+  public async deleteMaterial(id: number): Promise<void> {
+    try {
+      const response = await this.httpClient.delete<ApiResponse<void>>(`${MaterialService.url}/${id}`);
+      if (!response.data.success) {
+        throw new Error(response.data.message.content.join(', '));
+      }
+    } catch (error) {
+      console.error('Error deleting material:', error);
+      throw error;
+    }
+  }
+}
