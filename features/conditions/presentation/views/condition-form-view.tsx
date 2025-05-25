@@ -30,11 +30,14 @@ export default function ConditionFormView({ params }: { params: { id?: string } 
                 const condition = await getConditionById(params.id);
                 if (condition) {
                     setInitialData(condition);
+                } else {
+                    toast.error('No se encontró la condición');
+                    router.push('/conditions');
                 }
             }
         };
         loadData();
-    }, [isEdit, params.id, getConditionById]);
+    }, [isEdit, params.id, getConditionById, router]);
 
     const handleSubmit = async (data: ConditionFormValues) => {
         try {
@@ -55,6 +58,7 @@ export default function ConditionFormView({ params }: { params: { id?: string } 
     return (
         <div className="space-y-6">
             <ConditionForm
+                id={params.id}
                 initialData={initialData}
                 onSubmit={handleSubmit}
                 isLoading={loading}

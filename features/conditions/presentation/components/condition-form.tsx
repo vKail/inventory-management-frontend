@@ -40,15 +40,21 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
     const form = useForm<ConditionFormValues>({
         resolver: zodResolver(conditionSchema),
         defaultValues: {
-            name: initialData?.name ?? '',
-            description: initialData?.description ?? '',
-            requiresMaintenance: initialData?.requiresMaintenance ?? false,
+            name: '',
+            description: '',
+            requiresMaintenance: false,
         },
     });
 
     useEffect(() => {
-        console.log("HOME")
-    }, [])
+        if (initialData) {
+            form.reset({
+                name: initialData.name || '',
+                description: initialData.description || '',
+                requiresMaintenance: initialData.requiresMaintenance || false,
+            });
+        }
+    }, [initialData, form]);
 
     return (
         <div className="flex-1 space-y-6 container mx-auto px-4 max-w-7xl">
@@ -156,7 +162,14 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                                             Cancelar
                                         </Button>
                                         <Button type="submit" disabled={isLoading}>
-                                            {id ? "Actualizar" : "Crear"}
+                                            {isLoading ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    {id ? "Actualizando..." : "Creando..."}
+                                                </>
+                                            ) : (
+                                                id ? "Actualizar" : "Crear"
+                                            )}
                                         </Button>
                                     </div>
                                 </form>
