@@ -1,5 +1,5 @@
-import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
-import { ApiResponse, ICondition, PaginatedConditions } from '../data/interfaces/condition.interface';
+import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
+import { ICondition, PaginatedConditions } from '../data/interfaces/condition.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 interface ConditionServiceProps {
@@ -28,9 +28,12 @@ export class ConditionService implements ConditionServiceProps {
 
     public async getConditions(page = 1, limit = 10): Promise<PaginatedConditions> {
         try {
-            const response = await this.httpClient.get<ApiResponse<PaginatedConditions>>(
+            const response = await this.httpClient.get<PaginatedConditions>(
                 `${ConditionService.url}?page=${page}&limit=${limit}`
             );
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
             return response.data;
         } catch (error) {
             console.error('Error fetching conditions:', error);
@@ -40,7 +43,10 @@ export class ConditionService implements ConditionServiceProps {
 
     public async getConditionById(id: string): Promise<ICondition | undefined> {
         try {
-            const response = await this.httpClient.get<ApiResponse<ICondition>>(`${ConditionService.url}/${id}`);
+            const response = await this.httpClient.get<ICondition>(`${ConditionService.url}/${id}`);
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
             return response.data;
         } catch (error) {
             console.error('Error fetching condition:', error);
@@ -50,10 +56,13 @@ export class ConditionService implements ConditionServiceProps {
 
     public async createCondition(condition: Partial<ICondition>): Promise<ICondition | undefined> {
         try {
-            const response = await this.httpClient.post<ApiResponse<ICondition>>(
+            const response = await this.httpClient.post<ICondition>(
                 ConditionService.url,
                 condition
             );
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
             return response.data;
         } catch (error) {
             console.error('Error creating condition:', error);
@@ -63,10 +72,13 @@ export class ConditionService implements ConditionServiceProps {
 
     public async updateCondition(id: string, condition: Partial<ICondition>): Promise<ICondition | undefined> {
         try {
-            const response = await this.httpClient.patch<ApiResponse<ICondition>>(
+            const response = await this.httpClient.patch<ICondition>(
                 `${ConditionService.url}/${id}`,
                 condition
             );
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
             return response.data;
         } catch (error) {
             console.error('Error updating condition:', error);
@@ -76,9 +88,9 @@ export class ConditionService implements ConditionServiceProps {
 
     public async deleteCondition(id: string): Promise<void> {
         try {
-            const response = await this.httpClient.delete<ApiResponse<void>>(`${ConditionService.url}/${id}`);
-            if (!response.data.success) {
-                throw new Error(response.data.message.content.join(', '));
+            const response = await this.httpClient.delete<void>(`${ConditionService.url}/${id}`);
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
             }
         } catch (error) {
             console.error('Error deleting condition:', error);

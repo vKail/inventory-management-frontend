@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Pencil, Trash2, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Package } from 'lucide-react';
 import {
     Card,
     CardContent,
@@ -27,6 +27,7 @@ import { useEffect, useState } from 'react';
 import { useMaterialStore } from '@/features/materials/context/material-store';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { MaterialPaginator } from './material-paginator';
 
 export default function MaterialTable() {
     const router = useRouter();
@@ -34,11 +35,12 @@ export default function MaterialTable() {
         materials,
         loading,
         getMaterials,
-        deleteMaterial
+        deleteMaterial,
+        currentPage,
+        totalPages
     } = useMaterialStore();
 
     const [materialToDelete, setMaterialToDelete] = useState<number | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
     useEffect(() => {
@@ -81,21 +83,12 @@ export default function MaterialTable() {
         return <Badge variant={variants[type] as "default" | "destructive" | "outline" | "secondary"}>{labels[type]}</Badge>;
     };
 
-    const handlePreviousPage = () => {
-        if (currentPage > 1) {
-            setCurrentPage(prev => prev - 1);
-        }
-    };
-
-    const handleNextPage = () => {
-        // Asumimos que si hay materiales llenos, podría haber más páginas
-        if (materials.length === itemsPerPage) {
-            setCurrentPage(prev => prev + 1);
-        }
+    const handlePageChange = (page: number) => {
+        getMaterials(page, itemsPerPage);
     };
 
     return (
-        <Card className="w-full max-w-[1200px]">
+        <Card className="w-full max-w-[1200px] mx-auto">
             <CardHeader className="px-4 md:px-8 pb-0">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
@@ -116,7 +109,7 @@ export default function MaterialTable() {
                 <hr className="border-t border-muted mt-4" />
             </CardHeader>
 
-            <CardContent className="px-4 md:px-8 pb-6">
+            <CardContent className="px-4 md:px-8 pb-6 overflow-x-auto">
                 <div className="min-h-[400px] flex flex-col justify-between">
                     <Table>
                         <TableHeader>
@@ -196,25 +189,12 @@ export default function MaterialTable() {
                 </div>
             </CardContent>
 
-            <CardFooter className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePreviousPage}
-                    disabled={currentPage === 1 || loading}
-                >
-                    <ChevronLeft className="h-4 w-4" />
-                    Anterior
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNextPage}
-                    disabled={materials.length < itemsPerPage || loading}
-                >
-                    Siguiente
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
+            <CardFooter className="flex items-center justify-center py-4">
+                <MaterialPaginator
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                />
             </CardFooter>
         </Card>
     );

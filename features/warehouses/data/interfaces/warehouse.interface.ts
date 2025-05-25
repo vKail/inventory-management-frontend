@@ -1,27 +1,26 @@
-
-
 ///borrar arriba
 
- export interface Warehouse {
-  id: string;
+export interface IWarehouse {
   name: string;
-  location: string;
-  responsibleId: number;
-  description: string;
-  active: boolean;
+  address: string;
+  phone: string;
+  capacity: number;
+  description?: string;
+  active?: boolean;
 }
 
-export interface Responsible {
+export interface IWarehouseResponse extends IWarehouse {
   id: number;
-  name: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaginatedWarehouses {
-  total: number;
-  limit: number;
+  records: IWarehouseResponse[];
   page: number;
   pages: number;
-  records: Warehouse[];
+  limit: number;
+  total: number;
 }
 
 export interface ApiResponse<T> {

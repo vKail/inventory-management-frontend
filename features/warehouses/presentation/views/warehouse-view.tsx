@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react'
-import { useColorStore } from '../../context/color-store'
+import { useWarehouseStore } from '../../context/warehouse-store'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import ColorTable from '../components/color-table'
+import WarehouseTable from '../components/warehouse-table'
+import Link from 'next/link'
 
 import {
     AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
@@ -15,53 +16,48 @@ import {
     BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PaletteIcon, Plus } from 'lucide-react'
+import { Building2, Plus } from 'lucide-react'
 
-export default function ColorView() {
+export default function WarehouseView() {
     const {
-        colors,
+        warehouses,
         loading,
-        getColors,
-        deleteColor,
+        getWarehouses,
+        deleteWarehouse,
         currentPage,
         totalPages,
-    } = useColorStore();
+    } = useWarehouseStore();
 
     const [openDialog, setOpenDialog] = useState(false);
-    const [colorIdToDelete, setColorIdToDelete] = useState<number | null>(null);
+    const [warehouseIdToDelete, setWarehouseIdToDelete] = useState<number | null>(null);
 
     const router = useRouter();
 
     useEffect(() => {
-        loadColors();
+        loadWarehouses();
     }, [currentPage]);
 
-    const loadColors = async () => {
+    const loadWarehouses = async () => {
         try {
-            await getColors(currentPage, 10);
+            await getWarehouses(currentPage, 10);
         } catch (error) {
-            toast.error('Error al cargar los colores');
+            toast.error('Error al cargar los almacenes');
         }
     };
 
     const handlePageChange = async (page: number) => {
         try {
-            await getColors(page, 10);
+            await getWarehouses(page, 10);
         } catch (error) {
             toast.error('Error al cambiar de página');
         }
     };
 
     const handleDelete = async (id: number) => {
-        try {
-            await deleteColor(id);
-            toast.success('Color eliminado exitosamente');
-            await loadColors();
-        } catch (error) {
-            toast.error('Error al eliminar el color');
-        }
+        setWarehouseIdToDelete(id);
+        setOpenDialog(true);
     };
 
     return (
@@ -71,26 +67,30 @@ export default function ColorView() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <span className="text-muted-foreground font-medium">Configuración</span>
+                                <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <PaletteIcon className="h-4 w-4 text-primary" />
-                                <BreadcrumbPage>Colores</BreadcrumbPage>
+                                <BreadcrumbLink href="/settings">Configuración</BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                            <BreadcrumbItem>
+                                <Building2 className="h-4 w-4 text-primary inline mr-1" />
+                                <BreadcrumbPage>Almacenes</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>
                     </Breadcrumb>
-                    <h2 className="text-2xl font-bold tracking-tight mt-2">Lista de Colores</h2>
+                    <h2 className="text-2xl font-bold tracking-tight mt-2">Lista de Almacenes</h2>
                 </div>
-                <Button onClick={() => router.push('/colors/new')} className="bg-red-600 hover:bg-red-700">
-                    <Plus className="mr-2 h-4 w-4" /> Nuevo Color
+                <Button onClick={() => router.push('/warehouses/new')} className="bg-red-600 hover:bg-red-700">
+                    <Plus className="mr-2 h-4 w-4" /> Nuevo Almacén
                 </Button>
             </div>
 
             <Card>
                 <CardContent className="p-6">
-                    <ColorTable
-                        colors={colors}
+                    <WarehouseTable
+                        warehouses={warehouses}
                         onDelete={handleDelete}
                         loading={loading}
                         currentPage={currentPage}
@@ -105,7 +105,7 @@ export default function ColorView() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará permanentemente el color.
+                            Esta acción no se puede deshacer. Se eliminará permanentemente el almacén.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -114,9 +114,10 @@ export default function ColorView() {
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => {
-                                if (colorIdToDelete !== null) {
-                                    handleDelete(colorIdToDelete);
+                                if (warehouseIdToDelete !== null) {
+                                    deleteWarehouse(warehouseIdToDelete);
                                     setOpenDialog(false);
+                                    toast.success('Almacén eliminado exitosamente');
                                 }
                             }}
                             className="bg-red-600 hover:bg-red-700"
@@ -128,4 +129,4 @@ export default function ColorView() {
             </AlertDialog>
         </div>
     );
-}
+} 

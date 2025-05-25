@@ -1,28 +1,28 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { IColor, IColorResponse, PaginatedColors } from "../data/interfaces/color.interface";
-import { ColorService } from "../services/color.service";
+import { IWarehouse, IWarehouseResponse, PaginatedWarehouses } from "../data/interfaces/warehouse.interface";
+import { WarehouseService } from "../services/warehouse.service";
 
-interface ColorStore {
-    colors: IColorResponse[];
+interface WarehouseStore {
+    warehouses: IWarehouseResponse[];
     loading: boolean;
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getColors: (page?: number, limit?: number) => Promise<void>;
-    getColorById: (colorId: number) => Promise<IColorResponse | undefined>;
-    addColor: (color: IColor) => Promise<void>;
-    updateColor: (colorId: number, color: IColor) => Promise<void>;
-    deleteColor: (colorId: number) => Promise<void>;
+    getWarehouses: (page?: number, limit?: number) => Promise<void>;
+    getWarehouseById: (warehouseId: number) => Promise<IWarehouseResponse | undefined>;
+    addWarehouse: (warehouse: IWarehouse) => Promise<void>;
+    updateWarehouse: (warehouseId: number, warehouse: IWarehouse) => Promise<void>;
+    deleteWarehouse: (warehouseId: number) => Promise<void>;
     refreshTable: () => Promise<void>;
 }
 
-const STORE_NAME = 'color';
+const STORE_NAME = 'warehouse';
 
-export const useColorStore = create<ColorStore>()(
+export const useWarehouseStore = create<WarehouseStore>()(
     persist(
         (set, get) => ({
-            colors: [],
+            warehouses: [],
             loading: false,
             error: null,
             currentPage: 1,
@@ -30,23 +30,23 @@ export const useColorStore = create<ColorStore>()(
 
             refreshTable: async () => {
                 const { currentPage } = get();
-                await get().getColors(currentPage, 10);
+                await get().getWarehouses(currentPage, 10);
             },
 
-            getColors: async (page = 1, limit = 10) => {
+            getWarehouses: async (page = 1, limit = 10) => {
                 set({ loading: true });
                 try {
-                    const data = await ColorService.getInstance().getColors(page, limit);
+                    const data = await WarehouseService.getInstance().getWarehouses(page, limit);
                     set({
-                        colors: data.records,
+                        warehouses: data.records,
                         currentPage: data.page,
                         totalPages: data.pages,
                         error: null
                     });
                 } catch (err: any) {
                     set({
-                        error: "Error al cargar los colores",
-                        colors: [],
+                        error: "Error al cargar los almacenes",
+                        warehouses: [],
                         currentPage: 1,
                         totalPages: 1
                     });
@@ -55,55 +55,55 @@ export const useColorStore = create<ColorStore>()(
                 }
             },
 
-            getColorById: async (colorId: number) => {
+            getWarehouseById: async (warehouseId: number) => {
                 try {
-                    return await ColorService.getInstance().getColorById(colorId);
+                    return await WarehouseService.getInstance().getWarehouseById(warehouseId);
                 } catch {
-                    set({ error: "Error al cargar el color" });
+                    set({ error: "Error al cargar el almacén" });
                     return undefined;
                 }
             },
 
-            addColor: async (color: IColor) => {
+            addWarehouse: async (warehouse: IWarehouse) => {
                 set({ loading: true });
                 try {
-                    await ColorService.getInstance().createColor(color);
-                    await get().getColors(1, 10); // Reset to first page after adding
+                    await WarehouseService.getInstance().createWarehouse(warehouse);
+                    await get().getWarehouses(1, 10); // Reset to first page after adding
                 } catch (error) {
-                    set({ error: "Error al crear el color" });
+                    set({ error: "Error al crear el almacén" });
                     throw error;
                 } finally {
                     set({ loading: false });
                 }
             },
 
-            updateColor: async (colorId: number, color: IColor) => {
+            updateWarehouse: async (warehouseId: number, warehouse: IWarehouse) => {
                 set({ loading: true });
                 try {
-                    await ColorService.getInstance().updateColor(colorId, color);
+                    await WarehouseService.getInstance().updateWarehouse(warehouseId, warehouse);
                     await get().refreshTable(); // Stay on current page after update
                 } catch (error) {
-                    set({ error: "Error al actualizar el color" });
+                    set({ error: "Error al actualizar el almacén" });
                     throw error;
                 } finally {
                     set({ loading: false });
                 }
             },
 
-            deleteColor: async (colorId: number) => {
+            deleteWarehouse: async (warehouseId: number) => {
                 set({ loading: true });
                 try {
-                    await ColorService.getInstance().deleteColor(colorId);
-                    const { currentPage, colors } = get();
-                    if (colors.length === 1 && currentPage > 1) {
+                    await WarehouseService.getInstance().deleteWarehouse(warehouseId);
+                    const { currentPage, warehouses } = get();
+                    if (warehouses.length === 1 && currentPage > 1) {
                         // Si es el último item de la página actual y no es la primera página
-                        await get().getColors(currentPage - 1, 10);
+                        await get().getWarehouses(currentPage - 1, 10);
                     } else {
                         // Refrescamos la página actual
                         await get().refreshTable();
                     }
                 } catch (error) {
-                    set({ error: "Error al eliminar el color" });
+                    set({ error: "Error al eliminar el almacén" });
                     throw error;
                 } finally {
                     set({ loading: false });
@@ -115,4 +115,4 @@ export const useColorStore = create<ColorStore>()(
             storage: createJSONStorage(() => sessionStorage),
         }
     )
-);
+); 

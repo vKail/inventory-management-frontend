@@ -1,53 +1,95 @@
-import { ApiResponse, PaginatedWarehouses, Warehouse } from '../data/interfaces/warehouse.interface'
+import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
+import { AxiosClient } from '@/core/infrestucture/AxiosClient';
+import { IWarehouse, IWarehouseResponse, PaginatedWarehouses } from "../data/interfaces/warehouse.interface";
 
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}warehouses`
-
-
-export async function fetchWarehouses(page = 1, limit = 10): Promise<PaginatedWarehouses> {
-  const res = await fetch(`${BASE_URL}?page=${page}&limit=${limit}`)
-  if (!res.ok) throw new Error('Error fetching warehouses')
-  const json: ApiResponse<PaginatedWarehouses> = await res.json()
-  return json.data
+interface WarehouseServiceProps {
+  getWarehouses: (page?: number, limit?: number) => Promise<PaginatedWarehouses>;
+  getWarehouseById: (id: number) => Promise<IWarehouseResponse | undefined>;
+  createWarehouse: (warehouse: IWarehouse) => Promise<IWarehouseResponse | undefined>;
+  updateWarehouse: (id: number, warehouse: IWarehouse) => Promise<IWarehouseResponse | undefined>;
+  deleteWarehouse: (id: number) => Promise<void>;
 }
 
-export async function fetchWarehouseById(id: string): Promise<Warehouse> {
-  const res = await fetch(`${BASE_URL}/${id}`)
-  if (!res.ok) throw new Error('Error fetching warehouse')
-  const json: ApiResponse<Warehouse> = await res.json()
-  return json.data
+export class WarehouseService implements WarehouseServiceProps {
+  private static instance: WarehouseService;
+  private httpClient: HttpHandler;
+  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}warehouses`;
+
+  private constructor() {
+    this.httpClient = AxiosClient.getInstance();
+  }
+
+  public static getInstance(): WarehouseService {
+    if (!WarehouseService.instance) {
+      WarehouseService.instance = new WarehouseService();
+    }
+    return WarehouseService.instance;
+  }
+
+  async getWarehouses(page: number = 1, limit: number = 10): Promise<PaginatedWarehouses> {
+    try {
+      const { data } = await this.httpClient.get<PaginatedWarehouses>(
+        `${WarehouseService.url}?page=${page}&limit=${limit}`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching warehouses:', error);
+      return {
+        records: [],
+        total: 0,
+        pages: 0,
+        page: page,
+        limit: limit,
+      };
+    }
+  }
+
+  async getWarehouseById(id: number): Promise<IWarehouseResponse | undefined> {
+    try {
+      const { data } = await this.httpClient.get<IWarehouseResponse>(
+        `${WarehouseService.url}/${id}`
+      );
+      return data;
+    } catch (error) {
+      console.error('Error fetching warehouse:', error);
+      return undefined;
+    }
+  }
+
+  async createWarehouse(warehouse: IWarehouse): Promise<IWarehouseResponse | undefined> {
+    try {
+      const { data } = await this.httpClient.post<IWarehouseResponse>(
+        WarehouseService.url,
+        warehouse
+      );
+      return data;
+    } catch (error) {
+      console.error('Error creating warehouse:', error);
+      throw error;
+    }
+  }
+
+  async updateWarehouse(id: number, warehouse: IWarehouse): Promise<IWarehouseResponse | undefined> {
+    try {
+      const { data } = await this.httpClient.patch<IWarehouseResponse>(
+        `${WarehouseService.url}/${id}`,
+        warehouse
+      );
+      return data;
+    } catch (error) {
+      console.error('Error updating warehouse:', error);
+      throw error;
+    }
+  }
+
+  async deleteWarehouse(id: number): Promise<void> {
+    try {
+      await this.httpClient.delete<void>(`${WarehouseService.url}/${id}`);
+    } catch (error) {
+      console.error('Error deleting warehouse:', error);
+      throw error;
+    }
+  }
 }
 
-export async function createWarehouse(data: Omit<Warehouse, 'id' | 'active'>): Promise<Warehouse> {
-  const res = await fetch(`${BASE_URL}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Error creating warehouse')
-  const json: ApiResponse<Warehouse> = await res.json()
-  return json.data
-}
-
-export async function updateWarehouse(id: string,data: Partial<Omit<Warehouse, 'id' | 'active'>>): Promise<Warehouse> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Error updating warehouse')
-  const json: ApiResponse<Warehouse> = await res.json()
-  return json.data
-}
-
-export async function deleteWarehouse(id: string): Promise<Warehouse> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: 'DELETE',
-  })
-  if (!res.ok) throw new Error('Error deleting warehouse')
-  const json: ApiResponse<Warehouse> = await res.json()
-  return json.data
-}
+export const warehouseService = WarehouseService.getInstance();

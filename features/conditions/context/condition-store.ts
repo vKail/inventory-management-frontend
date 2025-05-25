@@ -7,11 +7,14 @@ interface ConditionStore {
     conditions: ICondition[];
     loading: boolean;
     error: string | null;
+    currentPage: number;
+    totalPages: number;
     getConditions: (page?: number, limit?: number) => Promise<void>;
     getConditionById: (conditionId: string) => Promise<ICondition | undefined>;
     addCondition: (condition: Partial<ICondition>) => Promise<void>;
     updateCondition: (conditionId: string, condition: Partial<ICondition>) => Promise<void>;
     deleteCondition: (conditionId: string) => Promise<void>;
+    refreshTable: () => Promise<void>;
 }
 
 const STORE_NAME = 'condition-storage';
@@ -22,16 +25,31 @@ export const useConditionStore = create<ConditionStore>()(
             conditions: [],
             loading: false,
             error: null,
+            currentPage: 1,
+            totalPages: 1,
+
+            refreshTable: async () => {
+                const { currentPage } = get();
+                await get().getConditions(currentPage, 10);
+            },
 
             getConditions: async (page = 1, limit = 10) => {
                 try {
                     set({ loading: true, error: null });
-                    const { records } = await ConditionService.getInstance().getConditions(page, limit);
+                    const response = await ConditionService.getInstance().getConditions(page, limit);
 
-                    console.log(records)
+                    // Si estamos en una página que ya no existe (por ejemplo, después de borrar), volvemos a la primera
+                    if (response.pages > 0 && page > response.pages) {
+                        await get().getConditions(1, limit);
+                        return;
+                    }
+
                     set({
-                        conditions: records,
+                        conditions: response.records,
+                        currentPage: response.page,
+                        totalPages: response.pages,
                         loading: false,
+                        error: null
                     });
                 } catch (error) {
                     console.error('Error fetching conditions:', error);
@@ -39,6 +57,8 @@ export const useConditionStore = create<ConditionStore>()(
                         error: 'Error al cargar las condiciones',
                         loading: false,
                         conditions: [],
+                        currentPage: 1,
+                        totalPages: 1
                     });
                 }
             },
@@ -56,8 +76,8 @@ export const useConditionStore = create<ConditionStore>()(
                 try {
                     set({ loading: true, error: null });
                     await ConditionService.getInstance().createCondition(condition);
-                    await get().getConditions();
-                    set({ loading: false });
+                    // Después de añadir, volvemos a la primera página
+                    await get().getConditions(1, 10);
                 } catch (error) {
                     console.error('Error adding condition:', error);
                     set({
@@ -72,8 +92,8 @@ export const useConditionStore = create<ConditionStore>()(
                 try {
                     set({ loading: true, error: null });
                     await ConditionService.getInstance().updateCondition(id, condition);
-                    await get().getConditions();
-                    set({ loading: false });
+                    // Mantenemos la página actual después de actualizar
+                    await get().refreshTable();
                 } catch (error) {
                     console.error('Error updating condition:', error);
                     set({
@@ -88,8 +108,16 @@ export const useConditionStore = create<ConditionStore>()(
                 try {
                     set({ loading: true, error: null });
                     await ConditionService.getInstance().deleteCondition(conditionId);
-                    const newConditions = get().conditions.filter(c => c.id !== conditionId);
-                    set({ conditions: newConditions, loading: false });
+
+                    // Verificamos si necesitamos ajustar la página actual
+                    const { currentPage, conditions } = get();
+                    if (conditions.length === 1 && currentPage > 1) {
+                        // Si es el último item de la página actual y no es la primera página
+                        await get().getConditions(currentPage - 1, 10);
+                    } else {
+                        // Refrescamos la página actual
+                        await get().refreshTable();
+                    }
                 } catch (error) {
                     console.error('Error deleting condition:', error);
                     set({

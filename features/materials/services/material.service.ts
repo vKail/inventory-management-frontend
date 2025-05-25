@@ -22,7 +22,7 @@ export class MaterialService implements MaterialServiceProps {
   public static getInstance(): MaterialService {
     if (!MaterialService.instance) {
       MaterialService.instance = new MaterialService();
-    }
+  }
     return MaterialService.instance;
   }
 

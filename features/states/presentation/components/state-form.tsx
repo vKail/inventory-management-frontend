@@ -1,10 +1,8 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -13,7 +11,6 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-    FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,127 +22,70 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import {
-    Breadcrumb,
-    BreadcrumbList,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { AlertCircle } from "lucide-react";
-import {
-    createState,
-    updateState,
-    getStateById,
-} from "@/features/states/services/state.service";
-import { UpdateStateDTO } from "../../data/interfaces/state.interface";
-import { deleteState } from "@/features/states/services/state.service";
+import { stateSchema, StateFormValues } from '../../data/schemas/state.schema';
+import { IState } from '../../data/interfaces/state.interface';
+import { useEffect } from "react";
 
-const stateSchema = z.object({
-    name: z.string().min(1, "El nombre es requerido"),
-    description: z.string().min(1, "La descripción es requerida"),
-    requiresMaintenance: z.boolean(),
-    active: z.boolean(),
-});
+interface StateFormProps {
+    initialData?: IState;
+    onSubmit: (data: StateFormValues) => Promise<void>;
+    isLoading: boolean;
+}
 
-type StateFormValues = z.infer<typeof stateSchema>;
-
-export default function StateForm() {
+export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const id = searchParams.get("id"); // Editar: ?id=123
-    const [loading, setLoading] = useState(false);
 
     const form = useForm<StateFormValues>({
         resolver: zodResolver(stateSchema),
         defaultValues: {
-            name: "",
-            description: "",
-            requiresMaintenance: false,
-            active: true,
+            name: initialData?.name || '',
+            description: initialData?.description || '',
+            active: initialData?.active ?? true,
         },
     });
 
     useEffect(() => {
-        if (id) {
-            const fetchState = async () => {
-                try {
-                    const fetched = await getStateById(Number(id));
-                    form.reset(fetched);
-                } catch (error) {
-                    console.error("Error fetching state:", error);
-                }
-            };
-            fetchState();
+        if (initialData) {
+            form.reset({
+                name: initialData.name,
+                description: initialData.description,
+                active: initialData.active,
+            });
         }
-    }, [id, form]);
+    }, [initialData, form]);
 
-    const onSubmit = async (data: StateFormValues) => {
-        setLoading(true);
+    const handleSubmit: SubmitHandler<StateFormValues> = async (data) => {
         try {
-            const { active, ...cleanedData } = data;
-
-            if (id) {
-                await updateState(Number(id), cleanedData as UpdateStateDTO);
-            } else {
-                await createState(cleanedData);
-            }
-
-            router.push("/states");
+            await onSubmit(data);
+            router.push('/states');
         } catch (error) {
-            console.error(" Error saving state:", error);
-        } finally {
-            setLoading(false);
+            console.error('Error en el formulario:', error);
         }
     };
 
-
-
-
     return (
-        <div className="flex flex-col items-center space-y-6 px-6 md:px-12 w-full">
-            <div className="mb-2 w-[1200px] min-w-[1200px] max-w-[1200px] mx-auto">
-                <Breadcrumb className="mb-6">
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <span className="text-muted-foreground font-medium">
-                                Configuración
-                            </span>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <AlertCircle className="inline mr-1 h-4 w-4 text-primary align-middle" />
-                            <BreadcrumbLink href="/states">Estados</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>{id ? "Editar Estado" : "Nuevo Estado"}</BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            </div>
+        <div className="flex flex-col items-center w-full">
 
-            <div className="flex flex-col md:flex-row gap-x-8 gap-y-8 w-[1200px] mx-auto">
+            <div className="flex flex-col md:flex-row gap-8 w-full">
                 <div className="md:w-1/3">
                     <h3 className="text-lg font-semibold mb-1">Detalles del estado</h3>
                     <p className="text-muted-foreground text-sm">
-                        Ingresa la información general del estado, incluyendo nombre, descripción y configuración de mantenimiento.
+                        Ingresa la información general del estado.
                     </p>
                 </div>
                 <div className="md:w-2/3">
                     <Card>
                         <CardHeader>
-                            <CardTitle>{id ? "Editar Estado" : "Nuevo Estado"}</CardTitle>
+                            <CardTitle>{initialData ? "Editar Estado" : "Nuevo Estado"}</CardTitle>
                             <CardDescription>
-                                {id
+                                {initialData
                                     ? "Modifica los datos del estado"
                                     : "Complete los datos para crear un nuevo estado"}
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="pt-6">
+                        <CardContent>
                             <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
                                     <FormField
                                         control={form.control}
                                         name="name"
@@ -168,7 +108,7 @@ export default function StateForm() {
                                                 <FormLabel>Descripción</FormLabel>
                                                 <FormControl>
                                                     <Textarea
-                                                        placeholder="Descripción detallada del estado"
+                                                        placeholder="Descripción del estado"
                                                         {...field}
                                                     />
                                                 </FormControl>
@@ -179,58 +119,44 @@ export default function StateForm() {
 
                                     <FormField
                                         control={form.control}
-                                        name="requiresMaintenance"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">Requiere Mantenimiento</FormLabel>
-                                                    <FormDescription>
-                                                        Indica si este estado requiere mantenimiento
-                                                    </FormDescription>
-                                                </div>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={field.value}
-                                                        onCheckedChange={(checked) => {
-                                                            field.onChange(checked);
-                                                            field.onBlur();
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
                                         name="active"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                                <div className="space-y-0.5">
-                                                    <FormLabel className="text-base">Estado</FormLabel>
-                                                    <FormDescription>
-                                                        Indica si el estado está activo
-                                                    </FormDescription>
+                                            <FormItem>
+                                                <div className="flex items-center justify-between space-x-2">
+                                                    <div className="space-y-0.5">
+                                                        <FormLabel>Estado Activo</FormLabel>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Determina si el estado está activo en el sistema
+                                                        </p>
+                                                    </div>
+                                                    <FormControl>
+                                                        <Switch
+                                                            checked={field.value}
+                                                            onCheckedChange={field.onChange}
+                                                        />
+                                                    </FormControl>
                                                 </div>
-                                                <FormControl>
-                                                    <Switch
-                                                        checked={Boolean(field.value)} 
-                                                        onCheckedChange={(checked) => {
-                                                            field.onChange(checked);
-                                                            field.onBlur();
-                                                        }}
-                                                    />
-                                                </FormControl>
                                             </FormItem>
                                         )}
                                     />
 
-                                    <div className="flex justify-end gap-4">
-                                        <Button type="button" variant="outline" onClick={() => router.push("/states")}>
+                                    <div className="flex gap-4 justify-end mt-6">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => router.push('/states')}
+                                        >
                                             Cancelar
                                         </Button>
-                                        <Button type="submit" disabled={loading}>
-                                            {loading ? "Guardando..." : id ? "Actualizar" : "Crear"}
+                                        <Button type="submit" disabled={isLoading}>
+                                            {isLoading ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    Guardando...
+                                                </>
+                                            ) : (
+                                                'Guardar'
+                                            )}
                                         </Button>
                                     </div>
                                 </form>

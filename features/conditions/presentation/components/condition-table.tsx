@@ -25,38 +25,41 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useConditionStore } from '@/features/conditions/context/condition-store';
 import { toast } from "sonner";
+import { ConditionPagination } from './condition-pagination';
 
 export default function ConditionTable() {
     const router = useRouter();
-    const {
-        conditions,
-        loading,
-        getConditions,
-        deleteCondition
-    } = useConditionStore();
-
     const [conditionToDelete, setConditionToDelete] = useState<string | null>(null);
+    const { conditions, loading, error, getConditions, deleteCondition, currentPage, totalPages } = useConditionStore();
+    const itemsPerPage = 10;
 
     useEffect(() => {
-        const loadConditions = async () => {
-            try {
-                await getConditions();
-            } catch (error) {
-                console.error('Error loading conditions:', error);
-                toast.error('Error al cargar las condiciones');
-            }
-        };
-
         loadConditions();
-    }, [getConditions]);
+    }, [currentPage]);
 
-    const handleDelete = async () => {
-        if (conditionToDelete === null) return;
-
+    const loadConditions = async () => {
         try {
-            await deleteCondition(conditionToDelete);
+            await getConditions(currentPage, itemsPerPage);
+        } catch (error) {
+            console.error('Error loading conditions:', error);
+            toast.error('Error al cargar las condiciones');
+        }
+    };
+
+    const handlePageChange = async (page: number) => {
+        try {
+            await getConditions(page, itemsPerPage);
+        } catch (error) {
+            console.error('Error changing page:', error);
+            toast.error('Error al cambiar de página');
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteCondition(id);
             toast.success('Condición eliminada exitosamente');
-            setConditionToDelete(null);
+            loadConditions();
         } catch (error) {
             console.error('Error deleting condition:', error);
             toast.error('Error al eliminar la condición');
@@ -85,7 +88,7 @@ export default function ConditionTable() {
                 <hr className="border-t border-muted mt-4" />
             </CardHeader>
 
-            <CardContent className="px-4 md:px-8 pb-6">
+            <CardContent className="px-4 md:px-8">
                 <div className="min-h-[400px] flex flex-col justify-between">
                     <Table>
                         <TableHeader>
@@ -118,7 +121,7 @@ export default function ConditionTable() {
                                         <TableCell>{condition.name}</TableCell>
                                         <TableCell>{condition.description}</TableCell>
                                         <TableCell>{condition.requiresMaintenance ? 'Sí' : 'No'}</TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right space-x-2">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -133,7 +136,6 @@ export default function ConditionTable() {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => setConditionToDelete(condition.id)}
                                                     >
                                                         <Trash2 className="h-4 w-4 text-red-600" />
                                                     </Button>
@@ -142,15 +144,15 @@ export default function ConditionTable() {
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                                         <AlertDialogDescription>
-                                                            Esta acción no se puede deshacer. Se eliminará permanentemente la condición
-                                                            <span className="font-semibold"> {condition.name}</span>.
+                                                            Esta acción no se puede deshacer. Esto eliminará permanentemente la condición.
                                                         </AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
-                                                        <AlertDialogCancel onClick={() => setConditionToDelete(null)}>
-                                                            Cancelar
-                                                        </AlertDialogCancel>
-                                                        <AlertDialogAction onClick={handleDelete}>
+                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction
+                                                            onClick={() => condition.id && handleDelete(condition.id)}
+                                                            className="bg-red-600 hover:bg-red-700"
+                                                        >
                                                             Eliminar
                                                         </AlertDialogAction>
                                                     </AlertDialogFooter>
@@ -162,6 +164,15 @@ export default function ConditionTable() {
                             )}
                         </TableBody>
                     </Table>
+                    {!loading && conditions.length > 0 && (
+                        <div className="mt-4">
+                            <ConditionPagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
