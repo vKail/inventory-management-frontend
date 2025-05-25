@@ -1,89 +1,97 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-import { State, CreateStateDTO, UpdateStateDTO } from "../data/interfaces/state.interface";
+import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
+import { AxiosClient } from '@/core/infrestucture/AxiosClient';
+import { IState, PaginatedResponse, ApiResponse } from '../data/interfaces/state.interface';
 
-interface PaginatedResponse<T> {
-  records: T[];
-  total: number;
-  limit: number;
-  page: number;
-  pages: number;
+interface StateServiceProps {
+  getStates: (page?: number, limit?: number) => Promise<PaginatedResponse<IState>>;
+  getStateById: (id: number) => Promise<IState | undefined>;
+  createState: (state: Partial<IState>) => Promise<IState | undefined>;
+  updateState: (id: number, state: Partial<IState>) => Promise<IState | undefined>;
+  deleteState: (id: number) => Promise<void>;
 }
 
-async function getAuthHeaders(): Promise<HeadersInit> {
-  // borar ssi para activar token 
-  // const token = getTokenFromStorageOrCookie();
-  return {
-    "Content-Type": "application/json",
-    // ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+export class StateService implements StateServiceProps {
+  private static instance: StateService;
+  private httpClient: HttpHandler;
+  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}states`;
 
-export async function getStates(page = 1, limit = 10): Promise<PaginatedResponse<State>> {
-  const res = await fetch(`${API_URL}states?page=${page}&limit=${limit}`, {
-    headers: await getAuthHeaders(),
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch states");
+  private constructor() {
+    this.httpClient = AxiosClient.getInstance();
   }
 
-  const json = await res.json();
-  return json.data;
-}
-
-export async function getStateById(id: number): Promise<State> {
-  const res = await fetch(`${API_URL}states/${id}`, {
-    headers: await getAuthHeaders(),
-  });
-
-  if (!res.ok) {
-    throw new Error(`State with ID ${id} not found`);
+  public static getInstance(): StateService {
+    if (!StateService.instance) {
+      StateService.instance = new StateService();
+    }
+    return StateService.instance;
   }
 
-  const json = await res.json();
-  return json.data;
-}
-
-export async function createState(data: CreateStateDTO): Promise<State> {
-  const res = await fetch(`${API_URL}states`, {
-    method: "POST",
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to create state");
+  public async getStates(page = 1, limit = 10): Promise<PaginatedResponse<IState>> {
+    try {
+      const response = await this.httpClient.get<ApiResponse<PaginatedResponse<IState>>>(
+        `${StateService.url}?page=${page}&limit=${limit}`
+      );
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error) {
+      console.error('Error fetching states:', error);
+      throw error;
+    }
   }
 
-  const json = await res.json();
-  return json.data;
-}
-
-
-export async function updateState(id: number, data: UpdateStateDTO): Promise<State> {
-  const res = await fetch(`${API_URL}states/${id}`, {
-    method: "PATCH",
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to update state");
+  public async getStateById(id: number): Promise<IState | undefined> {
+    try {
+      const response = await this.httpClient.get<ApiResponse<IState>>(`${StateService.url}/${id}`);
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error) {
+      console.error('Error fetching state:', error);
+      return undefined;
+    }
   }
 
-  const json = await res.json();
-  return json.data;
-}
+  public async createState(state: Partial<IState>): Promise<IState | undefined> {
+    try {
+      const response = await this.httpClient.post<ApiResponse<IState>>(
+        StateService.url,
+        state
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error creating state:', error);
+      throw error;
+    }
+  }
 
-export async function deleteState(id: number): Promise<void> {
-  const res = await fetch(`${API_URL}states/${id}`, {
-    method: "DELETE",
-    headers: await getAuthHeaders(),
-  });
+  public async updateState(id: number, state: Partial<IState>): Promise<IState | undefined> {
+    try {
+      const response = await this.httpClient.patch<ApiResponse<IState>>(
+        `${StateService.url}/${id}`,
+        state
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error updating state:', error);
+      throw error;
+    }
+  }
 
-  if (!res.ok) {
-    throw new Error("Failed to delete state");
+  public async deleteState(id: number): Promise<void> {
+    try {
+      const response = await this.httpClient.delete<ApiResponse<void>>(`${StateService.url}/${id}`);
+      if (!response.data.success) {
+        throw new Error(response.data.message.content.join(', '));
+      }
+    } catch (error) {
+      console.error('Error deleting state:', error);
+      throw error;
+    }
   }
 }
+
+export const stateService = StateService.getInstance();
 
