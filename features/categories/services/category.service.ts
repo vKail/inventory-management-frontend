@@ -1,13 +1,13 @@
 // services/category.service.ts
 import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
-import { ApiResponse, ICategory, PaginatedCategories } from '../data/interfaces/category.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
+import { ICategory, PaginatedCategories, ApiResponse, CreateCategoryDTO, UpdateCategoryDTO } from '../data/interfaces/category.interface';
 
 interface CategoryServiceProps {
-  getCategories: (page?: number, limit?: number, search?: string) => Promise<ICategory[]>;
+  getCategories: (page?: number, limit?: number) => Promise<PaginatedCategories>;
   getCategoryById: (id: number) => Promise<ICategory | undefined>;
-  createCategory: (category: ICategory) => Promise<ICategory | undefined>;
-  updateCategory: (id: number, category: ICategory) => Promise<ICategory | undefined>;
+  createCategory: (category: CreateCategoryDTO) => Promise<ICategory | undefined>;
+  updateCategory: (id: number, category: UpdateCategoryDTO) => Promise<ICategory | undefined>;
   deleteCategory: (id: number) => Promise<void>;
 }
 
@@ -32,7 +32,10 @@ export class CategoryService implements CategoryServiceProps {
       const response = await this.httpClient.get<ApiResponse<PaginatedCategories>>(
         `${CategoryService.url}?page=${page}&limit=${limit}`
       );
-      return response.data;
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error fetching categories:', error);
       throw error;
@@ -41,35 +44,37 @@ export class CategoryService implements CategoryServiceProps {
 
   public async getCategoryById(id: number): Promise<ICategory | undefined> {
     try {
-      const response = await this.httpClient.get<ICategory>(`${CategoryService.url}/${id}`);
-      return response.data;
+      const response = await this.httpClient.get<ApiResponse<ICategory>>(`${CategoryService.url}/${id}`);
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error fetching category:', error);
       return undefined;
     }
   }
 
-  public async createCategory(category: ICategory): Promise<ICategory | undefined> {
+  public async createCategory(category: CreateCategoryDTO): Promise<ICategory | undefined> {
     try {
-      const { active, ...categoryWithoutActive } = category;
-      const response = await this.httpClient.post<ICategory>(
-        CategoryService.url,
-        categoryWithoutActive
-      );
-      return response.data;
+      const response = await this.httpClient.post<ApiResponse<ICategory>>(CategoryService.url, category);
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error creating category:', error);
       throw error;
     }
   }
 
-  public async updateCategory(id: number, category: ICategory): Promise<ICategory | undefined> {
+  public async updateCategory(id: number, category: UpdateCategoryDTO): Promise<ICategory | undefined> {
     try {
-      const response = await this.httpClient.patch<ICategory>(
-        `${CategoryService.url}/${id}`,
-        category
-      );
-      return response.data;
+      const response = await this.httpClient.patch<ApiResponse<ICategory>>(`${CategoryService.url}/${id}`, category);
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error updating category:', error);
       throw error;
@@ -78,7 +83,10 @@ export class CategoryService implements CategoryServiceProps {
 
   public async deleteCategory(id: number): Promise<void> {
     try {
-      await this.httpClient.delete(`${CategoryService.url}/${id}`);
+      const response = await this.httpClient.delete<ApiResponse<void>>(`${CategoryService.url}/${id}`);
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
     } catch (error) {
       console.error('Error deleting category:', error);
       throw error;
