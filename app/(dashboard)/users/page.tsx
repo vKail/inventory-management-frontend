@@ -1,7 +1,5 @@
-import dynamic from 'next/dynamic'
+import UsersView from '@/features/users/presentation/views/users-view';
 
-const UsersView = dynamic(() => import('@/features/users/presentation/views/users-view'))
-
-export default function Page() {
-    return <UsersView />
+export default function UsersPage() {
+    return <UsersView />;
 }

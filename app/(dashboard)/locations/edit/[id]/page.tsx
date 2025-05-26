@@ -7,22 +7,24 @@ import { LocationFormValues } from "@/features/locations/data/schemas/location.s
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ILocation } from "@/features/locations/data/interfaces/location.interface";
+import { use } from "react";
 
-interface PageProps {
-    params: {
+interface EditLocationPageProps {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default function LocationEditPage({ params }: PageProps) {
+export default function EditLocationPage({ params }: EditLocationPageProps) {
     const router = useRouter();
     const { updateLocation, getLocationById, isLoading } = useLocationStore();
     const [location, setLocation] = useState<ILocation | undefined>(undefined);
+    const resolvedParams = use(params);
 
     useEffect(() => {
         const loadLocation = async () => {
             try {
-                const data = await getLocationById(Number(params.id));
+                const data = await getLocationById(Number(resolvedParams.id));
                 if (data) {
                     setLocation(data);
                 } else {
@@ -37,11 +39,11 @@ export default function LocationEditPage({ params }: PageProps) {
         };
 
         loadLocation();
-    }, [getLocationById, params.id, router]);
+    }, [getLocationById, resolvedParams.id, router]);
 
     const handleSubmit = async (data: LocationFormValues) => {
         try {
-            await updateLocation(Number(params.id), data);
+            await updateLocation(Number(resolvedParams.id), data as any);
             toast.success("Ubicación actualizada exitosamente");
             router.push("/locations");
         } catch (error) {
@@ -51,13 +53,7 @@ export default function LocationEditPage({ params }: PageProps) {
     };
 
     if (!location) {
-        return (
-            <div className="container mx-auto px-4 py-6 max-w-7xl">
-                <div className="flex items-center justify-center h-32">
-                    Cargando...
-                </div>
-            </div>
-        );
+        return <div>Cargando...</div>;
     }
 
     return (

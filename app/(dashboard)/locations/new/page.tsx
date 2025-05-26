@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 import { LocationFormValues } from "@/features/locations/data/schemas/location.schema";
 import { toast } from "sonner";
 
-export default function LocationCreatePage() {
+export default function NewLocationPage() {
   const router = useRouter();
   const { addLocation, isLoading } = useLocationStore();
 
   const handleSubmit = async (data: LocationFormValues) => {
     try {
-      await addLocation(data);
+      await addLocation(data as any); // Temporal fix for type issue
       toast.success("Ubicación creada exitosamente");
       router.push("/locations");
     } catch (error) {

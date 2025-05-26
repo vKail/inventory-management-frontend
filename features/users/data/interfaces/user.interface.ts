@@ -12,7 +12,7 @@ export interface Person {
 export interface User {
   id: number;
   userName: string;
-  password:string;
+  password: string;
   career: string;
   userType: string;
   status: string;
@@ -34,4 +34,19 @@ export interface ApiResponse<T> {
     displayable: boolean;
   };
   data: T;
+}
+
+export interface IUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  active: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  records: T[];
+  total: number;
+  pages: number;
+  currentPage: number;
 }
