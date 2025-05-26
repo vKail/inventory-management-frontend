@@ -70,7 +70,7 @@ export const useCategoryStore = create<CategoryStore>()(
       addCategory: async (category: Partial<ICategory>) => {
         try {
           set({ loading: true, error: null });
-          await CategoryService.getInstance().createCategory(category);
+          await CategoryService.getInstance().createCategory(category as ICategory);
           await get().getCategories();
           set({ loading: false });
         } catch (error) {

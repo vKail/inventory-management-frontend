@@ -30,6 +30,7 @@ export default [
     rules: {
       // React
       'react/react-in-jsx-scope': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
       'react/prop-types': 'off',
       'react/jsx-uses-react': 'warn',
       'react/jsx-uses-vars': 'warn',
