@@ -39,8 +39,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useCategoryStore } from '@/features/categories/context/category-store';
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
-export default function CategoryTable() {
+interface CategoryTableProps {
+  currentPage: number;
+  itemsPerPage: number;
+}
+
+export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps) {
   const router = useRouter();
   const {
     categories,
@@ -54,7 +60,7 @@ export default function CategoryTable() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        await getCategories();
+        await getCategories(currentPage, itemsPerPage);
       } catch (error) {
         console.error('Error loading categories:', error);
         toast.error('Error al cargar las categorías');
@@ -62,7 +68,7 @@ export default function CategoryTable() {
     };
 
     loadCategories();
-  }, [getCategories]);
+  }, [getCategories, currentPage, itemsPerPage]);
 
   const handleDelete = async () => {
     if (categoryToDelete === null) return;
@@ -76,6 +82,22 @@ export default function CategoryTable() {
       toast.error('Error al eliminar la categoría');
     }
   };
+
+  const handleEdit = (id: number) => {
+    router.push(`/categories/edit/${id}`);
+  };
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
+
+  if (categories.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No hay categorías para mostrar</p>
+      </div>
+    );
+  }
 
   return (
     <Card className="w-full max-w-[1200px]">
@@ -117,62 +139,50 @@ export default function CategoryTable() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead>Categoría Padre</TableHead>
-                <TableHead>Vida Útil (años)</TableHead>
-                <TableHead>Depreciación (%)</TableHead>
+                <TableHead>Vida Útil</TableHead>
+                <TableHead>% Depreciación</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    Cargando...
+              {categories.map((category) => (
+                <TableRow key={category.id}>
+                  <TableCell>{category.code}</TableCell>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>{category.description}</TableCell>
+                  <TableCell>{category.parentCategory?.name || 'Ninguna'}</TableCell>
+                  <TableCell>{category.standardUsefulLife} años</TableCell>
+                  <TableCell>{category.depreciationPercentage}%</TableCell>
+                  <TableCell>
+                    <Badge variant={category.active ? "default" : "outline"}>
+                      {category.active ? "Activo" : "Inactivo"}
+                    </Badge>
                   </TableCell>
-                </TableRow>
-              ) : categories.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-20 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <Tags className="h-10 w-10 opacity-30" />
-                      <span>No hay categorías para mostrar</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell>{category.code}</TableCell>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell>{category.description}</TableCell>
-                    <TableCell>{useCategoryStore.getState().getParentCategoryNameById(category.parentCategoryId)}</TableCell>
-                    <TableCell>{category.standardUsefulLife}</TableCell>
-                    <TableCell>{category.depreciationPercentage}%</TableCell>
-                    <TableCell className="text-right">
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
-                        onClick={() => {
-                          router.push(`/categories/edit/${category.id}`);
-                        }}
+                        onClick={() => handleEdit(category.id)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="icon"
                             onClick={() => setCategoryToDelete(category.id)}
                           >
-                            <Trash2 className="h-4 w-4 text-red-600" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                            <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará permanentemente la categoría
-                              <span className="font-semibold"> {category.name}</span>.
+                              Esta acción no se puede deshacer. Esto eliminará permanentemente la categoría.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -185,10 +195,10 @@ export default function CategoryTable() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>

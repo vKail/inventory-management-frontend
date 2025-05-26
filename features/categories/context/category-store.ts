@@ -1,21 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // context/category-store.ts
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { ICategory } from '../data/interfaces/category.interface';
-import { CategoryService } from '@/features/categories/services/category.service';
+import { persist } from 'zustand/middleware';
+import { ICategory, PaginatedCategories, ApiResponse } from '../data/interfaces/category.interface';
+import { CategoryService } from '../services/category.service';
 
 interface CategoryStore {
   categories: ICategory[];
   loading: boolean;
   error: string | null;
-  getParentCategoryNameById: (parentId: number | null | undefined) => string;
-  getCategories: (page?: number, limit?: number) => Promise<void>;
+  getCategories: (page?: number, limit?: number) => Promise<PaginatedCategories>;
   getCategoryById: (categoryId: number) => Promise<ICategory | undefined>;
-  addCategory: (category: ICategory) => Promise<void>;
+  addCategory: (category: Partial<ICategory>) => Promise<void>;
   updateCategory: (categoryId: number, category: Partial<ICategory>) => Promise<void>;
   deleteCategory: (categoryId: number) => Promise<void>;
+  getParentCategoryNameById: (parentId: number | null | undefined) => string;
 }
+
 const STORE_NAME = 'category-storage';
 
 export const useCategoryStore = create<CategoryStore>()(
@@ -26,32 +27,37 @@ export const useCategoryStore = create<CategoryStore>()(
       error: null,
 
       getCategories: async (page = 1, limit = 10) => {
+        set({ loading: true });
         try {
-          set({ loading: true, error: null });
-          const { records, total, limit: l, page: p, pages } =
-            await CategoryService.getInstance().getCategories(page, limit);
-          set({
-            categories: records,
-            loading: false,
-          });
+          const response = await CategoryService.getInstance().getCategories(page, limit);
+
+          if (response && response.records) {
+            set({
+              categories: response.records,
+              loading: false,
+              error: null
+            });
+            return response;
+          } else {
+            throw new Error('Invalid response format');
+          }
         } catch (error) {
-          console.error('Error fetching categories:', error);
+          console.error('Error in getCategories:', error);
           set({
             error: 'Error al cargar las categorías',
             loading: false,
-            categories: [],
+            categories: []
           });
+          throw error;
         }
       },
 
       getParentCategoryNameById: (parentId: number | null | undefined): string => {
-        console.log(parentId)
         if (!parentId) return 'Ninguna';
         const parent = get().categories.find(cat => cat.id === parentId);
-        console.log(parent)
         return parent ? parent.name : 'Desconocida';
       },
-      
+
       getCategoryById: async (categoryId: number) => {
         try {
           return await CategoryService.getInstance().getCategoryById(categoryId);
@@ -61,7 +67,7 @@ export const useCategoryStore = create<CategoryStore>()(
         }
       },
 
-      addCategory: async (category: ICategory) => {
+      addCategory: async (category: Partial<ICategory>) => {
         try {
           set({ loading: true, error: null });
           await CategoryService.getInstance().createCategory(category);
@@ -80,22 +86,9 @@ export const useCategoryStore = create<CategoryStore>()(
       updateCategory: async (id: number, category: Partial<ICategory>) => {
         try {
           set({ loading: true, error: null });
-
-          const payload = {
-            code: category.code,
-            name: category.name,
-            description: category.description,
-            parentCategoryId: category.parentCategory?.id,
-            standardUsefulLife: category.standardUsefulLife,
-            depreciationPercentage: category.depreciationPercentage
-          };
-
-          await CategoryService.getInstance().updateCategory(id, payload);
-          const updatedCategories = get().categories.map(c =>
-            c.id === id ? { ...c, code: payload.code || c.code, name: payload.name || c.name, description: payload.description || c.description, parentCategoryId: payload.parentCategoryId || c.parentCategory?.id, standardUsefulLife: payload.standardUsefulLife || c.standardUsefulLife, depreciationPercentage: payload.depreciationPercentage || c.depreciationPercentage } : c
-          );
-
-          set({ categories: updatedCategories, loading: false });
+          await CategoryService.getInstance().updateCategory(id, category);
+          await get().getCategories();
+          set({ loading: false });
         } catch (error) {
           console.error('Error updating category:', error);
           set({
@@ -104,7 +97,6 @@ export const useCategoryStore = create<CategoryStore>()(
           });
           throw error;
         }
-
       },
 
       deleteCategory: async (categoryId: number) => {
@@ -125,7 +117,6 @@ export const useCategoryStore = create<CategoryStore>()(
     }),
     {
       name: STORE_NAME,
-      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
