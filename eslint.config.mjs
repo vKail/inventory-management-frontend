@@ -1,38 +1,64 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import js from '@eslint/js';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
+import pluginReact from 'eslint-plugin-react';
+import pluginReactHooks from 'eslint-plugin-react-hooks';
+import unusedImports from 'eslint-plugin-unused-imports';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),
+export default [
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  pluginReact.configs.flat.recommended,
   {
-    files: ["*.ts", "*.tsx"],
     languageOptions: {
-      parser: "@typescript-eslint/parser",
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
       parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir: __dirname,
-        sourceType: "module",
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
+    plugins: {
+      'react-hooks': pluginReactHooks,
+      'unused-imports': unusedImports,
+    },
     rules: {
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "off",
-      "unused-imports/no-unused-imports": "warn",
+      // React
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      'react/jsx-uses-react': 'warn',
+      'react/jsx-uses-vars': 'warn',
+
+      // React Hooks
+      ...pluginReactHooks.configs.recommended.rules,
+
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      'unused-imports/no-unused-imports': 'warn',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
+
+      '@typescript-eslint/no-explicit-any': 'warn',
+
+      'no-console': 'warn',
+      'prefer-const': 'error',
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
   },
-  {
-    files: ["*.js", "*.jsx"],
-    rules: {
-      "no-console": "warn",
-    },
-  },  
 ];
-
-export default eslintConfig;
