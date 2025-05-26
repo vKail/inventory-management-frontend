@@ -1,15 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { userSchema, UserFormValues } from '../../data/schemas/user-schema'
-import {
-    fetchUserById,
-    createUser,
-    updateUser,
-} from '../../services/user.service'
 import { UserRole } from '../../data/enums/user-roles.enums'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,13 +12,16 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useUserStore } from '../../context/user-store'
 
-export default function UserForm() {
+interface UserFormProps {
+    id?: string;
+}
+
+export default function UserForm({ id }: UserFormProps) {
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const id = searchParams.get('id')
-
     const [loading, setLoading] = useState(false)
+    const { getUserById, addUser, updateUser } = useUserStore()
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
@@ -43,34 +41,38 @@ export default function UserForm() {
 
         const loadUser = async () => {
             try {
-                const data = await fetchUserById(id)
-                form.reset({
-                    userName: data.userName,
-                    ...(data.password ? { password: data.password } : {}),
-                    career: data.career,
-                    userType: data.userType as 'STUDENT' | 'TEACHER' | 'ADMINISTRATOR' | 'MANAGER',
-                    person: {
-                        dni: data.person.dni,
-                        firstName: data.person.firstName,
-                        lastName: data.person.lastName,
-                        email: data.person.email,
-                    },
-                })
-
+                setLoading(true)
+                const data = await getUserById(parseInt(id))
+                if (data) {
+                    form.reset({
+                        userName: data.userName,
+                        ...(data.password ? { password: data.password } : {}),
+                        career: data.career,
+                        userType: data.userType as UserRole,
+                        person: {
+                            dni: data.person.dni,
+                            firstName: data.person.firstName,
+                            lastName: data.person.lastName,
+                            email: data.person.email,
+                        },
+                    })
+                }
             } catch (error) {
                 console.error('Error fetching user:', error)
+                toast.error('Error al cargar el usuario')
+            } finally {
+                setLoading(false)
             }
         }
 
         loadUser()
-    }, [id, form])
-
+    }, [id, form, getUserById])
 
     const onSubmit = async (data: UserFormValues) => {
         setLoading(true)
         try {
             if (id) {
-                await updateUser(id, {
+                await updateUser(parseInt(id), {
                     userName: data.userName,
                     career: data.career,
                     userType: data.userType,
@@ -82,9 +84,9 @@ export default function UserForm() {
                     },
                     ...(data.password ? { password: data.password } : {}),
                 })
-                toast.success('User updated successfully')
+                toast.success('Usuario actualizado exitosamente')
             } else {
-                await createUser({
+                await addUser({
                     userName: data.userName,
                     career: data.career,
                     userType: data.userType,
@@ -97,28 +99,34 @@ export default function UserForm() {
                         email: data.person.email,
                     },
                 })
-                toast.success('User created successfully')
+                toast.success('Usuario creado exitosamente')
             }
 
-            setTimeout(() => router.push('/users'), 1500)
+            router.push('/users')
         } catch (error) {
-            toast.error('Error saving user')
-            console.error(error)
+            console.error('Error saving user:', error)
+            toast.error('Error al guardar el usuario')
         } finally {
             setLoading(false)
         }
     }
 
-
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col items-center w-full px-6 md:px-12">
             <div className="w-full max-w-[1200px]">
                 <Card>
                     <CardHeader>
-                        <CardTitle>{id ? 'Edit User' : 'New User'}</CardTitle>
+                        <CardTitle>{id ? 'Editar Usuario' : 'Nuevo Usuario'}</CardTitle>
                         <CardDescription>
-                            {id ? 'Update user information' : 'Fill in the form to create a new user'}
+                            {id ? 'Actualiza la información del usuario' : 'Completa el formulario para crear un nuevo usuario'}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -146,12 +154,13 @@ export default function UserForm() {
                                             <FormItem>
                                                 <FormLabel>Usuario</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Username" {...field} />
+                                                    <Input placeholder="Nombre de usuario" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
+
                                     <FormField
                                         control={form.control}
                                         name="career"
@@ -161,11 +170,39 @@ export default function UserForm() {
                                                 <FormControl>
                                                     <Input
                                                         {...field}
-                                                        placeholder="Career"
+                                                        placeholder="Facultad"
                                                         value="FISEI"
                                                         disabled
                                                     />
                                                 </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="userType"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tipo de Usuario</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    defaultValue={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecciona un tipo" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {Object.values(UserRole).map((role) => (
+                                                            <SelectItem key={role} value={role}>
+                                                                {role}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -178,12 +215,13 @@ export default function UserForm() {
                                             <FormItem>
                                                 <FormLabel>Nombre</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="First Name" {...field} />
+                                                    <Input placeholder="Nombre" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
+
                                     <FormField
                                         control={form.control}
                                         name="person.lastName"
@@ -191,36 +229,8 @@ export default function UserForm() {
                                             <FormItem>
                                                 <FormLabel>Apellido</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Last Name" {...field} />
+                                                    <Input placeholder="Apellido" {...field} />
                                                 </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="userType"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Rol</FormLabel>
-                                                <Select
-                                                    value={field.value}
-                                                    onValueChange={field.onChange}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select a role" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {Object.entries(UserRole).map(([key, value]) => (
-                                                            <SelectItem key={key} value={value}>
-                                                                {value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-
-                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -230,41 +240,59 @@ export default function UserForm() {
                                         control={form.control}
                                         name="person.email"
                                         render={({ field }) => (
-                                            <FormItem className="">
+                                            <FormItem>
                                                 <FormLabel>Email</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Email" type="email" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="password"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Contraseña</FormLabel>
-                                                <FormControl>
-                                                    <Input type="password" placeholder="Password" {...field} />
+                                                    <Input
+                                                        type="email"
+                                                        placeholder="correo@ejemplo.com"
+                                                        {...field}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
 
-
+                                    {!id && (
+                                        <FormField
+                                            control={form.control}
+                                            name="password"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Contraseña</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="password"
+                                                            placeholder="Contraseña"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
                                 </div>
-                                <div className="flex justify-end gap-2">
+
+                                <div className="flex justify-end gap-4">
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={() => router.push('/users')}
+                                        disabled={loading}
                                     >
-                                        Cancel
+                                        Cancelar
                                     </Button>
                                     <Button type="submit" disabled={loading}>
-                                        {loading ? 'Saving...' : id ? 'Update' : 'Create'}
+                                        {loading ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                {id ? 'Actualizando...' : 'Creando...'}
+                                            </>
+                                        ) : (
+                                            id ? 'Actualizar' : 'Crear'
+                                        )}
                                     </Button>
                                 </div>
                             </form>

@@ -1,12 +1,27 @@
 export interface Person {
   dni: string;
   firstName: string;
-  middleName?: string;
   lastName: string;
-  secondLastName?: string;
   email: string;
-  birthDate?: string;
-  phone?: string;
+}
+
+export interface IUser {
+  id: number;
+  userName: string;
+  password?: string;
+  career: string;
+  userType: string;
+  status: string;
+  person: Person;
+  active: boolean;
+  role: string;
+}
+
+export interface PaginatedResponse<T> {
+  records: T[];
+  total: number;
+  pages: number;
+  currentPage: number;
 }
 
 export interface User {
@@ -34,19 +49,4 @@ export interface ApiResponse<T> {
     displayable: boolean;
   };
   data: T;
-}
-
-export interface IUser {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  active: boolean;
-}
-
-export interface PaginatedResponse<T> {
-  records: T[];
-  total: number;
-  pages: number;
-  currentPage: number;
 }

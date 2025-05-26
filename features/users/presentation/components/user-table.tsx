@@ -93,9 +93,10 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Usuario</TableHead>
               <TableHead>Nombre</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Rol</TableHead>
+              <TableHead>Correo</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -103,7 +104,7 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
+                <TableCell colSpan={6} className="text-center h-24">
                   <div className="flex items-center justify-center">
                     Cargando...
                   </div>
@@ -111,7 +112,7 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
+                <TableCell colSpan={6} className="text-center h-24">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <p className="mb-2">No hay usuarios para mostrar</p>
                     <Button
@@ -128,11 +129,12 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
             ) : (
               users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.userName}</TableCell>
+                  <TableCell>{`${user.person.firstName} ${user.person.lastName}`}</TableCell>
+                  <TableCell>{user.person.email}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {user.role}
+                      {user.userType}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -164,7 +166,7 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
                             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                             <AlertDialogDescription>
                               Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
-                              <span className="font-semibold"> {user.name}</span>.
+                              <span className="font-semibold"> {user.userName}</span>.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
