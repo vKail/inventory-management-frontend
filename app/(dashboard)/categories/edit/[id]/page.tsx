@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ICategory } from "@/features/categories/data/interfaces/category.interface";
 
-interface PageProps {
+type PageProps = {
   params: {
     id: string;
   };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
 export default function CategoryEditPage({ params }: PageProps) {
