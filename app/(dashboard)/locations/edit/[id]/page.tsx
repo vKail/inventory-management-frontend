@@ -7,24 +7,22 @@ import { LocationFormValues } from "@/features/locations/data/schemas/location.s
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ILocation } from "@/features/locations/data/interfaces/location.interface";
-import { use } from "react";
 
-interface EditLocationPageProps {
-    params: Promise<{
+interface PageProps {
+    params: {
         id: string;
-    }>;
+    };
 }
 
-export default function EditLocationPage({ params }: EditLocationPageProps) {
+export default function LocationEditPage({ params }: PageProps) {
     const router = useRouter();
     const { updateLocation, getLocationById, isLoading } = useLocationStore();
     const [location, setLocation] = useState<ILocation | undefined>(undefined);
-    const resolvedParams = use(params);
 
     useEffect(() => {
         const loadLocation = async () => {
             try {
-                const data = await getLocationById(Number(resolvedParams.id));
+                const data = await getLocationById(Number(params.id));
                 if (data) {
                     setLocation(data);
                 } else {
@@ -39,11 +37,11 @@ export default function EditLocationPage({ params }: EditLocationPageProps) {
         };
 
         loadLocation();
-    }, [getLocationById, resolvedParams.id, router]);
+    }, [getLocationById, params.id, router]);
 
     const handleSubmit = async (data: LocationFormValues) => {
         try {
-            await updateLocation(Number(resolvedParams.id), data as any);
+            await updateLocation(Number(params.id), data);
             toast.success("Ubicación actualizada exitosamente");
             router.push("/locations");
         } catch (error) {
@@ -53,7 +51,13 @@ export default function EditLocationPage({ params }: EditLocationPageProps) {
     };
 
     if (!location) {
-        return <div>Cargando...</div>;
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-7xl">
+                <div className="flex items-center justify-center h-32">
+                    Cargando...
+                </div>
+            </div>
+        );
     }
 
     return (
