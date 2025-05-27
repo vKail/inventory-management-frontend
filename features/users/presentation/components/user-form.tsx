@@ -16,11 +16,15 @@ import { useUserStore } from '../../context/user-store'
 
 interface UserFormProps {
     id?: string;
+    initialValues?: User;
+    onSubmit?: (data: UserFormValues) => Promise<void>;
+    isLoading?: boolean;
 }
 
-export default function UserForm({ id }: UserFormProps) {
+export default function UserForm({ id, initialValues, onSubmit: externalSubmit, isLoading: externalLoading }: UserFormProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const isLoading = externalLoading || loading
     const { getUserById, addUser, updateUser } = useUserStore()
 
     const form = useForm<UserFormValues>({
@@ -48,85 +52,112 @@ export default function UserForm({ id }: UserFormProps) {
     })
 
     useEffect(() => {
-        if (!id) return
+        if (initialValues) {
+            form.reset({
+                name: initialValues.person.firstName + ' ' + initialValues.person.lastName,
+                email: initialValues.person.email,
+                role: initialValues.role || 'user',
+                password: initialValues.password || '',
+                career: initialValues.career,
+                userType: initialValues.userType,
+                userName: initialValues.userName,
+                status: initialValues.status,
+                person: {
+                    dni: initialValues.person.dni,
+                    firstName: initialValues.person.firstName,
+                    middleName: initialValues.person.middleName || '',
+                    lastName: initialValues.person.lastName,
+                    secondLastName: initialValues.person.secondLastName || '',
+                    email: initialValues.person.email,
+                    birthDate: initialValues.person.birthDate || '',
+                    phone: initialValues.person.phone || ''
+                }
+            })
+        } else if (id && !initialValues) {
+            // If we have an ID but no initialValues, load the user data
+            const loadUser = async () => {
+                try {
+                    setLoading(true)
+                    const data = await getUserById(id)
+                    if (data) {
+                        form.reset({
+                            name: data.person.firstName + ' ' + data.person.lastName,
+                            email: data.person.email,
+                            role: data.role || 'user',
+                            password: data.password || '',
+                            career: data.career,
+                            userType: data.userType,
+                            userName: data.userName,
+                            status: data.status,
+                            person: {
+                                dni: data.person.dni,
+                                firstName: data.person.firstName,
+                                middleName: data.person.middleName || '',
+                                lastName: data.person.lastName,
+                                secondLastName: data.person.secondLastName || '',
+                                email: data.person.email,
+                                birthDate: data.person.birthDate || '',
+                                phone: data.person.phone || ''
+                            }
+                        })
+                    }
+                } catch (error) {
+                    console.error(error)
+                    toast.error('Error al cargar el usuario')
+                } finally {
+                    setLoading(false)
+                }
+            }
 
-        const loadUser = async () => {
+            loadUser()
+        }
+    }, [id, initialValues, form, getUserById])
+
+    const onSubmit = async (data: UserFormValues) => {
+        if (externalSubmit) {
+            // Use the external submit handler if provided
+            await externalSubmit(data)
+        } else {
             try {
                 setLoading(true)
-                const data = await getUserById(id)
-                if (data) {
-                    form.reset({
-                        name: data.person.firstName + ' ' + data.person.lastName,
+                
+                // Preparar los datos para enviar a la API
+                const userData = {
+                    userName: data.userName,
+                    password: data.password,
+                    career: data.career,
+                    userType: data.userType,
+                    status: 'ACTIVE',
+                    person: {
+                        dni: data.person.dni,
+                        firstName: data.person.firstName,
+                        middleName: data.person.middleName || '',
+                        lastName: data.person.lastName,
+                        secondLastName: data.person.secondLastName || '',
                         email: data.person.email,
-                        role: data.role || 'user',
-                        password: data.password || '',
-                        career: data.career,
-                        userType: data.userType,
-                        userName: data.userName,
-                        status: data.status,
-                        person: {
-                            dni: data.person.dni,
-                            firstName: data.person.firstName,
-                            middleName: data.person.middleName || '',
-                            lastName: data.person.lastName,
-                            secondLastName: data.person.secondLastName || '',
-                            email: data.person.email,
-                            birthDate: data.person.birthDate || '',
-                            phone: data.person.phone || ''
-                        }
-                    })
+                        birthDate: data.person.birthDate || '',
+                        phone: data.person.phone || ''
+                    }
                 }
+                
+                if (id) {
+                    await updateUser(id, userData)
+                    toast.success('Usuario actualizado exitosamente')
+                } else {
+                    await addUser(userData)
+                    toast.success('Usuario creado exitosamente')
+                }
+                router.push('/users')
             } catch (error) {
-                console.error(error)
-                toast.error('Error al cargar el usuario')
+                console.error('Error saving user:', error)
+                toast.error('Error al guardar el usuario')
             } finally {
                 setLoading(false)
             }
         }
-
-        loadUser()
-    }, [id, form, getUserById])
-
-    const onSubmit = async (data: UserFormValues) => {
-        try {
-            setLoading(true)
-            
-            // Preparar los datos para enviar a la API
-            const userData = {
-                userName: data.userName,
-                password: data.password,
-                career: data.career,
-                userType: data.userType,
-                status: 'ACTIVE',
-                person: {
-                    dni: data.person.dni,
-                    firstName: data.person.firstName,
-                    middleName: data.person.middleName || '',
-                    lastName: data.person.lastName,
-                    secondLastName: data.person.secondLastName || '',
-                    email: data.person.email,
-                    birthDate: data.person.birthDate || '',
-                    phone: data.person.phone || ''
-                }
-            }
-            
-            if (id) {
-                await updateUser(id, userData)
-                toast.success('Usuario actualizado exitosamente')
-            } else {
-                await addUser(userData)
-                toast.success('Usuario creado exitosamente')
-            }
-            router.push('/users')
-        } catch (error) {
-            console.error('Error saving user:', error)
-            toast.error('Error al guardar el usuario')
-        } finally {
-            setLoading(false)
-        }
     }
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>

@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useUserStore } from '@/features/users/context/user-store';
 import { useRouter } from 'next/navigation';
-import { User } from '@/features/users/interfaces/user.interface';
+import { User, UserFormValues } from '@/features/users/data/interfaces/user.interface';
 import UserForm from '../components/user-form';
-import { UserFormValues } from '@/features/users/interfaces/user.interface';
 import { toast } from 'sonner';
 
 export default function UserFormView({ params }: { params: { id?: string } }) {
@@ -51,7 +50,12 @@ export default function UserFormView({ params }: { params: { id?: string } }) {
 
     return (
         <div className="space-y-6">
-            <UserForm id={isEdit ? params.id : undefined} />
+            <UserForm 
+                initialValues={initialData}
+                onSubmit={handleSubmit}
+                isLoading={loading}
+                id={isEdit ? params.id : undefined}
+            />
         </div>
     );
 }
