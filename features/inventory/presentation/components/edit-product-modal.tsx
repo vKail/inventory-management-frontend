@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { InventoryItem, ProductStatus } from "@/features/inventory/data/interfaces/inventory.interface";
+import { InventoryItem, ProductStatus, ProductCategory, Department } from "@/features/inventory/data/interfaces/inventory.interface";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, X as XIcon } from "lucide-react";
 
@@ -15,7 +15,7 @@ interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: InventoryItem | null;
-  onSave: (updatedProduct: InventoryItem) => void;
+  onSave: (updatedProduct: InventoryItem, originalProduct: InventoryItem) => void;
 }
 
 export const EditProductModal: React.FC<EditProductModalProps> = ({
@@ -25,31 +25,63 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   onSave,
 }) => {
   const emptyProduct: InventoryItem = {
-    id: "",
+    id: 0,
     name: "",
     description: "",
     barcode: "",
-    category: "",
-    department: "",
+    category: ProductCategory.TECHNOLOGY,
+    department: Department.COMPUTING,
     quantity: 0,
     status: ProductStatus.AVAILABLE,
-    imageUrl: "",
-    cost: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    imageUrl: undefined,
+    cost: undefined,
+    createdAt: undefined,
+    updatedAt: undefined,
+    itemTypeId: undefined,
+    normativeType: undefined,
+    origin: undefined,
+    locationId: undefined,
+    custodianId: undefined,
+    availableForLoan: undefined,
+    identifier: undefined,
+    previousCode: undefined,
+    certificateId: undefined,
+    conditionId: undefined,
+    entryOrigin: undefined,
+    entryType: undefined,
+    acquisitionDate: undefined,
+    commitmentNumber: undefined,
+    modelCharacteristics: undefined,
+    brandBreedOther: undefined,
+    identificationSeries: undefined,
+    warrantyDate: undefined,
+    dimensions: undefined,
+    critical: undefined,
+    dangerous: undefined,
+    requiresSpecialHandling: undefined,
+    perishable: undefined,
+    expirationDate: undefined,
+    itemLine: undefined,
+    accountingAccount: undefined,
+    observations: undefined,
+    activeCustodian: undefined,
+    registrationUserId: undefined,
   };
 
   const [formData, setFormData] = useState<InventoryItem>(emptyProduct);
+  const [originalData, setOriginalData] = useState<InventoryItem | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (product) {
       setFormData(product);
+      setOriginalData({ ...product }); // Almacena el estado original
       setIsDirty(false);
       setCopied(false);
     } else {
       setFormData(emptyProduct);
+      setOriginalData(null);
       setIsDirty(false);
       setCopied(false);
     }
@@ -62,8 +94,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     setFormData((prev) => {
       const newData = { ...prev, [key]: value };
       const dirty = Object.keys(newData).some((k) => {
-        // @ts-ignore
-        return newData[k] !== (product ? product[k] : emptyProduct[k]);
+        const originalValue = originalData ? originalData[k as keyof InventoryItem] : emptyProduct[k as keyof InventoryItem];
+        return newData[k as keyof InventoryItem] !== originalValue;
       });
       setIsDirty(dirty);
       return newData;
@@ -88,7 +120,9 @@ Estado: ${formData.status}`.trim();
   };
 
   const handleSave = () => {
-    onSave(formData);
+    if (originalData) {
+      onSave(formData, originalData);
+    }
     setIsDirty(false);
     onClose();
   };
@@ -100,21 +134,23 @@ Estado: ${formData.status}`.trim();
   };
 
   const statusOptions = Object.values(ProductStatus);
+  const categoryOptions = Object.values(ProductCategory);
+  const departmentOptions = Object.values(Department);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-md">
+      <DialogContent
+        className="max-w-md"
+        aria-describedby="edit-product-description"
+      >
         <DialogHeader>
           <DialogTitle>Editar producto</DialogTitle>
         </DialogHeader>
+        <p id="edit-product-description" className="text-sm text-gray-500 mb-4">
+          Edite los detalles del producto a continuación.
+        </p>
 
-        <form
-          className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (isDirty) handleSave();
-          }}
-        >
+        <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1">Nombre</label>
             <input
@@ -150,24 +186,32 @@ Estado: ${formData.status}`.trim();
 
           <div>
             <label className="block text-sm font-medium mb-1">Categoría</label>
-            <input
-              type="text"
+            <select
               className="w-full rounded-md border border-gray-300 px-3 py-2"
               value={formData.category}
-              onChange={(e) => handleChange("category", e.target.value)}
-              placeholder="Categoría"
-            />
+              onChange={(e) => handleChange("category", e.target.value as ProductCategory)}
+            >
+              {categoryOptions.map((categoryOption) => (
+                <option key={categoryOption} value={categoryOption}>
+                  {categoryOption}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Departamento</label>
-            <input
-              type="text"
+            <select
               className="w-full rounded-md border border-gray-300 px-3 py-2"
               value={formData.department}
-              onChange={(e) => handleChange("department", e.target.value)}
-              placeholder="Departamento"
-            />
+              onChange={(e) => handleChange("department", e.target.value as Department)}
+            >
+              {departmentOptions.map((departmentOption) => (
+                <option key={departmentOption} value={departmentOption}>
+                  {departmentOption}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -219,7 +263,8 @@ Estado: ${formData.status}`.trim();
                 {copied ? "Copiado" : "Copiar"}
               </Button>
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSave}
                 disabled={!isDirty}
                 className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white"
               >
@@ -228,7 +273,7 @@ Estado: ${formData.status}`.trim();
               </Button>
             </div>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

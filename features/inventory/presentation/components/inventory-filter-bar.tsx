@@ -1,19 +1,18 @@
-// /features/inventory/components/inventory-filter-bar.tsx
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
-import { InventoryFilters } from '@/features/inventory/data/interfaces/inventory.interface';
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { InventoryFilters } from "@/features/inventory/data/interfaces/inventory.interface";
 
 interface Props {
   onFilterChange: (filters: InventoryFilters) => void;
@@ -22,42 +21,58 @@ interface Props {
 
 export const InventoryFilterBar = ({ onFilterChange, onClear }: Props) => {
   const [filters, setFilters] = useState<InventoryFilters>({
-    search: '',
-    category: '',
-    department: '',
-    state: '',
-    sortBy: 'nameAsc',
+    search: "",
+    category: "",
+    department: "",
+    state: "",
+    sortBy: "nameAsc",
   });
 
   const handleChange = (field: keyof InventoryFilters, value: string) => {
-    const updatedFilters = {
-      ...filters,
-      [field]: value === 'all' ? '' : value,
+    // Solo actualizamos el estado y disparamos onFilterChange para los campos "search" y "sortBy"
+    if (field === "search" || field === "sortBy") {
+      const updatedFilters = {
+        ...filters,
+        [field]: value === "all" ? "" : value,
+      };
+      setFilters(updatedFilters);
+      onFilterChange(updatedFilters);
+    }
+    // No hacemos nada para los campos "category", "department" y "state"
+  };
+
+  const handleClear = () => {
+    const resetFilters = {
+      search: "",
+      category: "",
+      department: "",
+      state: "",
+      sortBy: "nameAsc",
     };
-    setFilters(updatedFilters);
-    onFilterChange(updatedFilters);
+    setFilters(resetFilters);
+    onClear();
   };
 
   return (
     <Card className="w-full">
       <CardContent>
         <div className="flex flex-col md:flex-row items-center gap-3 w-full flex-wrap">
-          {/* Campo de búsqueda */}
+          {/* Campo de búsqueda (funcional) */}
           <div className="relative w-full md:flex-1">
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
             <Input
               type="search"
               placeholder="Buscar producto..."
-              value={filters.search || ''}
-              onChange={e => handleChange('search', e.target.value)}
+              value={filters.search || ""}
+              onChange={(e) => handleChange("search", e.target.value)}
               className="pl-10 h-10"
             />
           </div>
 
-          {/* Selector de categoría */}
+          {/* Selector de categoría (solo visual, sin funcionalidad) */}
           <Select
-            value={filters.category || 'all'}
-            onValueChange={value => handleChange('category', value)}
+            value={filters.category || "all"}
+            onValueChange={(value) => handleChange("category", value)}
           >
             <SelectTrigger className="w-full md:w-40 h-10">
               <SelectValue placeholder="Categoría" />
@@ -71,10 +86,10 @@ export const InventoryFilterBar = ({ onFilterChange, onClear }: Props) => {
             </SelectContent>
           </Select>
 
-          {/* Selector de departamento */}
+          {/* Selector de departamento (solo visual, sin funcionalidad) */}
           <Select
-            value={filters.department || 'all'}
-            onValueChange={value => handleChange('department', value)}
+            value={filters.department || "all"}
+            onValueChange={(value) => handleChange("department", value)}
           >
             <SelectTrigger className="w-full md:w-40 h-10">
               <SelectValue placeholder="Departamento" />
@@ -88,10 +103,10 @@ export const InventoryFilterBar = ({ onFilterChange, onClear }: Props) => {
             </SelectContent>
           </Select>
 
-          {/* Selector de estado */}
+          {/* Selector de estado (solo visual, sin funcionalidad) */}
           <Select
-            value={filters.state || 'all'}
-            onValueChange={value => handleChange('state', value)}
+            value={filters.state || "all"}
+            onValueChange={(value) => handleChange("state", value)}
           >
             <SelectTrigger className="w-full md:w-40 h-10">
               <SelectValue placeholder="Estado" />
@@ -105,10 +120,10 @@ export const InventoryFilterBar = ({ onFilterChange, onClear }: Props) => {
             </SelectContent>
           </Select>
 
-          {/* Selector de orden */}
+          {/* Selector de orden (funcional) */}
           <Select
-            value={filters.sortBy || 'nameAsc'}
-            onValueChange={value => handleChange('sortBy', value)}
+            value={filters.sortBy || "nameAsc"}
+            onValueChange={(value) => handleChange("sortBy", value)}
           >
             <SelectTrigger className="w-full md:w-40 h-10">
               <SelectValue placeholder="Ordenar por" />
@@ -121,15 +136,15 @@ export const InventoryFilterBar = ({ onFilterChange, onClear }: Props) => {
             </SelectContent>
           </Select>
 
-          {/* Botón de filtro avanzado */}
+          {/* Botón de filtro avanzado (visual, sin funcionalidad) */}
           <Button variant="outline" size="icon" className="h-10 w-10">
             <Filter className="h-5 w-5" />
           </Button>
 
-          {/* Botón de limpiar filtros */}
+          {/* Botón de limpiar filtros (funcional) */}
           <Button
             variant="ghost"
-            onClick={onClear}
+            onClick={handleClear}
             className="text-xs hover:text-primary flex items-center gap-1 whitespace-nowrap"
           >
             <SlidersHorizontal className="h-4 w-4" />
