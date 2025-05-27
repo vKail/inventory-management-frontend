@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { User } from '@/features/users/data/interfaces/user.interface';
 import { useUserStore } from '@/features/users/context/user-store';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,9 +39,10 @@ interface UserTableProps {
 }
 
 export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
+  // Using props instead of local state for pagination
   const router = useRouter();
   const { users, loading, getUsers, deleteUser } = useUserStore();
-  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -130,16 +132,16 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
               users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.userName}</TableCell>
-                  <TableCell>{`${user.person.firstName} ${user.person.lastName}`}</TableCell>
-                  <TableCell>{user.person.email}</TableCell>
+                  <TableCell>{user.person ? `${user.person.firstName} ${user.person.lastName}` : '-'}</TableCell>
+                  <TableCell>{user.person ? user.person.email : '-'}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
                       {user.userType}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.active ? "default" : "outline"}>
-                      {user.active ? "Activo" : "Inactivo"}
+                    <Badge variant={user.status === 'ACTIVE' ? "default" : "destructive"}>
+                      {user.status === 'ACTIVE' ? "Activo" : "Inactivo"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -147,7 +149,8 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleEdit(user.id)}
+                        className="h-8 w-8"
+                        onClick={() => router.push(`/users/edit/${user.id}`)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -156,7 +159,7 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setUserToDelete(user.id)}
+                            onClick={() => setUserToDelete(user.id.toString())}
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>

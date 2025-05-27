@@ -2,6 +2,6 @@
 
 import UserFormView from '@/features/users/presentation/views/user-form-view';
 
-export default function NewUserPage() {
-  return <UserFormView params={{ id: 'new' }} />;
+export default function EditUserPage() {
+  return <UserFormView params={{ id: 'edit' }} />;
 }

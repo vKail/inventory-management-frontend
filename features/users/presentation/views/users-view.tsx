@@ -1,12 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { UserService } from '../../services/user.service'
-import { UserTable } from '../components/user-table'
-import { UserPagination } from '../components/user-pagination'
+import { useState } from 'react'
 import { Users } from 'lucide-react'
-import { useUserStore } from '../../context/user-store'
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -14,65 +9,38 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { toast } from 'sonner'
+import { UserTable } from '../components/user-table'
 
 export default function UsersView() {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const itemsPerPage = 10
-  const { getUsers } = useUserStore()
-
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const response = await getUsers(currentPage, itemsPerPage)
-        if (response) {
-          setTotalPages(response.pages)
-        }
-      } catch (error) {
-        console.error('Error loading users:', error)
-        toast.error('Error al cargar los usuarios')
-      }
-    }
-    loadUsers()
-  }, [currentPage, getUsers, itemsPerPage])
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <div className="mb-6">
-        <Breadcrumb className="mb-4">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <span className="text-muted-foreground font-medium">
-                Administración
-              </span>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <Users className="inline mr-1 h-4 w-4 text-primary align-middle" />
-              <BreadcrumbPage>Usuarios</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+    <div className="flex-1 space-y-4 p-8 pt-6 overflow-hidden">
+      {/* Breadcrumbs y título */}
+      <div className="flex items-center justify-between space-y-2">
+        <div>
+          <Breadcrumb className="mb-6">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <span className="text-muted-foreground font-medium">Administración</span>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <Users className="inline mr-1 h-4 w-4 text-blue-600 align-middle" />
+                <BreadcrumbPage>Usuarios</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          <h2 className="text-2xl font-bold tracking-tight">Lista de Usuarios</h2>
+          <p className="text-muted-foreground">Todos los usuarios registrados en el sistema</p>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <UserTable
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-        />
-        {totalPages > 1 && (
-          <UserPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        )}
-      </div>
+      <UserTable 
+        currentPage={currentPage}
+        itemsPerPage={itemsPerPage}
+      />
     </div>
   )
 }

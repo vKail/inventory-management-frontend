@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { userSchema, UserFormValues } from '../../data/schemas/user-schema'
-import { UserRole } from '../../data/enums/user-roles.enums'
+import { User, UserFormValues, UserRole } from '@/features/users/data/interfaces/user.interface'
+import { createUserSchema } from '@/features/users/data/schemas'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
@@ -24,15 +24,26 @@ export default function UserForm({ id }: UserFormProps) {
     const { getUserById, addUser, updateUser } = useUserStore()
 
     const form = useForm<UserFormValues>({
-        resolver: zodResolver(userSchema),
+        resolver: zodResolver(createUserSchema),
         defaultValues: {
-            userName: '',
-            career: 'FISEI',
+            name: '',
+            email: '',
+            role: 'user',
+            password: '',
             person: {
+                dni: '',
                 firstName: '',
+                middleName: '',
                 lastName: '',
+                secondLastName: '',
                 email: '',
+                birthDate: '',
+                phone: ''
             },
+            career: null,
+            userType: 'ADMINISTRATOR',
+            userName: '',
+            status: 'ACTIVE'
         },
     })
 
@@ -42,23 +53,31 @@ export default function UserForm({ id }: UserFormProps) {
         const loadUser = async () => {
             try {
                 setLoading(true)
-                const data = await getUserById(parseInt(id))
+                const data = await getUserById(id)
                 if (data) {
                     form.reset({
-                        userName: data.userName,
-                        ...(data.password ? { password: data.password } : {}),
+                        name: data.person.firstName + ' ' + data.person.lastName,
+                        email: data.person.email,
+                        role: data.role || 'user',
+                        password: data.password || '',
                         career: data.career,
-                        userType: data.userType as UserRole,
+                        userType: data.userType,
+                        userName: data.userName,
+                        status: data.status,
                         person: {
                             dni: data.person.dni,
                             firstName: data.person.firstName,
+                            middleName: data.person.middleName || '',
                             lastName: data.person.lastName,
+                            secondLastName: data.person.secondLastName || '',
                             email: data.person.email,
-                        },
+                            birthDate: data.person.birthDate || '',
+                            phone: data.person.phone || ''
+                        }
                     })
                 }
             } catch (error) {
-                console.error('Error fetching user:', error)
+                console.error(error)
                 toast.error('Error al cargar el usuario')
             } finally {
                 setLoading(false)
@@ -69,39 +88,35 @@ export default function UserForm({ id }: UserFormProps) {
     }, [id, form, getUserById])
 
     const onSubmit = async (data: UserFormValues) => {
-        setLoading(true)
         try {
+            setLoading(true)
+            
+            // Preparar los datos para enviar a la API
+            const userData = {
+                userName: data.userName,
+                password: data.password,
+                career: data.career,
+                userType: data.userType,
+                status: 'ACTIVE',
+                person: {
+                    dni: data.person.dni,
+                    firstName: data.person.firstName,
+                    middleName: data.person.middleName || '',
+                    lastName: data.person.lastName,
+                    secondLastName: data.person.secondLastName || '',
+                    email: data.person.email,
+                    birthDate: data.person.birthDate || '',
+                    phone: data.person.phone || ''
+                }
+            }
+            
             if (id) {
-                await updateUser(parseInt(id), {
-                    userName: data.userName,
-                    career: data.career,
-                    userType: data.userType,
-                    person: {
-                        dni: data.person.dni,
-                        firstName: data.person.firstName,
-                        lastName: data.person.lastName,
-                        email: data.person.email,
-                    },
-                    ...(data.password ? { password: data.password } : {}),
-                })
+                await updateUser(id, userData)
                 toast.success('Usuario actualizado exitosamente')
             } else {
-                await addUser({
-                    userName: data.userName,
-                    career: data.career,
-                    userType: data.userType,
-                    password: data.password,
-                    status: 'ACTIVE',
-                    person: {
-                        dni: data.person.dni,
-                        firstName: data.person.firstName,
-                        lastName: data.person.lastName,
-                        email: data.person.email,
-                    },
-                })
+                await addUser(userData)
                 toast.success('Usuario creado exitosamente')
             }
-
             router.push('/users')
         } catch (error) {
             console.error('Error saving user:', error)

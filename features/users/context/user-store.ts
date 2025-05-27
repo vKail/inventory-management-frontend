@@ -1,17 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { IUser, PaginatedResponse } from '../data/interfaces/user.interface';
+import { User, PaginatedResponse } from '../data/interfaces/user.interface';
 import { UserService } from '../services/user.service';
 
 interface UserStore {
-    users: IUser[];
+    users: User[];
     loading: boolean;
     error: string | null;
-    getUsers: (page?: number, limit?: number) => Promise<PaginatedResponse<IUser>>;
-    getUserById: (userId: number) => Promise<IUser | undefined>;
-    addUser: (user: Partial<IUser>) => Promise<void>;
-    updateUser: (userId: number, user: Partial<IUser>) => Promise<void>;
-    deleteUser: (userId: number) => Promise<void>;
+    getUsers: (page?: number, limit?: number) => Promise<PaginatedResponse>;
+    getUserById: (userId: string) => Promise<User | undefined>;
+    addUser: (user: Partial<User>) => Promise<void>;
+    updateUser: (userId: string, user: Partial<User>) => Promise<void>;
+    deleteUser: (userId: string) => Promise<void>;
 }
 
 const STORE_NAME = 'user-storage';
@@ -49,7 +49,7 @@ export const useUserStore = create<UserStore>()(
                 }
             },
 
-            getUserById: async (userId: number) => {
+            getUserById: async (userId: string) => {
                 try {
                     return await UserService.getInstance().getUserById(userId);
                 } catch {
@@ -58,7 +58,7 @@ export const useUserStore = create<UserStore>()(
                 }
             },
 
-            addUser: async (user: Partial<IUser>) => {
+            addUser: async (user: Partial<User>) => {
                 try {
                     set({ loading: true, error: null });
                     await UserService.getInstance().createUser(user);
@@ -74,7 +74,7 @@ export const useUserStore = create<UserStore>()(
                 }
             },
 
-            updateUser: async (id: number, user: Partial<IUser>) => {
+            updateUser: async (id: string, user: Partial<User>) => {
                 try {
                     set({ loading: true, error: null });
                     await UserService.getInstance().updateUser(id, user);
@@ -90,11 +90,11 @@ export const useUserStore = create<UserStore>()(
                 }
             },
 
-            deleteUser: async (userId: number) => {
+            deleteUser: async (userId: string) => {
                 try {
                     set({ loading: true, error: null });
                     await UserService.getInstance().deleteUser(userId);
-                    const newUsers = get().users.filter(u => u.id !== userId);
+                    const newUsers = get().users.filter(u => u.id !== Number(userId));
                     set({ users: newUsers, loading: false });
                 } catch (error) {
                     console.error('Error deleting user:', error);
