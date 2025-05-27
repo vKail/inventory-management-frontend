@@ -1,39 +1,35 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, UserFormValues, UserRole } from '@/features/users/data/interfaces/user.interface'
-import { createUserSchema } from '@/features/users/data/schemas'
+import { User } from '@/features/users/data/interfaces/user.interface'
+import { userSchema, UserFormValues, UserRole, UserStatus } from '@/features/users/data/schemas/user.schema'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useUserStore } from '../../context/user-store'
 
 interface UserFormProps {
-    id?: string;
-    initialValues?: User;
-    onSubmit?: (data: UserFormValues) => Promise<void>;
-    isLoading?: boolean;
+    initialData?: User;
+    onSubmit: (data: UserFormValues) => Promise<void>;
+    isLoading: boolean;
 }
 
-export default function UserForm({ id, initialValues, onSubmit: externalSubmit, isLoading: externalLoading }: UserFormProps) {
+export default function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
     const router = useRouter()
-    const [loading, setLoading] = useState(false)
-    const isLoading = externalLoading || loading
-    const { getUserById, addUser, updateUser } = useUserStore()
+    const isEdit = !!initialData
 
     const form = useForm<UserFormValues>({
-        resolver: zodResolver(createUserSchema),
+        resolver: zodResolver(userSchema) as any,
         defaultValues: {
-            name: '',
-            email: '',
-            role: 'user',
+            userName: '',
             password: '',
+            career: 'FISEI',
+            userType: UserRole.ADMINISTRATOR,
+            status: UserStatus.ACTIVE,
             person: {
                 dni: '',
                 firstName: '',
@@ -43,126 +39,40 @@ export default function UserForm({ id, initialValues, onSubmit: externalSubmit, 
                 email: '',
                 birthDate: '',
                 phone: ''
-            },
-            career: null,
-            userType: 'ADMINISTRATOR',
-            userName: '',
-            status: 'ACTIVE'
+            }
         },
     })
 
     useEffect(() => {
-        if (initialValues) {
+        if (initialData) {
             form.reset({
-                name: initialValues.person.firstName + ' ' + initialValues.person.lastName,
-                email: initialValues.person.email,
-                role: initialValues.role || 'user',
-                password: initialValues.password || '',
-                career: initialValues.career,
-                userType: initialValues.userType,
-                userName: initialValues.userName,
-                status: initialValues.status,
+                userName: initialData.userName,
+                password: '', // Don't populate password for security
+                career: initialData.career || 'FISEI',
+                userType: initialData.userType as UserRole,
+                status: initialData.status as UserStatus,
                 person: {
-                    dni: initialValues.person.dni,
-                    firstName: initialValues.person.firstName,
-                    middleName: initialValues.person.middleName || '',
-                    lastName: initialValues.person.lastName,
-                    secondLastName: initialValues.person.secondLastName || '',
-                    email: initialValues.person.email,
-                    birthDate: initialValues.person.birthDate || '',
-                    phone: initialValues.person.phone || ''
+                    dni: initialData.person?.dni || '',
+                    firstName: initialData.person?.firstName || '',
+                    middleName: initialData.person?.middleName || '',
+                    lastName: initialData.person?.lastName || '',
+                    secondLastName: initialData.person?.secondLastName || '',
+                    email: initialData.person?.email || '',
+                    birthDate: initialData.person?.birthDate || '',
+                    phone: initialData.person?.phone || ''
                 }
             })
-        } else if (id && !initialValues) {
-            // If we have an ID but no initialValues, load the user data
-            const loadUser = async () => {
-                try {
-                    setLoading(true)
-                    const data = await getUserById(id)
-                    if (data) {
-                        form.reset({
-                            name: data.person.firstName + ' ' + data.person.lastName,
-                            email: data.person.email,
-                            role: data.role || 'user',
-                            password: data.password || '',
-                            career: data.career,
-                            userType: data.userType,
-                            userName: data.userName,
-                            status: data.status,
-                            person: {
-                                dni: data.person.dni,
-                                firstName: data.person.firstName,
-                                middleName: data.person.middleName || '',
-                                lastName: data.person.lastName,
-                                secondLastName: data.person.secondLastName || '',
-                                email: data.person.email,
-                                birthDate: data.person.birthDate || '',
-                                phone: data.person.phone || ''
-                            }
-                        })
-                    }
-                } catch (error) {
-                    console.error(error)
-                    toast.error('Error al cargar el usuario')
-                } finally {
-                    setLoading(false)
-                }
-            }
-
-            loadUser()
         }
-    }, [id, initialValues, form, getUserById])
+    }, [initialData, form])
 
-    const onSubmit = async (data: UserFormValues) => {
-        if (externalSubmit) {
-            // Use the external submit handler if provided
-            await externalSubmit(data)
-        } else {
-            try {
-                setLoading(true)
-                
-                // Preparar los datos para enviar a la API
-                const userData = {
-                    userName: data.userName,
-                    password: data.password,
-                    career: data.career,
-                    userType: data.userType,
-                    status: 'ACTIVE',
-                    person: {
-                        dni: data.person.dni,
-                        firstName: data.person.firstName,
-                        middleName: data.person.middleName || '',
-                        lastName: data.person.lastName,
-                        secondLastName: data.person.secondLastName || '',
-                        email: data.person.email,
-                        birthDate: data.person.birthDate || '',
-                        phone: data.person.phone || ''
-                    }
-                }
-                
-                if (id) {
-                    await updateUser(id, userData)
-                    toast.success('Usuario actualizado exitosamente')
-                } else {
-                    await addUser(userData)
-                    toast.success('Usuario creado exitosamente')
-                }
-                router.push('/users')
-            } catch (error) {
-                console.error('Error saving user:', error)
-                toast.error('Error al guardar el usuario')
-            } finally {
-                setLoading(false)
-            }
+    const handleSubmit = async (data: UserFormValues) => {
+        try {
+            console.log('Form data being submitted:', data);
+            await onSubmit(data);
+            console.log('Form submission successful');
+        } catch (error) {
+            console.error('Error submitting form:', error);
         }
-    }
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            </div>
-        )
     }
 
     return (
@@ -170,147 +80,139 @@ export default function UserForm({ id, initialValues, onSubmit: externalSubmit, 
             <div className="w-full max-w-[1200px]">
                 <Card>
                     <CardHeader>
-                        <CardTitle>{id ? 'Editar Usuario' : 'Nuevo Usuario'}</CardTitle>
+                        <CardTitle>{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</CardTitle>
                         <CardDescription>
-                            {id ? 'Actualiza la información del usuario' : 'Completa el formulario para crear un nuevo usuario'}
+                            {isEdit ? 'Actualiza la información del usuario' : 'Completa el formulario para crear un nuevo usuario'}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="person.dni"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>DNI</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="DNI" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="userName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Usuario</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Nombre de usuario" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="career"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Facultad</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        placeholder="Facultad"
-                                                        value="FISEI"
-                                                        disabled
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="userType"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Tipo de Usuario</FormLabel>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    defaultValue={field.value}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Selecciona un tipo" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {Object.values(UserRole).map((role) => (
-                                                            <SelectItem key={role} value={role}>
-                                                                {role}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="person.firstName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Nombre</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Nombre" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="person.lastName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Apellido</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Apellido" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="person.email"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Email</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="email"
-                                                        placeholder="correo@ejemplo.com"
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {!id && (
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                form.handleSubmit(handleSubmit)(e);
+                            }} className="space-y-8">
+                                {/* Sección: Información de Usuario */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium border-b pb-2">Información de Usuario</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <FormField
                                             control={form.control}
-                                            name="password"
+                                            name="userName"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Contraseña</FormLabel>
+                                                    <FormLabel>Usuario</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Nombre de usuario" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        {!isEdit && (
+                                            <FormField
+                                                control={form.control}
+                                                name="password"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Contraseña</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="password"
+                                                                placeholder="Contraseña"
+                                                                {...field}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
+
+                                        <FormField
+                                            control={form.control}
+                                            name="userType"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Tipo de Usuario</FormLabel>
+                                                    <Select
+                                                        onValueChange={(value) => field.onChange(value as UserRole)}
+                                                        defaultValue={field.value}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Selecciona un tipo" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value={UserRole.ADMINISTRATOR}>
+                                                                Administrador
+                                                            </SelectItem>
+                                                            <SelectItem value={UserRole.TEACHER}>
+                                                                Profesor
+                                                            </SelectItem>
+                                                            <SelectItem value={UserRole.STUDENT}>
+                                                                Estudiante
+                                                            </SelectItem>
+                                                            <SelectItem value={UserRole.MANAGER}>
+                                                                Gestor
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="career"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Facultad</FormLabel>
                                                     <FormControl>
                                                         <Input
-                                                            type="password"
-                                                            placeholder="Contraseña"
+                                                            {...field}
+                                                            placeholder="Facultad"
+                                                            value="FISEI"
+                                                            disabled
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Sección: Información Personal */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium border-b pb-2">Información Personal</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <FormField
+                                            control={form.control}
+                                            name="person.dni"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>DNI</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="DNI" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="person.email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Email</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="email"
+                                                            placeholder="correo@ejemplo.com"
                                                             {...field}
                                                         />
                                                     </FormControl>
@@ -318,26 +220,118 @@ export default function UserForm({ id, initialValues, onSubmit: externalSubmit, 
                                                 </FormItem>
                                             )}
                                         />
-                                    )}
+
+                                        <FormField
+                                            control={form.control}
+                                            name="person.firstName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Nombre</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Nombre" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="person.lastName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Apellido</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Apellido" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="person.middleName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Segundo Nombre (Opcional)</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Segundo Nombre" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="person.secondLastName"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Segundo Apellido (Opcional)</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Segundo Apellido" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="person.phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Teléfono (Opcional)</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Teléfono" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="person.birthDate"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Fecha de Nacimiento (Opcional)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="date" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div className="flex justify-end gap-4">
+                                <div className="flex justify-end gap-4 pt-4">
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={() => router.push('/users')}
-                                        disabled={loading}
+                                        disabled={isLoading}
                                     >
                                         Cancelar
                                     </Button>
-                                    <Button type="submit" disabled={loading}>
-                                        {loading ? (
+                                    <Button 
+                                        type="button" 
+                                        disabled={isLoading}
+                                        onClick={() => {
+                                            const formData = form.getValues();
+                                            console.log('Manual submit with data:', formData);
+                                            handleSubmit(formData);
+                                        }}
+                                    >
+                                        {isLoading ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                {id ? 'Actualizando...' : 'Creando...'}
+                                                {isEdit ? 'Actualizando...' : 'Creando...'}
                                             </>
                                         ) : (
-                                            id ? 'Actualizar' : 'Crear'
+                                            isEdit ? 'Actualizar' : 'Crear'
                                         )}
                                     </Button>
                                 </div>

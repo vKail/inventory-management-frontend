@@ -1,5 +1,5 @@
-import UsersView from '@/features/users/presentation/views/users-view';
+import UserView from '@/features/users/presentation/views/user-view';
 
 export default function UsersPage() {
-    return <UsersView />;
+    return <UserView />;
 }

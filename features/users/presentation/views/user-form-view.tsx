@@ -7,9 +7,9 @@ import { User, UserFormValues } from '@/features/users/data/interfaces/user.inte
 import UserForm from '../components/user-form';
 import { toast } from 'sonner';
 
-export default function UserFormView({ params }: { params: { id?: string } }) {
+export default function UserFormView({ params }: { params?: { id?: string } }) {
     const router = useRouter();
-    const isEdit = params.id !== undefined && params.id !== 'new';
+    const isEdit = params?.id !== undefined && params?.id !== 'new';
 
     const {
         getUserById,
@@ -22,7 +22,7 @@ export default function UserFormView({ params }: { params: { id?: string } }) {
 
     useEffect(() => {
         const loadData = async () => {
-            if (isEdit && params.id) {
+            if (isEdit && params?.id) {
                 const userData = await getUserById(params.id);
                 if (userData) {
                     setInitialData(userData);
@@ -30,15 +30,41 @@ export default function UserFormView({ params }: { params: { id?: string } }) {
             }
         };
         loadData();
-    }, [isEdit, params.id, getUserById]);
+    }, [isEdit, params?.id, getUserById]);
 
     const handleSubmit = async (data: UserFormValues) => {
         try {
-            if (isEdit && params.id) {
-                await updateUser(params.id, data);
+            console.log('UserFormView received data:', data);
+            console.log('Is edit mode:', isEdit, 'with ID:', params?.id);
+            
+            // Preparar los datos para enviar a la API
+            const userData = {
+                userName: data.userName,
+                password: data.password,
+                career: data.career || 'FISEI',
+                userType: data.userType,
+                status: data.status || 'ACTIVE',
+                person: {
+                    dni: data.person.dni,
+                    firstName: data.person.firstName,
+                    middleName: data.person.middleName || '',
+                    lastName: data.person.lastName,
+                    secondLastName: data.person.secondLastName || '',
+                    email: data.person.email,
+                    birthDate: data.person.birthDate || '',
+                    phone: data.person.phone || ''
+                }
+            };
+            
+            console.log('Formatted userData to send:', userData);
+            
+            if (isEdit && params?.id) {
+                console.log('Updating user with ID:', params.id);
+                await updateUser(params.id, userData);
                 toast.success('Usuario actualizado exitosamente');
             } else {
-                await addUser(data);
+                console.log('Creating new user');
+                await addUser(userData);
                 toast.success('Usuario creado exitosamente');
             }
             router.push('/users');
@@ -50,11 +76,10 @@ export default function UserFormView({ params }: { params: { id?: string } }) {
 
     return (
         <div className="space-y-6">
-            <UserForm 
-                initialValues={initialData}
+            <UserForm
+                initialData={initialData}
                 onSubmit={handleSubmit}
                 isLoading={loading}
-                id={isEdit ? params.id : undefined}
             />
         </div>
     );

@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { User } from '@/features/users/data/interfaces/user.interface';
 import { useUserStore } from '@/features/users/context/user-store';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,14 +31,51 @@ import {
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
+import { UserRole, UserStatus } from '../../data/schemas/user.schema';
 
 interface UserTableProps {
   currentPage: number;
   itemsPerPage: number;
 }
 
+const getUserTypeLabel = (type: string) => {
+  switch (type) {
+    case UserRole.ADMINISTRATOR:
+      return 'Administrador';
+    case UserRole.TEACHER:
+      return 'Profesor';
+    case UserRole.STUDENT:
+      return 'Estudiante';
+    case UserRole.MANAGER:
+      return 'Gestor';
+    default:
+      return type;
+  }
+};
+
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case UserStatus.ACTIVE:
+      return 'default';
+    case UserStatus.INACTIVE:
+      return 'outline';
+    default:
+      return 'outline';
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case UserStatus.ACTIVE:
+      return 'Activo';
+    case UserStatus.INACTIVE:
+      return 'Inactivo';
+    default:
+      return status;
+  }
+};
+
 export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
-  // Using props instead of local state for pagination
   const router = useRouter();
   const { users, loading, getUsers, deleteUser } = useUserStore();
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -70,9 +106,25 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
     }
   };
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     router.push(`/users/edit/${id}`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (users.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No hay usuarios para mostrar</p>
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -96,97 +148,72 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Usuario</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Correo</TableHead>
+              <TableHead>Nombre Completo</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">
-                  <div className="flex items-center justify-center">
-                    Cargando...
-                  </div>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{user.userName}</TableCell>
+                <TableCell>
+                  {`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim() || 'N/A'}
                 </TableCell>
-              </TableRow>
-            ) : users.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <p className="mb-2">No hay usuarios para mostrar</p>
+                <TableCell>{user.person?.email || 'N/A'}</TableCell>
+                <TableCell>
+                  <Badge variant="secondary">
+                    {getUserTypeLabel(user.userType)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={getStatusVariant(user.status)}>
+                    {getStatusLabel(user.status)}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
                     <Button
-                      onClick={() => router.push('/users/new')}
                       variant="outline"
-                      size="sm"
+                      size="icon"
+                      onClick={() => handleEdit(user.id)}
                     >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Crear primer usuario
+                      <Pencil className="h-4 w-4" />
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setUserToDelete(user.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
+                            <span className="font-semibold"> {user.userName}</span> y todos sus datos asociados.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setUserToDelete(null)}>
+                            Cancelar
+                          </AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDelete}>
+                            Eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.userName}</TableCell>
-                  <TableCell>{user.person ? `${user.person.firstName} ${user.person.lastName}` : '-'}</TableCell>
-                  <TableCell>{user.person ? user.person.email : '-'}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {user.userType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === 'ACTIVE' ? "default" : "destructive"}>
-                      {user.status === 'ACTIVE' ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => router.push(`/users/edit/${user.id}`)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setUserToDelete(user.id.toString())}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
-                              <span className="font-semibold"> {user.userName}</span>.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setUserToDelete(null)}>
-                              Cancelar
-                            </AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete}>
-                              Eliminar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </CardContent>

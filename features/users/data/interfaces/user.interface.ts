@@ -1,8 +1,7 @@
-export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-  ADMINISTRATOR = 'ADMINISTRATOR'
-}
+import { UserRole, UserStatus, UserFormValues } from '../schemas/user.schema';
+
+export type { UserFormValues };
+export { UserRole, UserStatus };
 
 export interface Person {
   dni: string;
@@ -28,26 +27,7 @@ export interface User {
   updatedAt?: string;
 }
 
-export interface UserFormValues {
-  name: string;
-  email: string;
-  role: string;
-  password: string;
-  person: {
-    dni: string;
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    secondLastName?: string;
-    email: string;
-    birthDate?: string;
-    phone?: string;
-  };
-  career: string | null;
-  userType: string;
-  userName: string;
-  status?: string;
-}
+// UserFormValues is now imported from the schema file
 
 export interface PaginatedResponse {
   limit: number;
