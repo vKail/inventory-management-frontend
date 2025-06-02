@@ -73,20 +73,18 @@ export default function WarehouseTable({
                   <TableCell>
                     <div className="flex justify-center gap-2">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => router.push(`/warehouses/edit/${warehouse.id}`)}
                       >
                         <Pencil className="mr-1 h-4 w-4" />
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-red-600 text-red-600 hover:bg-red-50"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => onDelete(warehouse.id)}
                       >
-                        <Trash2 className="mr-1 h-4 w-4" />
+                        <Trash2 className="h-4 w-4 text-red-600" />
                       </Button>
                     </div>
                   </TableCell>

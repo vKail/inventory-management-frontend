@@ -210,7 +210,7 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleEdit(location.id)}
                         >
@@ -219,11 +219,11 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="icon"
                               onClick={() => setLocationToDelete(location.id)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>

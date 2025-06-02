@@ -125,7 +125,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
                       onClick={() => handleEdit(state.id)}
                       >

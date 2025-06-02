@@ -1,116 +1,98 @@
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+"use client";
 
-interface UserPaginationProps {
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+interface StatePaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
 }
 
-export function UserPagination({ currentPage, totalPages, onPageChange }: UserPaginationProps) {
-  if (totalPages <= 1) return null;
+// Función para calcular qué páginas mostrar
+function getPageNumbers(current: number, total: number): (number | string)[] {
+  const delta = 2;
+  const pages: (number | string)[] = [];
 
-  const getVisiblePages = () => {
-    const pages = [];
-    const maxVisible = 5;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      let start = Math.max(1, currentPage - 2);
-      let end = Math.min(totalPages, currentPage + 2);
-      
-      if (currentPage <= 3) {
-        end = maxVisible;
-      }
-      
-      if (currentPage >= totalPages - 2) {
-        start = totalPages - maxVisible + 1;
-      }
-      
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) {
+      pages.push(i);
     }
-    
-    return pages;
-  };
+  } else {
+    pages.push(1);
 
-  const visiblePages = getVisiblePages();
+    if (current > delta + 2) {
+      pages.push("...");
+    }
+
+    const start = Math.max(2, current - delta);
+    const end = Math.min(total - 1, current + delta);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (current < total - delta - 1) {
+      pages.push("...");
+    }
+
+    pages.push(total);
+  }
+
+  return pages;
+}
+
+export function UserPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: StatePaginationProps) {
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="flex items-center justify-between px-2">
-      <div className="flex-1 text-sm text-muted-foreground">
-        Página {currentPage} de {totalPages}
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
-          className="h-8 w-8 p-0"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        {visiblePages[0] > 1 && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(1)}
-              className="h-8 w-8 p-0"
-            >
-              1
-            </Button>
-            {visiblePages[0] > 2 && (
-              <span className="text-muted-foreground">...</span>
-            )}
-          </>
-        )}
-        
-        {visiblePages.map((page) => (
+    <div className="flex items-center justify-center space-x-2">
+      {/* Botón página anterior */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 p-0"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage <= 1}
+      >
+        <span className="sr-only">Página anterior</span>
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+
+      {/* Botones de página */}
+      {pageNumbers.map((page, idx) =>
+        typeof page === "number" ? (
           <Button
-            key={page}
-            variant={currentPage === page ? "default" : "outline"}
-            size="sm"
-            onClick={() => onPageChange(page)}
+            key={idx}
+            variant={page === currentPage ? "default" : "ghost"}
+            size="icon"
             className="h-8 w-8 p-0"
+            onClick={() => onPageChange(page)}
           >
             {page}
           </Button>
-        ))}
-        
-        {visiblePages[visiblePages.length - 1] < totalPages && (
-          <>
-            {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
-              <span className="text-muted-foreground">...</span>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(totalPages)}
-              className="h-8 w-8 p-0"
-            >
-              {totalPages}
-            </Button>
-          </>
-        )}
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-          className="h-8 w-8 p-0"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
+        ) : (
+          <span key={idx} className="px-2 text-sm text-muted-foreground">
+            {page}
+          </span>
+        )
+      )}
+
+      {/* Botón página siguiente */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 p-0"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage >= totalPages}
+      >
+        <span className="sr-only">Página siguiente</span>
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 }
