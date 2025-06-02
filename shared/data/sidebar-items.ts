@@ -180,25 +180,25 @@ export const sidebarItems = [
           },
         ],
       },
-      {
-        title: 'Almacenes',
-        icon: Warehouse,
-        roles: [UserRole.ADMIN, UserRole.TEACHER],
-        subItems: [
-          {
-            title: 'Listar',
-            icon: List,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/warehouses',
-          },
-          {
-            title: 'Nuevo almacén',
-            icon: CirclePlus,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/warehouses/new',
-          },
-        ],
-      },
+      // {
+      //   title: 'Almacenes',
+      //   icon: Warehouse,
+      //   roles: [UserRole.ADMIN, UserRole.TEACHER],
+      //   subItems: [
+      //     {
+      //       title: 'Listar',
+      //       icon: List,
+      //       roles: [UserRole.ADMIN, UserRole.TEACHER],
+      //       href: '/warehouses',
+      //     },
+      //     {
+      //       title: 'Nuevo almacén',
+      //       icon: CirclePlus,
+      //       roles: [UserRole.ADMIN, UserRole.TEACHER],
+      //       href: '/warehouses/new',
+      //     },
+      //   ],
+      // },
       {
         title: 'Materiales',
         icon: Package,

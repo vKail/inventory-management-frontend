@@ -1,38 +1,39 @@
 export interface ILocation {
-    id: number;
-    name: string;
-    description: string;
-    warehouseId: number;
-    parentLocationId: number | null;
-    type: string;
-    building: string;
-    floor: string;
-    reference: string;
-    capacity: number;
-    capacityUnit: string;
-    occupancy: number;
-    qrCode: string;
-    coordinates: string;
-    notes: string;
+  id?: number;
+  name: string;
+  description: string;
+  parentLocationId?: number | null;
+  type: 'WAREHOUSE' | 'BUILDING' | 'FLOOR' | 'OFFICE' | 'SHELF' | 'LABORATORY';
+  floor: string;
+  reference: string;
+  capacity: number;
+  capacityUnit: 'UNITS' | 'METERS' | 'SQUARE_METERS';
+  occupancy: number;
+  qrCode: string;
+  coordinates: string;
+  notes: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-export interface PaginatedResponse<T> {
-    records: T[];
-    total: number;
-    limit: number;
-    page: number;
-    pages: number;
+export interface PaginatedLocations {
+  records: ILocation[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
-export interface ApiResponse<T> {
-    success: boolean;
-    message: {
-        content: string[];
-    };
-    data: T;
-}
+export const LocationTypeLabels: Record<ILocation['type'], string> = {
+  WAREHOUSE: 'almacén',
+  BUILDING: 'edificio',
+  FLOOR: 'piso',
+  OFFICE: 'oficina',
+  SHELF: 'estante',
+  LABORATORY: 'laboratorio'
+};
 
-export type PaginatedLocations = PaginatedResponse<ILocation>;
-
-export interface CreateLocationDTO extends Omit<ILocation, 'id'> { }
-export interface UpdateLocationDTO extends Partial<CreateLocationDTO> { } 
+export const CapacityUnitLabels: Record<ILocation['capacityUnit'], string> = {
+  UNITS: 'unidades (u)',
+  METERS: 'metros (m)',
+  SQUARE_METERS: 'metros cuadrados (m²)'
+};

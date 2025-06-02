@@ -28,27 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { locationSchema, LocationFormValues } from '../../data/schemas/location.schema'
-import { ILocation } from '../../data/interfaces/location.interface'
+import { locationSchema, LocationFormValues } from '../../schemas/location.schema'
+import { ILocation, LocationTypeLabels, CapacityUnitLabels } from '../../data/interfaces/location.interface'
 import { useEffect } from "react"
 import { useLocationStore } from "../../context/location-store"
-import { useWarehouseStore } from "@/features/warehouses/context/warehouse-store"
-
-// Enums for location types and capacity units
-const LocationTypes = {
-  BUILDING: "BUILDING",
-  FLOOR: "FLOOR",
-  OFFICE: "OFFICE",
-  WAREHOUSE: "WAREHOUSE",
-  SHELF: "SHELF",
-  LABORATORY: "LABORATORY",
-} as const;
-
-const CapacityUnits = {
-  UNITS: "UNITS",
-  METERS: "METERS",
-  SQUARE_METERS: "SQUARE_METERS",
-} as const;
 
 interface LocationFormProps {
   initialData?: ILocation
@@ -59,21 +42,18 @@ interface LocationFormProps {
 export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormProps) {
   const router = useRouter()
   const { locations, getLocations } = useLocationStore()
-  const { warehouses, getWarehouses } = useWarehouseStore()
 
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema),
     defaultValues: {
       name: "",
       description: "",
-      warehouseId: 0,
       parentLocationId: null,
-      type: "BUILDING" as const,
-      building: "",
+      type: "BUILDING",
       floor: "",
       reference: "",
       capacity: 0,
-      capacityUnit: "UNITS" as const,
+      capacityUnit: "UNITS",
       occupancy: 0,
       qrCode: "",
       coordinates: "",
@@ -83,27 +63,22 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
 
   useEffect(() => {
     const loadData = async () => {
-      await Promise.all([
-        getLocations(),
-        getWarehouses()
-      ])
+      await getLocations()
     }
     loadData()
-  }, [getLocations, getWarehouses])
+  }, [getLocations])
 
   useEffect(() => {
     if (initialData) {
       form.reset({
         name: initialData.name,
         description: initialData.description,
-        warehouseId: initialData.warehouseId,
         parentLocationId: initialData.parentLocationId,
-        type: initialData.type as "BUILDING" | "FLOOR" | "OFFICE" | "WAREHOUSE" | "SHELF" | "LABORATORY",
-        building: initialData.building,
+        type: initialData.type,
         floor: initialData.floor,
         reference: initialData.reference,
         capacity: initialData.capacity,
-        capacityUnit: initialData.capacityUnit as "UNITS" | "METERS" | "SQUARE_METERS",
+        capacityUnit: initialData.capacityUnit,
         occupancy: initialData.occupancy,
         qrCode: initialData.qrCode,
         coordinates: initialData.coordinates,
@@ -171,37 +146,6 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
 
                 <FormField
                   control={form.control}
-                  name="warehouseId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Almacén</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        value={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccione un almacén" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {warehouses.map((warehouse) => (
-                            <SelectItem
-                              key={warehouse.id}
-                              value={warehouse.id.toString()}
-                            >
-                              {warehouse.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="parentLocationId"
                   render={({ field }) => (
                     <FormItem>
@@ -220,7 +164,9 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                         <SelectContent>
                           <SelectItem value="none">Ninguna</SelectItem>
                           {locations
-                            .filter((loc) => loc.id !== initialData?.id)
+                            .filter((loc): loc is ILocation & { id: number } =>
+                              typeof loc.id === 'number' && loc.id !== initialData?.id
+                            )
                             .map((location) => (
                               <SelectItem
                                 key={location.id}
@@ -263,27 +209,13 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(LocationTypes).map(([key, value]) => (
-                            <SelectItem key={value} value={value}>
-                              {key}
+                          {Object.entries(LocationTypeLabels).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="building"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Edificio</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -316,21 +248,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-x-8 gap-y-8 w-full">
-          <div className="md:w-1/3">
-            <h3 className="text-lg font-semibold mb-1">Capacidad y Ocupación</h3>
-            <p className="text-muted-foreground text-sm">
-              Detalles sobre la capacidad y ocupación de la ubicación.
-            </p>
-          </div>
-          <div className="md:w-2/3">
-            <Card>
-              <CardContent className="space-y-4 pt-6">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -342,9 +260,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                           <Input
                             type="number"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
+                            onChange={(e) => field.onChange(Number(e.target.value))}
                           />
                         </FormControl>
                         <FormMessage />
@@ -357,7 +273,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     name="capacityUnit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Unidad de Capacidad</FormLabel>
+                        <FormLabel>Unidad</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -365,9 +281,9 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.entries(CapacityUnits).map(([key, value]) => (
-                              <SelectItem key={value} value={value}>
-                                {key}
+                            {Object.entries(CapacityUnitLabels).map(([key, label]) => (
+                              <SelectItem key={key} value={key}>
+                                {label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -376,42 +292,26 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="occupancy"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ocupación</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
 
-        <div className="flex flex-col md:flex-row gap-x-8 gap-y-8 w-full">
-          <div className="md:w-1/3">
-            <h3 className="text-lg font-semibold mb-1">Información Adicional</h3>
-            <p className="text-muted-foreground text-sm">
-              Detalles adicionales sobre la ubicación.
-            </p>
-          </div>
-          <div className="md:w-2/3">
-            <Card>
-              <CardContent className="space-y-4 pt-6">
+                <FormField
+                  control={form.control}
+                  name="occupancy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ocupación</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="qrCode"
@@ -433,7 +333,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     <FormItem>
                       <FormLabel>Coordenadas</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} placeholder="ej: 40.7128,-74.0060" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -458,16 +358,17 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
           </div>
         </div>
 
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-x-2">
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/locations")}
+            onClick={() => router.back()}
+            disabled={isLoading}
           >
             Cancelar
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Guardando..." : initialData ? "Guardar Cambios" : "Crear Ubicación"}
+            {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
           </Button>
         </div>
       </form>

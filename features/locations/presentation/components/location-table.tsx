@@ -30,18 +30,18 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLocationStore } from '@/features/locations/context/location-store';
-import { useWarehouseStore } from '@/features/warehouses/context/warehouse-store';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import LoaderComponent from '@/shared/components/ui/Loader';
 
 // Definimos los tipos de ubicación disponibles
 const LocationTypes = {
-  BUILDING: "BUILDING",
-  FLOOR: "FLOOR",
-  OFFICE: "OFFICE",
-  WAREHOUSE: "WAREHOUSE",
-  SHELF: "SHELF",
-  LABORATORY: "LABORATORY",
+  BUILDING: "Edificio",
+  FLOOR: "Piso",
+  OFFICE: "Oficina",
+  WAREHOUSE: "Almacen",
+  SHELF: "Estante",
+  LABORATORY: "Laboratorio",
 } as const;
 
 interface LocationTableProps {
@@ -58,7 +58,6 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
     deleteLocation
   } = useLocationStore();
 
-  const { warehouses, getWarehouses } = useWarehouseStore();
 
   const [locationToDelete, setLocationToDelete] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,7 +68,6 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
       try {
         await Promise.all([
           getLocations(currentPage, itemsPerPage),
-          getWarehouses()
         ]);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -78,7 +76,7 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
     };
 
     loadData();
-  }, [getLocations, getWarehouses, currentPage, itemsPerPage]);
+  }, [getLocations, currentPage, itemsPerPage]);
 
   const handleDelete = async () => {
     if (locationToDelete === null) return;
@@ -97,16 +95,11 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
     router.push(`/locations/edit/${id}`);
   };
 
-  const getWarehouseName = (warehouseId: number) => {
-    const warehouse = warehouses.find(w => w.id === warehouseId);
-    return warehouse?.name || 'No asignado';
-  };
-
   // Filtrar las ubicaciones basado en la búsqueda y el tipo seleccionado
   const filteredLocations = locations.filter(location => {
     const matchesSearch = searchTerm === '' ||
       location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      location.floor.toLowerCase().includes(searchTerm.toLowerCase());
+      location.floor?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType = selectedType === 'all' || location.type === selectedType;
 
@@ -160,7 +153,6 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Almacén</TableHead>
                 <TableHead>Piso</TableHead>
                 <TableHead>Referencia</TableHead>
                 <TableHead>Capacidad</TableHead>
@@ -170,13 +162,7 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
             </TableHeader>
             <TableBody>
               {isLoading.fetch ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center h-24">
-                    <div className="flex items-center justify-center">
-                      Cargando...
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <LoaderComponent />
               ) : filteredLocations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center h-24">
@@ -198,12 +184,11 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
                   <TableRow key={location.id}>
                     <TableCell>{location.name}</TableCell>
                     <TableCell>{location.type}</TableCell>
-                    <TableCell>{getWarehouseName(location.warehouseId)}</TableCell>
                     <TableCell>{location.floor}</TableCell>
                     <TableCell>{location.reference}</TableCell>
                     <TableCell>{`${location.capacity} ${location.capacityUnit}`}</TableCell>
                     <TableCell>
-                      <Badge variant={location.occupancy < location.capacity ? "default" : "default"}>
+                      <Badge variant={location.occupancy && location.capacity && location.occupancy < location.capacity ? "default" : "default"}>
                         {location.occupancy}/{location.capacity}
                       </Badge>
                     </TableCell>
@@ -212,7 +197,7 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleEdit(location.id)}
+                          onClick={() => handleEdit(location.id ?? 0)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -221,7 +206,7 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => setLocationToDelete(location.id)}
+                              onClick={() => setLocationToDelete(location.id ?? 0)}
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>

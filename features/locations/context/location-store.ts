@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ILocation, PaginatedLocations, ApiResponse } from '../data/interfaces/location.interface';
+import { ILocation, PaginatedLocations } from '../data/interfaces/location.interface';
 import { LocationService } from '../services/location.service';
 
 interface LocationStore {
@@ -14,7 +14,7 @@ interface LocationStore {
     error: string | null;
     getLocations: (page?: number, limit?: number) => Promise<PaginatedLocations>;
     getLocationById: (locationId: number) => Promise<ILocation | undefined>;
-    addLocation: (location: Partial<ILocation>) => Promise<void>;
+    addLocation: (location: Omit<ILocation, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
     updateLocation: (locationId: number, location: Partial<ILocation>) => Promise<void>;
     deleteLocation: (locationId: number) => Promise<void>;
 }
@@ -37,7 +37,6 @@ export const useLocationStore = create<LocationStore>()(
                 set(state => ({ isLoading: { ...state.isLoading, fetch: true } }));
                 try {
                     const response = await LocationService.getInstance().getLocations(page, limit);
-
                     if (response && response.records) {
                         set({
                             locations: response.records,
@@ -68,7 +67,7 @@ export const useLocationStore = create<LocationStore>()(
                 }
             },
 
-            addLocation: async (location: Partial<ILocation>) => {
+            addLocation: async (location: Omit<ILocation, 'id' | 'createdAt' | 'updatedAt'>) => {
                 set(state => ({ isLoading: { ...state.isLoading, create: true }, error: null }));
                 try {
                     await LocationService.getInstance().createLocation(location);

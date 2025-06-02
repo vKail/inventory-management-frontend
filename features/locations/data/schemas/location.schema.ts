@@ -1,24 +1,23 @@
 import { z } from "zod";
 
 const LocationType = z.enum([
-    "BUILDING",
-    "FLOOR",
-    "OFFICE",
-    "WAREHOUSE",
-    "SHELF",
-    "LABORATORY"
+    "Edificio",
+    "Piso",
+    "Oficina",
+    "Almacen",
+    "Estante",
+    "Laboratorio"
 ]);
 
 const CapacityUnit = z.enum([
-    "UNITS",
-    "METERS",
-    "SQUARE_METERS"
+    "Unidades",
+    "Metros",
+    "Metros cuadrados"
 ]);
 
 export const locationSchema = z.object({
     name: z.string().min(1, "El nombre es requerido"),
     description: z.string().min(1, "La descripción es requerida"),
-    warehouseId: z.number().min(1, "El almacén es requerido"),
     parentLocationId: z.number().nullable(),
     type: LocationType,
     building: z.string().min(1, "El edificio es requerido"),
