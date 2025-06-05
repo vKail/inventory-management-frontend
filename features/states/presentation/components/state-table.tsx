@@ -31,6 +31,7 @@ import {
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
+import LoaderComponent from '@/shared/components/ui/Loader';
 
 interface StateTableProps {
   currentPage: number;
@@ -74,7 +75,28 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
   };
 
   if (loading) {
-    return <div>Cargando...</div>;
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Lista de Estados</h2>
+            <p className="text-sm text-muted-foreground">
+              Gestiona los estados de los equipos
+            </p>
+          </div>
+          <Button
+            onClick={() => router.push('/states/new')}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Nuevo Estado
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <LoaderComponent rows={5} columns={4} />
+        </CardContent>
+      </Card>
+    );
   }
 
   if (states.length === 0) {
@@ -97,7 +119,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
         <Button
           onClick={() => router.push('/states/new')}
           className="bg-red-600 hover:bg-red-700"
-          >
+        >
           <PlusCircle className="mr-2 h-4 w-4" />
           Nuevo Estado
         </Button>
@@ -128,7 +150,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleEdit(state.id)}
-                      >
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <AlertDialog>

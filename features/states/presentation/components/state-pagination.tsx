@@ -14,7 +14,7 @@ function getPageNumbers(current: number, total: number): (number | string)[] {
   const delta = 2;
   const pages: (number | string)[] = [];
 
-  if (total <= 7) {a
+  if (total <= 7) {
     for (let i = 1; i <= total; i++) {
       pages.push(i);
     }
