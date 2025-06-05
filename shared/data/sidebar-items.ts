@@ -12,6 +12,7 @@ import {
   User,
   Users,
   Warehouse,
+  File
 } from 'lucide-react';
 
 export const sidebarItems = [
@@ -180,25 +181,25 @@ export const sidebarItems = [
           },
         ],
       },
-      // {
-      //   title: 'Almacenes',
-      //   icon: Warehouse,
-      //   roles: [UserRole.ADMIN, UserRole.TEACHER],
-      //   subItems: [
-      //     {
-      //       title: 'Listar',
-      //       icon: List,
-      //       roles: [UserRole.ADMIN, UserRole.TEACHER],
-      //       href: '/warehouses',
-      //     },
-      //     {
-      //       title: 'Nuevo almacén',
-      //       icon: CirclePlus,
-      //       roles: [UserRole.ADMIN, UserRole.TEACHER],
-      //       href: '/warehouses/new',
-      //     },
-      //   ],
-      // },
+      {
+        title: 'Certificados',
+        icon: File,
+        roles: [UserRole.ADMIN],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN],
+            href: '/certificates',
+          },
+          {
+            title: 'Nuevo certificado',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN],
+            href: '/certificates/new',
+          },
+        ],
+      },
       {
         title: 'Materiales',
         icon: Package,
