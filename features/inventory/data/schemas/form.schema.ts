@@ -1,0 +1,38 @@
+import z from "zod";
+import { NormativeType, Origin } from "./inventory.schema";
+
+export const formSchema = z.object({
+    code: z.string().min(1, 'El código es requerido'),
+    stock: z.number().min(0, 'El stock debe ser mayor o igual a 0'),
+    name: z.string().min(1, 'El nombre es requerido'),
+    description: z.string().min(1, 'La descripción es requerida'),
+    itemTypeId: z.number(),
+    categoryId: z.number(),
+    statusId: z.number(),
+    normativeType: z.nativeEnum(NormativeType),
+    origin: z.nativeEnum(Origin),
+    locationId: z.number(),
+    custodianId: z.number(),
+    availableForLoan: z.boolean(),
+    identifier: z.string(),
+    previousCode: z.string(),
+    conditionId: z.number(),
+    certificateId: z.number(),
+    entryOrigin: z.string(),
+    entryType: z.string(),
+    acquisitionDate: z.date(),
+    commitmentNumber: z.string(),
+    modelCharacteristics: z.string(),
+    brandBreedOther: z.string(),
+    identificationSeries: z.string(),
+    warrantyDate: z.date(),
+    dimensions: z.string(),
+    critical: z.boolean(),
+    dangerous: z.boolean(),
+    requiresSpecialHandling: z.boolean(),
+    perishable: z.boolean(),
+    expirationDate: z.date(),
+    itemLine: z.string(),
+    accountingAccount: z.string(),
+    observations: z.string()
+});

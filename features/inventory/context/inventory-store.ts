@@ -1,288 +1,152 @@
-import { create } from 'zustand';
-import { InventoryItem, ProductStatus, InventoryFilters, ProductCategory, Department } from '../data/interfaces/inventory.interface';
-import { getInventoryItems, updateInventoryItem, deleteInventoryItem } from '../services/inventory.service';
+import { create } from "zustand";
+import { toast } from "sonner";
+import { inventoryService } from "../services/inventory.service";
+import { InventoryItem } from "../data/interfaces/inventory.interface";
 
-// Mapeo de statusId a ProductStatus
-const mapStatusIdToProductStatus = (statusId: number): ProductStatus => {
-  const statusMap: { [key: number]: ProductStatus } = {
-    1: ProductStatus.AVAILABLE,
-    2: ProductStatus.IN_USE,
-    3: ProductStatus.MAINTENANCE,
-    4: ProductStatus.DAMAGED,
-  };
-  return statusMap[statusId] || ProductStatus.DAMAGED;
-};
+type ViewMode = "table" | "list" | "grid";
 
-// Mapeo de ProductStatus a statusId
-const mapProductStatusToStatusId = (status: ProductStatus): number => {
-  const statusMap: { [key in ProductStatus]: number } = {
-    [ProductStatus.AVAILABLE]: 1,
-    [ProductStatus.IN_USE]: 2,
-    [ProductStatus.MAINTENANCE]: 3,
-    [ProductStatus.DAMAGED]: 4,
-  };
-  return statusMap[status];
-};
-
-// Mapeo de categoryId a nombres de categorías
-const mapCategoryIdToName = (categoryId: number): string => {
-  const categoryMap: { [key: number]: ProductCategory } = {
-    1: ProductCategory.TECHNOLOGY,
-    2: ProductCategory.ELECTRONICS,
-    3: ProductCategory.FURNITURE,
-    4: ProductCategory.TOOLS,
-  };
-  return categoryMap[categoryId] || ProductCategory.OTHER;
-};
-
-// Mapeo de categoría a categoryId
-const mapCategoryToCategoryId = (category: string): number => {
-  const categoryMap: { [key in ProductCategory]: number } = {
-    [ProductCategory.TECHNOLOGY]: 1,
-    [ProductCategory.ELECTRONICS]: 2,
-    [ProductCategory.FURNITURE]: 3,
-    [ProductCategory.TOOLS]: 4,
-    [ProductCategory.MATERIALS]: 0,
-    [ProductCategory.OTHER]: 0,
-  };
-  return categoryMap[category as ProductCategory] || 0;
-};
-
-// Mapeo de locationId a nombres de departamentos
-const mapLocationIdToDepartment = (locationId: number): string => {
-  const locationMap: { [key: number]: Department } = {
-    1: Department.COMPUTING,
-    2: Department.ELECTRONICS,
-    3: Department.DESIGN,
-    4: Department.MECHANICS,
-  };
-  return locationMap[locationId] || Department.GENERAL;
-};
-
-// Mapeo de departamento a locationId
-const mapDepartmentToLocationId = (department: string): number => {
-  const departmentMap: { [key in Department]: number } = {
-    [Department.COMPUTING]: 1,
-    [Department.ELECTRONICS]: 2,
-    [Department.DESIGN]: 3,
-    [Department.MECHANICS]: 4,
-    [Department.GENERAL]: 0,
-  };
-  return departmentMap[department as Department] || 0;
-};
-
-// Mapea un ítem del backend a InventoryItem
-const mapBackendItemToInventoryItem = (record: any): InventoryItem => ({
-  id: record.id,
-  name: record.name,
-  description: record.description || 'Sin descripción',
-  barcode: record.code,
-  category: mapCategoryIdToName(record.categoryId),
-  department: mapLocationIdToDepartment(record.locationId),
-  quantity: record.stock,
-  status: mapStatusIdToProductStatus(record.statusId),
-  imageUrl: undefined,
-  cost: undefined,
-  createdAt: undefined,
-  updatedAt: undefined,
-  itemTypeId: record.itemTypeId,
-  normativeType: record.normativeType,
-  origin: record.origin,
-  locationId: record.locationId,
-  custodianId: record.custodianId,
-  availableForLoan: record.availableForLoan,
-  identifier: record.identifier,
-  previousCode: record.previousCode,
-  certificateId: record.certificateId,
-  conditionId: record.conditionId,
-  entryOrigin: record.entryOrigin,
-  entryType: record.entryType,
-  acquisitionDate: record.acquisitionDate,
-  commitmentNumber: record.commitmentNumber,
-  modelCharacteristics: record.modelCharacteristics,
-  brandBreedOther: record.brandBreedOther,
-  identificationSeries: record.identificationSeries,
-  warrantyDate: record.warrantyDate,
-  dimensions: record.dimensions,
-  critical: record.critical,
-  dangerous: record.dangerous,
-  requiresSpecialHandling: record.requiresSpecialHandling,
-  perishable: record.perishable,
-  expirationDate: record.expirationDate,
-  itemLine: record.itemLine,
-  accountingAccount: record.accountingAccount,
-  observations: record.observations,
-  activeCustodian: record.activeCustodian,
-  registrationUserId: record.registrationUserId,
-});
-
-// Mapea un InventoryItem al formato del backend, asegurando que solo se envíen los campos esperados
-const mapInventoryItemToBackend = (item: InventoryItem, originalItem: any): any => {
-  // Campos que el backend espera
-  const updatedFields = {
-    code: item.barcode,
-    stock: item.quantity,
-    name: item.name,
-    description: item.description,
-    itemTypeId: originalItem.itemTypeId,
-    categoryId: mapCategoryToCategoryId(item.category),
-    statusId: mapProductStatusToStatusId(item.status),
-    normativeType: originalItem.normativeType,
-    origin: originalItem.origin,
-    locationId: mapDepartmentToLocationId(item.department),
-    custodianId: originalItem.custodianId,
-    availableForLoan: originalItem.availableForLoan,
-    identifier: originalItem.identifier,
-    previousCode: originalItem.previousCode,
-    certificateId: originalItem.certificateId,
-    conditionId: originalItem.conditionId,
-    entryOrigin: originalItem.entryOrigin,
-    entryType: originalItem.entryType,
-    acquisitionDate: originalItem.acquisitionDate,
-    commitmentNumber: originalItem.commitmentNumber,
-    modelCharacteristics: originalItem.modelCharacteristics,
-    brandBreedOther: originalItem.brandBreedOther,
-    identificationSeries: originalItem.identificationSeries,
-    warrantyDate: originalItem.warrantyDate,
-    dimensions: originalItem.dimensions,
-    critical: originalItem.critical,
-    dangerous: originalItem.dangerous,
-    requiresSpecialHandling: originalItem.requiresSpecialHandling,
-    perishable: originalItem.perishable,
-    expirationDate: originalItem.expirationDate,
-    itemLine: originalItem.itemLine,
-    accountingAccount: originalItem.accountingAccount,
-    observations: originalItem.observations,
-  };
-
-  // Filtra los campos undefined para evitar enviar valores no deseados
-  return Object.fromEntries(
-    Object.entries(updatedFields).filter(([_, value]) => value !== undefined)
-  );
-};
+interface Filters {
+  search?: string;
+  category?: string;
+  location?: string;
+  status?: string;
+}
 
 interface InventoryState {
   items: InventoryItem[];
   filteredItems: InventoryItem[];
-  viewMode: 'grid' | 'list' | 'table';
-  filters: InventoryFilters;
-  isLoading: boolean;
+  selectedItem: InventoryItem | null;
+  loading: boolean;
   error: string | null;
-  fetchItems: () => Promise<void>;
-  updateItem: (updatedItem: InventoryItem, originalItem: InventoryItem) => Promise<void>;
-  deleteItem: (id: number) => Promise<void>;
-  setViewMode: (mode: 'grid' | 'list' | 'table') => void;
-  setFilters: (filters: InventoryFilters) => void;
-  clearFilters: () => void;
+  viewMode: ViewMode;
+  filters: Filters;
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+
+  // Methods
+  getInventoryItems: (page?: number) => Promise<void>;
+  getInventoryItemById: (id: number) => Promise<void>;
+  getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
+  setSelectedItem: (item: InventoryItem | null) => void;
+  setViewMode: (mode: ViewMode) => void;
+  setFilters: (filters: Filters) => void;
   applyFilters: () => void;
+  clearFilters: () => void;
+  setPage: (page: number) => void;
 }
 
 export const useInventoryStore = create<InventoryState>((set, get) => ({
   items: [],
   filteredItems: [],
-  viewMode: 'table',
-  filters: {
-    search: '',
-    category: '',
-    department: '',
-    state: '',
-    sortBy: 'nameAsc',
-  },
-  isLoading: false,
+  selectedItem: null,
+  loading: false,
   error: null,
+  viewMode: "table",
+  filters: {},
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  itemsPerPage: 10,
 
-  fetchItems: async () => {
-    set({ isLoading: true, error: null });
+  getInventoryItems: async (page = 1) => {
     try {
-      const response = await getInventoryItems();
-      const mappedItems: InventoryItem[] = response.data.records.map(mapBackendItemToInventoryItem);
-      set({ items: mappedItems, filteredItems: mappedItems, isLoading: false });
+      set({ loading: true, error: null });
+      const response = await inventoryService.getInventoryItems(page);
+      set({
+        items: response.records,
+        filteredItems: response.records,
+        currentPage: response.page,
+        totalPages: response.pages,
+        totalItems: response.total,
+        itemsPerPage: response.limit,
+        loading: false
+      });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al cargar los ítems';
-      set({ error: errorMessage, isLoading: false, items: [], filteredItems: [] });
+      const message = error instanceof Error ? error.message : "Error al obtener los items";
+      set({ error: message, loading: false });
+      toast.error(message);
     }
   },
 
-  updateItem: async (updatedItem: InventoryItem, originalItem: InventoryItem) => {
-    set({ isLoading: true, error: null });
+  getInventoryItemById: async (id: number) => {
     try {
-      const backendItem = mapInventoryItemToBackend(updatedItem, originalItem);
-      const response = await updateInventoryItem(updatedItem.id, backendItem);
-      const mappedItem = mapBackendItemToInventoryItem(response.data);
-      set((state) => ({
-        items: state.items.map((item) => (item.id === mappedItem.id ? mappedItem : item)),
-        filteredItems: state.filteredItems.map((item) =>
-          item.id === mappedItem.id ? mappedItem : item
-        ),
-        isLoading: false,
-      }));
+      set({ loading: true, error: null });
+      const item = await inventoryService.getInventoryItemById(id);
+      set({ selectedItem: item, loading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar el ítem';
-      set({ error: errorMessage, isLoading: false });
-      throw error; // Propagar el error para que el componente lo maneje
+      const message = error instanceof Error ? error.message : "Error al obtener el item";
+      set({ error: message, loading: false, selectedItem: null });
+      toast.error(message);
+      throw error;
     }
   },
 
-  deleteItem: async (id: number) => {
-    set({ isLoading: true, error: null });
+  getInventoryItemByCode: async (code: string) => {
     try {
-      await deleteInventoryItem(id);
-      set((state) => ({
-        items: state.items.filter((item) => item.id !== id),
-        filteredItems: state.filteredItems.filter((item) => item.id !== id),
-        isLoading: false,
-      }));
+      set({ loading: true, error: null });
+      const item = await inventoryService.getInventoryItemByCode(code);
+      set({ loading: false });
+      return item || null;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al eliminar el ítem';
-      set({ error: errorMessage, isLoading: false });
-      throw error; // Propagar el error para que el componente lo maneje
+      const message = error instanceof Error ? error.message : "Error al obtener el item";
+      set({ error: message, loading: false });
+      toast.error(message);
+      return null;
     }
   },
+
+  setSelectedItem: (item) => set({ selectedItem: item }),
 
   setViewMode: (mode) => set({ viewMode: mode }),
 
   setFilters: (filters) => set({ filters }),
 
-  clearFilters: () => set((state) => ({
-    filters: { search: '', category: '', department: '', state: '', sortBy: 'nameAsc' },
-    filteredItems: state.items,
-  })),
-
   applyFilters: () => {
     const { items, filters } = get();
-    if (!Array.isArray(items)) {
-      set({ filteredItems: [] });
-      return;
-    }
     let filtered = [...items];
 
     if (filters.search) {
-      filtered = filtered.filter((item) =>
-        item.name.toLowerCase().includes(filters.search?.toLowerCase() || '')
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(item =>
+        item.name?.toLowerCase().includes(searchTerm) ||
+        item.code?.toLowerCase().includes(searchTerm)
       );
     }
 
-
     if (filters.category) {
-      filtered = filtered.filter((item) => item.category === filters.category);
+      filtered = filtered.filter(item =>
+        item.category?.name.toLowerCase() === filters.category?.toLowerCase()
+      );
     }
 
-    if (filters.department) {
-      filtered = filtered.filter((item) => item.department === filters.department);
+    if (filters.location) {
+      filtered = filtered.filter(item =>
+        item.location?.name.toLowerCase() === filters.location?.toLowerCase()
+      );
     }
 
-    if (filters.state) {
-      filtered = filtered.filter((item) => item.status === filters.state);
-    }
-
-    if (filters.sortBy) {
-      filtered.sort((a, b) => {
-        if (filters.sortBy === 'nameAsc') return a.name.localeCompare(b.name);
-        if (filters.sortBy === 'nameDesc') return b.name.localeCompare(a.name);
-        return 0;
-      });
+    if (filters.status) {
+      filtered = filtered.filter(item =>
+        item.status?.name.toLowerCase() === filters.status?.toLowerCase()
+      );
     }
 
     set({ filteredItems: filtered });
   },
+
+  clearFilters: () => {
+    set((state) => ({
+      filters: {},
+      filteredItems: state.items
+    }));
+  },
+
+  setPage: (page) => {
+    const store = get();
+    if (page !== store.currentPage) {
+      store.getInventoryItems(page);
+    }
+  }
 }));
