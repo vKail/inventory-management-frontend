@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MaterialService } from '../services/material.service';
-import { IMaterial, PaginatedMaterials } from '../data/interfaces/material.interface';
+import { IMaterial } from '../data/interfaces/material.interface';
 
 export const useMaterials = () => {
   const [materials, setMaterials] = useState<IMaterial[]>([]);

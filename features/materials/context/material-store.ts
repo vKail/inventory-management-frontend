@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { IMaterial, PaginatedMaterials } from '../data/interfaces/material.interface';
+import { IMaterial } from '../data/interfaces/material.interface';
 import { MaterialService } from '../services/material.service';
 
 interface MaterialState {

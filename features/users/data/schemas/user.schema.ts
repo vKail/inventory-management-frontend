@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export enum UserRole {
-  ADMINISTRATOR = 'Administrador',
-  STUDENT = 'Estudiante',
-  TEACHER = 'Docente',
-  MANAGER = 'Gerente'
+  ADMINISTRATOR = 'ADMINISTRATOR',
+  STUDENT = 'STUDENT',
+  TEACHER = 'TEACHER',
+  MANAGER = 'MANAGER'
 }
 
 export enum UserStatus {
