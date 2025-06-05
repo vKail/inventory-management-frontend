@@ -27,7 +27,8 @@ import { toast } from 'sonner'
 import { ItemType } from '../../data/interfaces/item-type.interface'
 import { itemTypeSchema, type ItemTypeFormValues } from '../../data/schemas/item-type.schema'
 import { useItemTypeStore } from '../../context/item-types-store'
-
+import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbList, BreadcrumbPage, BreadcrumbLink } from '@/components/ui/breadcrumb';
+import { Boxes } from 'lucide-react';
 interface ItemTypeFormProps {
   id?: string
 }
@@ -92,6 +93,26 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
 
   return (
     <div className="container mx-auto py-10">
+      {/* Breadcrumbs, título y descripción */}
+      {/* Breadcrumbs, título y descripción */}
+      <div className="w-full">
+                <Breadcrumb className="mb-6">
+                    <BreadcrumbList>
+                        <BreadcrumbItem>
+                            <span className="text-muted-foreground font-medium">Configuración</span>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <Boxes className="inline mr-1 h-4 w-4 text-primary align-middle" />
+                            <BreadcrumbLink href="/item-types">Tipos de Item</BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>{id ? "Editar Tipo de Item" : "Nuevo Tipo de Item"}</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            </div>
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-1/3">
           <h3 className="text-lg font-semibold mb-1">Detalles del tipo de item</h3>

@@ -162,7 +162,11 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
             </TableHeader>
             <TableBody>
               {isLoading.fetch ? (
-                <LoaderComponent />
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <LoaderComponent rows={5} columns={7} />
+                  </TableCell>
+                </TableRow>
               ) : filteredLocations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center h-24">
