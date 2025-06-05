@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { MapPin, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { MapPin } from 'lucide-react';
 import { LocationTable } from '@/features/locations/presentation/components/location-table';
 import { LocationPagination } from '@/features/locations/presentation/components/location-pagination';
 import { useLocationStore } from '@/features/locations/context/location-store';
@@ -16,7 +14,6 @@ import {
 } from '@/components/ui/breadcrumb';
 
 export default function LocationsPage() {
-    const router = useRouter();
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const itemsPerPage = 10;
@@ -50,10 +47,6 @@ export default function LocationsPage() {
 
                 <div className="flex justify-between items-center">
                     <h1 className="text-2xl font-bold">Ubicaciones</h1>
-                    <Button onClick={() => router.push('/locations/new')}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nueva Ubicación
-                    </Button>
                 </div>
             </div>
 

@@ -17,6 +17,7 @@ interface LocationStore {
     addLocation: (location: Omit<ILocation, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
     updateLocation: (locationId: number, location: Partial<ILocation>) => Promise<void>;
     deleteLocation: (locationId: number) => Promise<void>;
+    loading: boolean;
 }
 
 const STORE_NAME = 'location-storage';
@@ -32,6 +33,7 @@ export const useLocationStore = create<LocationStore>()(
                 delete: false
             },
             error: null,
+            loading: false,
 
             getLocations: async (page = 1, limit = 10) => {
                 set(state => ({ isLoading: { ...state.isLoading, fetch: true } }));

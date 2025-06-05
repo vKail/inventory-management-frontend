@@ -226,7 +226,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="floor"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Piso</FormLabel>
+                      <FormLabel>Piso (Opcional)</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -306,34 +306,6 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="qrCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Código QR</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="coordinates"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Coordenadas</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="ej: 40.7128,-74.0060" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
