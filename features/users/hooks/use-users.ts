@@ -21,7 +21,7 @@ export const useUsers = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         try {
             setLoading(true);
             await UserService.getInstance().deleteUser(id);
@@ -48,7 +48,7 @@ export const useUsers = () => {
         }
     };
 
-    const handleUpdate = async (id: number, user: Partial<IUser>) => {
+    const handleUpdate = async (id: string, user: Partial<IUser>) => {
         try {
             setLoading(true);
             const response = await UserService.getInstance().updateUser(id, user);

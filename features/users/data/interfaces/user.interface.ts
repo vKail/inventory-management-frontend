@@ -14,8 +14,8 @@ export interface Person {
   phone?: string;
 }
 
-export interface User {
-  id: number;
+export interface IUser {
+  id: string;
   userName: string;
   password?: string;
   career: string | null;
@@ -33,7 +33,7 @@ export interface PaginatedResponse {
   limit: number;
   page: number;
   pages: number;
-  records: User[];
+  records: IUser[];
   total: number;
 }
 

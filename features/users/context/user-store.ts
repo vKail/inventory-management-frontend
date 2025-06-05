@@ -94,7 +94,7 @@ export const useUserStore = create<UserStore>()(
                 try {
                     set({ loading: true, error: null });
                     await UserService.getInstance().deleteUser(userId);
-                    const newUsers = get().users.filter(u => u.id !== Number(userId));
+                    const newUsers = get().users.filter(u => u.id !== userId);
                     set({ users: newUsers, loading: false });
                 } catch (error) {
                     console.error('Error deleting user:', error);

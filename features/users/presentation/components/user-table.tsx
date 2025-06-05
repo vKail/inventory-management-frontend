@@ -32,6 +32,7 @@ import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
 import { UserRole, UserStatus } from '../../data/schemas/user.schema';
+import LoaderComponent from '@/shared/components/ui/Loader';
 
 interface UserTableProps {
   currentPage: number;
@@ -112,9 +113,26 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Lista de Usuarios</h2>
+            <p className="text-sm text-muted-foreground">
+              Gestiona los usuarios del sistema
+            </p>
+          </div>
+          <Button
+            onClick={() => router.push('/users/new')}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Nuevo Usuario
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <LoaderComponent rows={5} columns={6} />
+        </CardContent>
+      </Card>
     );
   }
 

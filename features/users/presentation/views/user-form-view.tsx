@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useUserStore } from '@/features/users/context/user-store';
 import { useRouter } from 'next/navigation';
-import { User, UserFormValues } from '@/features/users/data/interfaces/user.interface';
+import { IUser, UserFormValues } from '@/features/users/data/interfaces/user.interface';
 import UserForm from '../components/user-form';
 import { toast } from 'sonner';
 
@@ -18,7 +18,7 @@ export default function UserFormView({ params }: { params?: { id?: string } }) {
         loading,
     } = useUserStore();
 
-    const [initialData, setInitialData] = useState<User | undefined>(undefined);
+    const [initialData, setInitialData] = useState<IUser | undefined>(undefined);
 
     useEffect(() => {
         const loadData = async () => {
@@ -36,7 +36,7 @@ export default function UserFormView({ params }: { params?: { id?: string } }) {
         try {
             console.log('UserFormView received data:', data);
             console.log('Is edit mode:', isEdit, 'with ID:', params?.id);
-            
+
             // Preparar los datos para enviar a la API
             const userData = {
                 userName: data.userName,
@@ -55,9 +55,9 @@ export default function UserFormView({ params }: { params?: { id?: string } }) {
                     phone: data.person.phone || ''
                 }
             };
-            
+
             console.log('Formatted userData to send:', userData);
-            
+
             if (isEdit && params?.id) {
                 console.log('Updating user with ID:', params.id);
                 await updateUser(params.id, userData);

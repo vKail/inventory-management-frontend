@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { Resolver, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User } from '@/features/users/data/interfaces/user.interface'
+import { IUser } from '@/features/users/data/interfaces/user.interface'
 import { userSchema, UserFormValues, UserRole, UserStatus } from '@/features/users/data/schemas/user.schema'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface UserFormProps {
-    initialData?: User;
+    initialData?: IUser;
     onSubmit: (data: UserFormValues) => Promise<void>;
     isLoading: boolean;
 }
@@ -23,7 +23,7 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
     const isEdit = !!initialData
 
     const form = useForm<UserFormValues>({
-        resolver: zodResolver(userSchema) as any,
+        resolver: zodResolver(userSchema) as unknown as Resolver<UserFormValues, any, any>,
         defaultValues: {
             userName: '',
             password: '',
@@ -47,7 +47,7 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
         if (initialData) {
             form.reset({
                 userName: initialData.userName,
-                password: '', // Don't populate password for security
+                password: '',
                 career: initialData.career || 'FISEI',
                 userType: initialData.userType as UserRole,
                 status: initialData.status as UserStatus,

@@ -1,25 +1,65 @@
 import React from "react"
 import ContentLoader from "react-content-loader"
+import { Loader2 } from "lucide-react"
 
-const LoaderComponent = (props: any) => (
-  <ContentLoader
-    speed={2}
-    width="100%" // ocupa todo el ancho del padre
-    height={80} // altura generosa para una fila
-    backgroundColor="#f3f3f3"
-    foregroundColor="#e0e0e0"
-    style={{ width: '100%' }}
-    {...props}
-  >
-    {/* Simula celdas de una tabla */}
-    <rect x="0" y="20" rx="4" ry="4" width="15%" height="20" />
-    <rect x="17%" y="20" rx="4" ry="4" width="15%" height="20" />
-    <rect x="34%" y="20" rx="4" ry="4" width="10%" height="20" />
-    <rect x="46%" y="20" rx="4" ry="4" width="15%" height="20" />
-    <rect x="63%" y="20" rx="4" ry="4" width="12%" height="20" />
-    <rect x="78%" y="20" rx="4" ry="4" width="10%" height="20" />
-    <rect x="90%" y="20" rx="4" ry="4" width="8%" height="20" />
-  </ContentLoader>
-)
+interface LoaderProps {
+  rows?: number;
+  columns?: number;
+}
 
-export default LoaderComponent
+const LoaderComponent = ({ rows = 5, columns = 7 }: LoaderProps) => {
+  const rowHeight = 50;
+  const height = rows * rowHeight;
+  const columnWidth = 100 / columns;
+
+  return (
+    <div className="w-full min-h-[400px] flex items-center justify-center">
+      <ContentLoader
+        speed={2}
+        width="100%"
+        height={height}
+        backgroundColor="#f3f3f3"
+        foregroundColor="#e0e0e0"
+        style={{ width: '100%' }}
+      >
+        {/* Header row */}
+        {Array.from({ length: columns }).map((_, colIndex) => (
+          <rect
+            key={`header-${colIndex}`}
+            x={`${colIndex * columnWidth}%`}
+            y="0"
+            rx="4"
+            ry="4"
+            width={`${columnWidth - 2}%`}
+            height="30"
+          />
+        ))}
+
+        {/* Data rows */}
+        {Array.from({ length: rows }).map((_, rowIndex) => (
+          Array.from({ length: columns }).map((_, colIndex) => (
+            <rect
+              key={`row-${rowIndex}-col-${colIndex}`}
+              x={`${colIndex * columnWidth}%`}
+              y={rowIndex * rowHeight + 40}
+              rx="4"
+              ry="4"
+              width={`${columnWidth - 2}%`}
+              height="30"
+            />
+          ))
+        ))}
+      </ContentLoader>
+    </div>
+  );
+};
+
+export const Loader = () => {
+  return (
+    <div className="flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+};
+
+export default LoaderComponent;
