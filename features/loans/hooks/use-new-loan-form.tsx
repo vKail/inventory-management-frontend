@@ -1,147 +1,177 @@
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { loanRequestSchema } from "../data/schemas/loan-request-schema";
+import { useInventoryStore } from "@/features/inventory/context/inventory-store";
 
-const MOCK_PRODUCTS = [
-  { id: "1", nombre: "MacBook Pro 16''", barcode: "6972011062725" },
-  { id: "2", nombre: "Monitor Dell UltraSharp 27''", barcode: "78929395" },
-  { id: "3", nombre: "Arduino Starter Kit", barcode: "TEC-003" },
-];
+interface FormData {
+  cedula: string;
+  telefono: string;
+  nombres: string;
+  apellidos: string;
+  correo: string;
+  rol: string;
+  motivo: string;
+  eventoAsociado: string;
+  ubicacionExterna: string;
+  fechaPrestamo: Date;
+  fechaDevolucion: Date | null;
+  notas: string;
+  aceptaResponsabilidad: boolean;
+}
 
-export const useNewLoanForm = () => {
+interface Item {
+  id: number;
+  name: string;
+  barcode: string;
+  description: string;
+}
+
+export function useNewLoanForm() {
   const router = useRouter();
+  const { getInventoryItems, items: inventoryItems, loading } = useInventoryStore();
 
-  const [formData, setFormData] = useState({
-    nombres: "",
-    apellidos: "",
-    correo: "",
-    telefono: "",
-    rol: "",
-    cedula: "",
-    bienId: "",
-    bienNombre: "",
-    motivo: "",
-    eventoAsociado: "",
-    ubicacionExterna: "",
+  const [formData, setFormData] = useState<FormData>({
+    cedula: '',
+    telefono: '',
+    nombres: '',
+    apellidos: '',
+    correo: '',
+    rol: '',
+    motivo: '',
+    eventoAsociado: '',
+    ubicacionExterna: '',
     fechaPrestamo: new Date(),
-    fechaDevolucion: null as Date | null,
-    notas: "",
+    fechaDevolucion: null,
+    notas: '',
     aceptaResponsabilidad: false,
   });
 
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [formErrors, setFormErrors] = useState<Partial<FormData>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Item[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Item[]>([]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  useEffect(() => {
+    // Cargar items del inventario al montar el componente
+    getInventoryItems();
+  }, [getInventoryItems]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const handleDateChange = (date: Date | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      fechaDevolucion: (date ?? null) as Date | null,
-    }));
+  const handleDateChange = (date: Date | null, field: 'fechaPrestamo' | 'fechaDevolucion') => {
+    if (date) {
+      setFormData(prev => ({ ...prev, [field]: date }));
+      setFormErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
-  const handleTimeChange = (time: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      handleTimeChange: time,
-    }));
-  }
+  const handleTimeChange = (time: string, field: 'fechaPrestamo' | 'fechaDevolucion') => {
+    const [hours, minutes] = time.split(':').map(Number);
+    setFormData(prev => {
+      const date = prev[field] ? new Date(prev[field]) : new Date();
+      date.setHours(hours);
+      date.setMinutes(minutes);
+      return { ...prev, [field]: date };
+    });
+  };
 
   const handleCheckboxChange = (checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      aceptaResponsabilidad: checked,
-    }));
+    setFormData(prev => ({ ...prev, aceptaResponsabilidad: checked }));
   };
 
-  const handleSearchBien = () => {
-    setSearchResults(MOCK_PRODUCTS);
-    setShowResults(true);
-  };
+  const handleSearchBien = useCallback(async () => {
+    if (!searchQuery.trim()) {
+      toast.error('Ingrese un término de búsqueda');
+      return;
+    }
 
-  const handleSelectBien = (bien: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      bienId: bien.id,
-      bienNombre: bien.nombre,
-    }));
+    try {
+      // Filtrar items del inventario basado en el término de búsqueda
+      const filteredItems = inventoryItems.filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.barcode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+      ).map(item => ({
+        id: item.id,
+        name: item.name,
+        barcode: item.barcode || '',
+        description: item.description
+      }));
+
+      setSearchResults(filteredItems);
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error searching items:', error);
+      toast.error('Error al buscar items');
+    }
+  }, [searchQuery, inventoryItems]);
+
+  const handleSelectBien = (item: Item) => {
+    if (!selectedItems.some(selected => selected.id === item.id)) {
+      setSelectedItems(prev => [...prev, item]);
+    }
     setShowResults(false);
+    setSearchQuery('');
+  };
+
+  const handleRemoveItem = (itemId: number) => {
+    setSelectedItems(prev => prev.filter(item => item.id !== itemId));
   };
 
   const handleScanBien = (barcode: string) => {
-    const bien = MOCK_PRODUCTS.find((item) => item.barcode === barcode);
-
-    if (bien) {
-      setFormData((prev) => ({
-        ...prev,
-        bienId: bien.id,
-        bienNombre: bien.nombre,
-      }));
+    // Buscar el item en el inventario por código de barras
+    const item = inventoryItems.find(item => item.barcode === barcode);
+    if (item) {
+      handleSelectBien({
+        id: item.id,
+        name: item.name,
+        barcode: item.barcode || '',
+        description: item.description
+      });
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        bienId: "",
-        bienNombre: "",
-      }));
+      toast.error('Item no encontrado');
     }
     setScanOpen(false);
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const handleCancel = () => {
+    router.back();
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const parsed = loanRequestSchema.safeParse({
-      ...formData,
-      fechaDevolucion: formData.fechaDevolucion || undefined,
-    });
-
-    if (!parsed.success) {
-      const errors: { [key: string]: string } = {};
-      const errorMap = parsed.error.format();
-      for (const key in errorMap) {
-        const err = errorMap[key as keyof typeof errorMap];
-        if (err && (err as any)._errors?.length) {
-          errors[key] = (err as any)._errors[0];
-        }
-      }
-      setFormErrors(errors);
-      toast.error("Por favor corrige los errores del formulario.");
+    if (selectedItems.length === 0) {
+      toast.error('Debe seleccionar al menos un item');
       return;
     }
 
-    // Serialize form data to JSON and log to console
-    const jsonData = JSON.stringify(formData, null, 2);
-    console.log("Data to be sent:", jsonData);
+    if (!formData.aceptaResponsabilidad) {
+      toast.error('Debe aceptar la responsabilidad del préstamo');
+      return;
+    }
 
-    toast.success("Solicitud de préstamo enviada correctamente");
-
-    setTimeout(() => {
-      router.push("/loans");
-    }, 3000);
-  };
-
-  const handleCancel = () => {
-    router.push("/loans");
+    try {
+      // Simular envío del formulario - Reemplazar con llamada real a la API
+      console.log('Form submitted:', { ...formData, items: selectedItems });
+      toast.success('Préstamo registrado exitosamente');
+      router.push('/loans');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('Error al registrar el préstamo');
+    }
   };
 
   return {
@@ -151,7 +181,7 @@ export const useNewLoanForm = () => {
     searchResults,
     showResults,
     scanOpen,
-    setFormData,
+    selectedItems,
     handleSearchBien,
     handleSelectBien,
     handleScanBien,
@@ -160,9 +190,10 @@ export const useNewLoanForm = () => {
     handleDateChange,
     handleTimeChange,
     handleCheckboxChange,
+    handleRemoveItem,
     onSubmit,
     setSearchQuery,
     setScanOpen,
     handleCancel,
   };
-};
+}

@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { LocationTypeLabels, CapacityUnitLabels } from '../data/interfaces/location.interface';
 
 export const locationSchema = z.object({
     name: z.string().min(1, 'El nombre es requerido'),
