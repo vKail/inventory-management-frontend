@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useUserStore } from '@/features/users/context/user-store';
-import { useRouter } from 'next/navigation';
 import { IUser, UserFormValues } from '@/features/users/data/interfaces/user.interface';
 import UserForm from '../components/user-form';
 import { toast } from 'sonner';
 
-export default function UserFormView({ params }: { params?: { id?: string } }) {
+export default function UserFormView() {
+    const { id } = useParams();
     const router = useRouter();
-    const isEdit = params?.id !== undefined && params?.id !== 'new';
+    const isEdit = id !== undefined && id !== 'new';
 
     const {
         getUserById,
@@ -22,22 +23,18 @@ export default function UserFormView({ params }: { params?: { id?: string } }) {
 
     useEffect(() => {
         const loadData = async () => {
-            if (isEdit && params?.id) {
-                const userData = await getUserById(params.id);
+            if (isEdit && typeof id === 'string') {
+                const userData = await getUserById(id);
                 if (userData) {
                     setInitialData(userData);
                 }
             }
         };
         loadData();
-    }, [isEdit, params?.id, getUserById]);
+    }, [isEdit, id, getUserById]);
 
     const handleSubmit = async (data: UserFormValues) => {
         try {
-            console.log('UserFormView received data:', data);
-            console.log('Is edit mode:', isEdit, 'with ID:', params?.id);
-
-            // Preparar los datos para enviar a la API
             const userData = {
                 userName: data.userName,
                 password: data.password,
@@ -56,17 +53,14 @@ export default function UserFormView({ params }: { params?: { id?: string } }) {
                 }
             };
 
-            console.log('Formatted userData to send:', userData);
-
-            if (isEdit && params?.id) {
-                console.log('Updating user with ID:', params.id);
-                await updateUser(params.id, userData);
+            if (isEdit && typeof id === 'string') {
+                await updateUser(id, userData);
                 toast.success('Usuario actualizado exitosamente');
             } else {
-                console.log('Creating new user');
                 await addUser(userData);
                 toast.success('Usuario creado exitosamente');
             }
+
             router.push('/users');
         } catch (error) {
             console.error('Error al guardar el usuario:', error);

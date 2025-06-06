@@ -8,7 +8,6 @@ import Loader from "@/shared/components/ui/Loader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";
 import { toast } from "sonner";
 
 export default function EditInventoryPage() {

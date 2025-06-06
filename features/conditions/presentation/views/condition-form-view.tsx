@@ -7,13 +7,14 @@ import { ICondition } from '@/features/conditions/data/interfaces/condition.inte
 import { ConditionForm } from '../components/condition-form';
 import { ConditionFormValues } from '../../data/schemas/condition.schema';
 import { toast } from 'sonner';
-import Link from 'next/link';
-import { ChevronRight, PaletteIcon } from 'lucide-react';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/components/ui/breadcrumb';
 
-export default function ConditionFormView({ params }: { params: { id?: string } }) {
+interface ConditionFormViewProps {
+    id: string;
+}
+
+export default function ConditionFormView({ id }: ConditionFormViewProps) {
     const router = useRouter();
-    const isEdit = params.id !== undefined && params.id !== 'new';
+    const isEdit = id !== undefined && id !== 'new';
 
     const {
         getConditionById,
@@ -26,8 +27,8 @@ export default function ConditionFormView({ params }: { params: { id?: string } 
 
     useEffect(() => {
         const loadData = async () => {
-            if (isEdit && params.id) {
-                const condition = await getConditionById(params.id);
+            if (isEdit && id) {
+                const condition = await getConditionById(id);
                 if (condition) {
                     setInitialData(condition);
                 } else {
@@ -37,12 +38,12 @@ export default function ConditionFormView({ params }: { params: { id?: string } 
             }
         };
         loadData();
-    }, [isEdit, params.id, getConditionById, router]);
+    }, [isEdit, id, getConditionById, router]);
 
     const handleSubmit = async (data: ConditionFormValues) => {
         try {
-            if (isEdit && params.id) {
-                await updateCondition(params.id, data);
+            if (isEdit && id) {
+                await updateCondition(id, data);
                 toast.success('Condición actualizada exitosamente');
             } else {
                 await addCondition(data);
@@ -58,7 +59,7 @@ export default function ConditionFormView({ params }: { params: { id?: string } 
     return (
         <div className="space-y-6">
             <ConditionForm
-                id={params.id}
+                id={id}
                 initialData={initialData}
                 onSubmit={handleSubmit}
                 isLoading={loading}

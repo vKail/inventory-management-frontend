@@ -8,9 +8,13 @@ import { CertificateForm } from '../components/certificate-form';
 import { CertificateFormValues } from '../../data/schemas/certificate.schema';
 import { toast } from 'sonner';
 
-export default function CertificateFormView({ params }: { params: { id?: string } }) {
+interface CertificateFormViewProps {
+    id: string;
+}
+
+export default function CertificateFormView({ id }: CertificateFormViewProps) {
     const router = useRouter();
-    const isEdit = params.id !== undefined && params.id !== 'new';
+    const isEdit = id !== undefined && id !== 'new';
 
     const {
         getCertificateById,
@@ -23,8 +27,8 @@ export default function CertificateFormView({ params }: { params: { id?: string 
 
     useEffect(() => {
         const loadData = async () => {
-            if (isEdit && params.id) {
-                const certificate = await getCertificateById(params.id);
+            if (isEdit && id) {
+                const certificate = await getCertificateById(id);
                 if (certificate) {
                     setInitialData(certificate);
                 } else {
@@ -34,12 +38,12 @@ export default function CertificateFormView({ params }: { params: { id?: string 
             }
         };
         loadData();
-    }, [isEdit, params.id, getCertificateById, router]);
+    }, [isEdit, id, getCertificateById, router]);
 
     const handleSubmit = async (data: CertificateFormValues) => {
         try {
-            if (isEdit && params.id) {
-                await updateCertificate(params.id, data);
+            if (isEdit && id) {
+                await updateCertificate(id, data);
                 toast.success('Certificado actualizado exitosamente');
             } else {
                 await addCertificate(data);
@@ -55,7 +59,7 @@ export default function CertificateFormView({ params }: { params: { id?: string 
     return (
         <div className="space-y-6">
             <CertificateForm
-                id={params.id}
+                id={id}
                 initialData={initialData}
                 onSubmit={handleSubmit}
                 isLoading={loading}

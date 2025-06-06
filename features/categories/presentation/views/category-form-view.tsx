@@ -23,7 +23,6 @@ interface CategoryFormViewProps {
 
 export default function CategoryFormView({ id }: CategoryFormViewProps) {
   const router = useRouter();
-  const params = useParams();
   const isEdit = id !== undefined && id !== 'new';
 
   const {
