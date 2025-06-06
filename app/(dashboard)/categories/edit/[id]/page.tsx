@@ -1,14 +1,11 @@
-import { type FC } from 'react';
-import CategoryFormView from '@/features/categories/presentation/views/category-form-view';
+'use client';
 
-interface PageProps {
-  params: {
-    id: string;
-  };
+import CategoryFormView from "@/features/categories/presentation/views/category-form-view";
+
+export default function CategoryFormEdit({
+  params,
+}: {
+  params: { id: string };
+}) {
+  return <CategoryFormView id={params.id.toString()} />;
 }
-
-const CategoryFormEdit: FC<PageProps> = ({ params }) => {
-  return <CategoryFormView id={params.id} />;
-};
-
-export default CategoryFormEdit;
