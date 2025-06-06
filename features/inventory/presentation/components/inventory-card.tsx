@@ -16,7 +16,7 @@ type Props = {
 };
 
 export const InventoryCard = ({ item, onViewClick }: Props) => {
-    return (
+return (
         <Card className="h-full flex flex-col">
             <CardContent className="p-4 flex flex-col gap-3 flex-1">
                 <div className="aspect-square rounded-lg border overflow-hidden">

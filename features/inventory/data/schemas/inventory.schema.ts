@@ -135,32 +135,49 @@ export const inventoryItemResponseSchema = z.object({
 
 export type InventoryItemResponse = z.infer<typeof inventoryItemResponseSchema>;
 
+const dateSchema = z.union([
+    z.string().refine((val) => val.length > 0, {
+        message: "La fecha es requerida"
+    }),
+    z.date().transform(date => date.toISOString())
+]);
+
 export const InventorySchema = z.object({
+    // Información Básica
     code: z.string().min(1, "El código es requerido"),
     name: z.string().min(1, "El nombre es requerido"),
     stock: z.number().min(0, "El stock no puede ser negativo"),
     description: z.string().optional(),
-    itemTypeId: z.number().min(1, "El tipo de item es requerido"),
+
+    // Clasificación
     categoryId: z.number().min(1, "La categoría es requerida"),
     statusId: z.number().min(1, "El estado es requerido"),
-    normativeType: z.string().min(1, "El tipo normativo es requerido"),
-    origin: z.string().min(1, "El origen es requerido"),
-    acquisitionDate: z.string().min(1, "La fecha de adquisición es requerida"),
+    locationId: z.number().min(1, "La ubicación es requerida"),
+    colorId: z.number().min(1, "El color es requerido"),
+    normativeType: z.enum(["PROPERTY", "ADMINISTRATIVE_CONTROL", "INVENTORY"], {
+        required_error: "El tipo normativo es requerido",
+    }),
+    origin: z.enum(["PURCHASE", "DONATION", "MANUFACTURING", "TRANSFER"], {
+        required_error: "El origen es requerido",
+    }),
+
+    // Información de Adquisición
+    acquisitionDate: dateSchema,
     acquisitionValue: z.number().min(0, "El valor de adquisición no puede ser negativo"),
     currentValue: z.number().min(0, "El valor actual no puede ser negativo"),
+
+    // Información de Depreciación
     usefulLife: z.number().min(0, "La vida útil no puede ser negativa"),
     depreciationRate: z.number().min(0, "La tasa de depreciación no puede ser negativa"),
     annualDepreciation: z.number().min(0, "La depreciación anual no puede ser negativa"),
     accumulatedDepreciation: z.number().min(0, "La depreciación acumulada no puede ser negativa"),
-    locationId: z.number().min(1, "La ubicación es requerida"),
-    colorId: z.number().optional(),
-    brandId: z.number().optional(),
-    modelId: z.number().optional(),
-    supplierId: z.number().optional(),
-    serialNumber: z.string().optional(),
-    modelCharacteristics: z.string().optional(),
-    brandBreedOther: z.string().optional(),
+
+    // Información del Producto
+    serialNumber: z.string().min(1, "El número de serie es requerido"),
+    modelCharacteristics: z.string().min(1, "Las características del modelo son requeridas"),
+    brandBreedOther: z.string().min(1, "La marca/raza/otro es requerida"),
     observations: z.string().optional(),
+    itemTypeId: z.number()
 });
 
 export type InventoryFormValues = z.infer<typeof InventorySchema>; 

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { toast } from "sonner";
 import { inventoryService } from "../services/inventory.service";
 import { InventoryItem, PaginatedResponse, FilterOption, LocationOption } from "../data/interfaces/inventory.interface";
+import { RegisterFormValues } from "../data/schemas/register-schema";
 
 type ViewMode = "table" | "list" | "grid";
 
@@ -35,9 +36,10 @@ interface InventoryState {
   applyFilters: () => void;
   clearFilters: () => void;
   setPage: (page: number) => void;
-  createInventoryItem: (item: Partial<InventoryItem>) => Promise<void>;
-  updateInventoryItem: (id: number, item: Partial<InventoryItem>) => Promise<void>;
+  createInventoryItem: (item: RegisterFormValues) => Promise<{ success: boolean; id?: number }>;
+  updateInventoryItem: (id: number, item: RegisterFormValues) => Promise<{ success: boolean }>;
   deleteInventoryItem: (id: number) => Promise<void>;
+  uploadItemImage: (id: number, file: File) => Promise<void>;
   refreshTable: () => Promise<void>;
   getCategories: () => Promise<FilterOption[]>;
   getLocations: () => Promise<LocationOption[]>;
@@ -159,27 +161,35 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     }
   },
 
-  createInventoryItem: async (item: Partial<InventoryItem>) => {
+  createInventoryItem: async (item: RegisterFormValues) => {
     try {
       set({ loading: true, error: null });
-      await inventoryService.createInventoryItem(item);
+      const { imageUrl, ...formData } = item;
+      const result = await inventoryService.createInventoryItem(formData);
       await get().refreshTable();
       set({ loading: false });
+      return { success: true, id: result.id };
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
-      throw error;
+      const message = error instanceof Error ? error.message : "Error al crear el item";
+      set({ error: message, loading: false });
+      toast.error(message);
+      return { success: false };
     }
   },
 
-  updateInventoryItem: async (id: number, item: Partial<InventoryItem>) => {
+  updateInventoryItem: async (id: number, item: RegisterFormValues) => {
     try {
       set({ loading: true, error: null });
-      await inventoryService.updateInventoryItem(id, item);
+      const { imageUrl, ...formData } = item;
+      await inventoryService.updateInventoryItem(id, formData);
       await get().refreshTable();
       set({ loading: false });
+      return { success: true };
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
-      throw error;
+      const message = error instanceof Error ? error.message : "Error al actualizar el item";
+      set({ error: message, loading: false });
+      toast.error(message);
+      return { success: false };
     }
   },
 
@@ -190,7 +200,24 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       await get().refreshTable();
       set({ loading: false });
     } catch (error) {
-      set({ error: (error as Error).message, loading: false });
+      const message = error instanceof Error ? error.message : "Error al eliminar el item";
+      set({ error: message, loading: false });
+      toast.error(message);
+      throw error;
+    }
+  },
+
+  uploadItemImage: async (id: number, file: File) => {
+    try {
+      set({ loading: true, error: null });
+      const formData = new FormData();
+      formData.append("image", file);
+      await inventoryService.uploadItemImage(id, formData);
+      set({ loading: false });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error al subir la imagen";
+      set({ error: message, loading: false });
+      toast.error(message);
       throw error;
     }
   },

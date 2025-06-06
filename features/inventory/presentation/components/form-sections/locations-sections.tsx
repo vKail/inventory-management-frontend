@@ -9,10 +9,10 @@ import { useLocationStore } from "@/features/locations/context/location-store";
 import { useUserStore } from "@/features/users/context/user-store";
 import { useCertificateStore } from "@/features/certificates/context/certificate-store";
 import { useEffect } from "react";
-import { RegisterFormData } from "../../../data/interfaces/register.interface";
+import { RegisterFormValues } from "../../../data/schemas/register-schema";
 
 interface LocationsSectionsProps {
-    form: UseFormReturn<RegisterFormData>;
+    form: UseFormReturn<RegisterFormValues>;
 }
 
 export const LocationsSections = ({ form }: LocationsSectionsProps) => {
@@ -42,7 +42,7 @@ export const LocationsSections = ({ form }: LocationsSectionsProps) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                             control={form.control}
-                            name="ubicacion"
+                            name="locationId"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Ubicación</FormLabel>
@@ -73,7 +73,7 @@ export const LocationsSections = ({ form }: LocationsSectionsProps) => {
 
                         <FormField
                             control={form.control}
-                            name="custodioActual"
+                            name="custodianId"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Custodio</FormLabel>
@@ -104,7 +104,7 @@ export const LocationsSections = ({ form }: LocationsSectionsProps) => {
 
                         <FormField
                             control={form.control}
-                            name="nroActaMatriz"
+                            name="certificateId"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Numero de Acta</FormLabel>

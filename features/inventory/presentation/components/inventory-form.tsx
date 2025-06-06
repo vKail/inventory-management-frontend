@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,35 +42,35 @@ export function InventoryForm({ onSubmit, isLoading, initialData }: InventoryFor
     const [suppliers, setSuppliers] = useState<FilterOption[]>([]);
     const { getCategories, getLocations, getStates, getColors } = useInventoryStore();
 
+    const defaultValues: InventoryFormValues = {
+        code: initialData?.code || "",
+        name: initialData?.name || "",
+        stock: initialData?.stock || 0,
+        description: initialData?.description || "",
+        itemTypeId: initialData?.itemType?.id || 0,
+        categoryId: initialData?.category?.id || 0,
+        statusId: initialData?.status?.id || 0,
+        normativeType: initialData?.normativeType || "ADMINISTRATIVE_CONTROL",
+        origin: initialData?.origin || "PURCHASE",
+        acquisitionDate: initialData?.acquisitionDate || new Date().toISOString().split('T')[0],
+        locationId: initialData?.location?.id || 1,
+        colorId: initialData?.color?.id || 0,
+        acquisitionValue: initialData?.acquisitionValue || 0,
+        currentValue: initialData?.currentValue || 0,
+        usefulLife: initialData?.usefulLife || 0,
+        depreciationRate: initialData?.depreciationRate || 0,
+        annualDepreciation: initialData?.annualDepreciation || 0,
+        accumulatedDepreciation: initialData?.accumulatedDepreciation || 0,
+        serialNumber: initialData?.serialNumber || "",
+        modelCharacteristics: initialData?.modelCharacteristics || "",
+        brandBreedOther: initialData?.brandBreedOther || "",
+        observations: initialData?.observations || "",
+    };
+
     const form = useForm<InventoryFormValues>({
-        resolver: zodResolver(InventorySchema),
-        defaultValues: {
-            code: initialData?.code || "",
-            name: initialData?.name || "",
-            stock: initialData?.stock || 0,
-            description: initialData?.description || "",
-            itemTypeId: initialData?.itemTypeId || 0,
-            categoryId: initialData?.categoryId || 0,
-            statusId: initialData?.statusId || 0,
-            normativeType: initialData?.normativeType || "",
-            origin: initialData?.origin || "",
-            acquisitionDate: initialData?.acquisitionDate || new Date().toISOString().split('T')[0],
-            acquisitionValue: initialData?.acquisitionValue || 0,
-            currentValue: initialData?.currentValue || 0,
-            usefulLife: initialData?.usefulLife || 0,
-            depreciationRate: initialData?.depreciationRate || 0,
-            annualDepreciation: initialData?.annualDepreciation || 0,
-            accumulatedDepreciation: initialData?.accumulatedDepreciation || 0,
-            locationId: initialData?.locationId || 0,
-            colorId: initialData?.colorId || 0,
-            brandId: initialData?.brandId || 0,
-            modelId: initialData?.modelId || 0,
-            supplierId: initialData?.supplierId || 0,
-            serialNumber: initialData?.serialNumber || "",
-            modelCharacteristics: initialData?.modelCharacteristics || "",
-            brandBreedOther: initialData?.brandBreedOther || "",
-            observations: initialData?.observations || "",
-        },
+        resolver: zodResolver(InventorySchema) as Resolver<InventoryFormValues>,
+        defaultValues,
+        mode: "onChange"
     });
 
     useEffect(() => {

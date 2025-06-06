@@ -148,47 +148,84 @@ export interface PaginatedResponse<T> {
 
 export interface InventoryItem {
   id: number;
+  // Información Básica
   code: string;
+  identificador: string;
+  nroActaMatriz: string;
+  bldBca: "BLD" | "BCA";
   name: string;
   stock: number;
-  description: string;
-  itemTypeId: number;
-  itemType: ItemType;
+  description?: string;  
+  itemType: {
+    id: number;
+    name: string;
+  };
+  // Clasificación
   categoryId: number;
-  category: Category;
+  category: {
+    id: number;
+    name: string;
+  };
   statusId: number;
-  status: Status;
-  normativeType: string;
-  origin: string;
+  status: {
+    id: number;
+    name: string;
+  };
+  locationId: number;
+  location: {
+    id: number;
+    name: string;
+  };
+  custodianId: number;
+  availableForLoan: boolean;
+  previousCode?: string;
+  condition: {
+    id: number;
+    name: string;
+  }
+  colorId: number;
+  color: {
+    id: number;
+    name: string;
+  };
+  certificate?: {
+    id: number;
+    name: string;
+  };
+  entryOrigin: string;
+  entryType: string;
+  normativeType: "PROPERTY" | "ADMINISTRATIVE_CONTROL" | "INVENTORY";
+  origin: "PURCHASE" | "DONATION" | "MANUFACTURING" | "TRANSFER";
+
+  // Información de Adquisición
   acquisitionDate: string;
   acquisitionValue: number;
-  currentValue: number;
+  commitmentNumber?: string;
+  currentValue: number;  // Información de Depreciación
   usefulLife: number;
   depreciationRate: number;
   annualDepreciation: number;
   accumulatedDepreciation: number;
-  locationId: number;
-  location: Location;
-  colorId: number;
-  color: Color;
-  brandId: number;
-  brand: Brand;
-  modelId: number;
-  model: Model;
-  supplierId: number;
-  supplier: Supplier;
+
+  // Información del Producto
   serialNumber: string;
   modelCharacteristics: string;
   brandBreedOther: string;
-  observations: string;
-  availableForLoan: boolean;
-  condition: string;
+  identifier: string;
+  identificationSeries: string;
+  warrantyDate?: string;
+  dimensions?: string;
   critical: boolean;
   dangerous: boolean;
   requiresSpecialHandling: boolean;
   perishable: boolean;
-  images: string[];
-  imageUrl: string
+  expirationDate?: string;
+  itemLine: number;
+  accountingAccount: string;
+  observations?: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type InventoryListResponse = ApiResponse<PaginatedResponse<InventoryItem>>;

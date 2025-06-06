@@ -1,19 +1,7 @@
-import { InventoryItem, FilterOption, LocationOption, PaginatedResponse } from "../data/interfaces/inventory.interface";
+import { InventoryItem, FilterOption, LocationOption, PaginatedResponse, ApiResponse } from "../data/interfaces/inventory.interface";
 import { AxiosClient } from "@/core/infrestucture/AxiosClient";
-import { IHttpResponse } from "@/core/data/interfaces/HttpHandler";
-import { HTTP_STATUS_CODE } from "@/core/data/HttpStatus";
 import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
 import { API_URL } from "@/config/constants";
-
-const apiClient = AxiosClient.getInstance();
-
-function getAuthHeaders() {
-  return {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-  };
-}
 
 export class InventoryService {
   private static instance: InventoryService;
@@ -98,36 +86,19 @@ export class InventoryService {
 
   public async deleteInventoryItem(id: number): Promise<void> {
     try {
-      const response = await this.httpClient.delete<void>(
+      const response = await this.httpClient.delete<ApiResponse<void>>(
         `${InventoryService.url}/${id}`
       );
       if (!response.success) {
         throw new Error(response.message.content.join(', '));
       }
-    } catch (error) {
-      console.error('Error deleting inventory item:', error);
-      throw error;
-    }
-  }
-
-  public async uploadItemImage(id: number, imageFile: File): Promise<{ imageUrl: string }> {
-    try {
-      const formData = new FormData();
-      formData.append("file", imageFile);
-      formData.append("itemId", id.toString());
-
-      const response = await this.httpClient.post<{ imageUrl: string }>(
-        `${InventoryService.url}/item-images/upload`,
-        formData
-      );
-
-      if (response.success && response.data && response.data.imageUrl) {
-        return { imageUrl: response.data.imageUrl };
-      }
-      throw new Error(response.message.content.join(', ') || 'Error al subir la imagen');
+      throw new Error(response.message.content.join(', '));
     } catch (error: any) {
-      console.error('Error uploading image:', error);
-      throw new Error(error.message || 'Error al subir la imagen');
+      console.error('Error updating inventory item:', error);
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado');
+      }
+      throw new Error(error.message || 'Error al eliminar un producto');
     }
   }
 
@@ -153,7 +124,6 @@ export class InventoryService {
     try {
       const response = await this.httpClient.get<PaginatedResponse<any>>("/categories", {
         params: { limit: 1000, page: 1 },
-        ...getAuthHeaders(),
       });
 
       if (!response.success) {
@@ -174,7 +144,6 @@ export class InventoryService {
     try {
       const response = await this.httpClient.get<PaginatedResponse<any>>("/locations", {
         params: { limit: 1000, page: 1 },
-        ...getAuthHeaders()
       });
 
       if (!response.success) {
@@ -196,7 +165,6 @@ export class InventoryService {
     try {
       const response = await this.httpClient.get<PaginatedResponse<any>>("/states", {
         params: { limit: 1000, page: 1 },
-        ...getAuthHeaders(),
       });
 
       if (!response.success) {
@@ -217,7 +185,6 @@ export class InventoryService {
     try {
       const response = await this.httpClient.get<PaginatedResponse<any>>("/colors", {
         params: { limit: 1000, page: 1 },
-        ...getAuthHeaders()
       });
 
       if (!response.success) {
@@ -232,6 +199,14 @@ export class InventoryService {
       console.error("Error fetching colors:", error);
       return [];
     }
+  }
+
+  async uploadItemImage(id: number, formData: FormData): Promise<void> {
+    const response = await this.httpClient.post(`/inventory/${id}/image`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   }
 }
 

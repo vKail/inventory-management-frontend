@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Resolver, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { InventoryItem } from "../../data/interfaces/inventory.interface";
 import { useInventoryStore } from "../../context/inventory-store";
-import { RegisterSchema, RegisterFormValues } from "../../data/schemas/register-schema";
+import { RegisterSchema, type RegisterFormValues } from "../../data/schemas/register-schema";
 import { ScanModal } from "./scan-modal";
 import { useItemTypeStore } from "@/features/item-types/context/item-types-store";
 import { useConditionStore } from "@/features/conditions/context/condition-store";
@@ -44,85 +44,50 @@ export const RegisterForm = ({ initialData, isEditing = false }: RegisterFormPro
     getStates();
   }, [getItemTypes, getConditions, getStates]);
 
+  const defaultValues: RegisterFormValues = {
+    code: initialData?.code || "",
+    name: initialData?.name || "",
+    description: initialData?.description || "",
+    stock: initialData?.stock || 0,
+    itemTypeId: initialData?.itemType?.id || 0,
+    categoryId: initialData?.category?.id || 0,
+    locationId: initialData?.location?.id || 0,
+    conditionId: initialData?.condition?.id || 0,
+    statusId: initialData?.status?.id || 0,
+    normativeType: initialData?.normativeType || "ADMINISTRATIVE_CONTROL",
+    origin: initialData?.origin || "PURCHASE",
+    observations: initialData?.observations || "",
+    custodianId: initialData?.custodianId || 0,
+    identificador: initialData?.identificador || "",
+    previousCode: initialData?.previousCode || "",
+    certificateId: initialData?.certificate?.id || 0,
+    entryOrigin: initialData?.entryOrigin || "",
+    entryType: initialData?.entryType || "",
+    acquisitionDate: initialData?.acquisitionDate || "",
+    commitmentNumber: initialData?.commitmentNumber || "",
+    modelCharacteristics: initialData?.modelCharacteristics || "",
+    brandBreedOther: initialData?.brandBreedOther || "",
+    identificationSeries: initialData?.identificationSeries || "",
+    warrantyDate: initialData?.warrantyDate || "",
+    dimensions: initialData?.dimensions || "",
+    critical: initialData?.critical || false,
+    dangerous: initialData?.dangerous || false,
+    requiresSpecialHandling: initialData?.requiresSpecialHandling || false,
+    perishable: initialData?.perishable || false,
+    expirationDate: initialData?.expirationDate || "",
+    itemLine: initialData?.itemLine || 0,
+    accountingAccount: initialData?.accountingAccount || "",
+    availableForLoan: initialData?.availableForLoan || false,
+    bldBca: initialData?.bldBca || "BLD",
+    nroActaMatriz: initialData?.nroActaMatriz || "",
+    imageUrl: initialData?.imageUrl || undefined,
+  };
+
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(RegisterSchema),
-    defaultValues: {
-      code: initialData?.code || "",
-      name: initialData?.name || "",
-      description: initialData?.description || "",
-      stock: initialData?.stock || 0,
-      itemTypeId: initialData?.itemType?.id || 0,
-      categoryId: initialData?.category?.id || 0,
-      locationId: initialData?.location?.id || 0,
-      conditionId: initialData?.condition?.id || 0,
-      statusId: initialData?.status?.id || 0,
-      normativeType: initialData?.normativeType || "ADMINISTRATIVE_CONTROL",
-      origin: initialData?.origin || "PURCHASE",
-      observations: initialData?.observations || "",
-      custodianId: initialData?.custodianId || 0,
-      identifier: initialData?.identifier || "",
-      previousCode: initialData?.previousCode || "",
-      certificateId: initialData?.certificate?.id || 0,
-      entryOrigin: initialData?.entryOrigin || "",
-      entryType: initialData?.entryType || "",
-      acquisitionDate: initialData?.acquisitionDate || "",
-      commitmentNumber: initialData?.commitmentNumber || "",
-      modelCharacteristics: initialData?.modelCharacteristics || "",
-      brandBreedOther: initialData?.brandBreedOther || "",
-      identificationSeries: initialData?.identificationSeries || "",
-      warrantyDate: initialData?.warrantyDate || "",
-      dimensions: initialData?.dimensions || "",
-      critical: initialData?.critical || false,
-      dangerous: initialData?.dangerous || false,
-      requiresSpecialHandling: initialData?.requiresSpecialHandling || false,
-      perishable: initialData?.perishable || false,
-      expirationDate: initialData?.expirationDate || "",
-      itemLine: initialData?.itemLine || 0,
-      accountingAccount: initialData?.accountingAccount || "",
-      availableForLoan: initialData?.availableForLoan || false,
-    },
+    resolver: zodResolver(RegisterSchema) as Resolver<RegisterFormValues>,
+    defaultValues,
     mode: "onChange"
   });
-
-  useEffect(() => {
-    if (initialData && isEditing) {
-      form.reset({
-        code: initialData.code,
-        name: initialData.name,
-        description: initialData.description,
-        stock: initialData.stock,
-        itemTypeId: initialData.itemType?.id,
-        categoryId: initialData.category?.id,
-        locationId: initialData.location?.id,
-        conditionId: initialData.condition?.id,
-        statusId: initialData.status?.id,
-        normativeType: initialData.normativeType,
-        origin: initialData.origin,
-        observations: initialData.observations,
-        custodianId: initialData.custodianId,
-        identifier: initialData.identifier,
-        previousCode: initialData.previousCode,
-        certificateId: initialData.certificate?.id,
-        entryOrigin: initialData.entryOrigin,
-        entryType: initialData.entryType,
-        acquisitionDate: initialData.acquisitionDate,
-        commitmentNumber: initialData.commitmentNumber,
-        modelCharacteristics: initialData.modelCharacteristics,
-        brandBreedOther: initialData.brandBreedOther,
-        identificationSeries: initialData.identificationSeries,
-        warrantyDate: initialData.warrantyDate,
-        dimensions: initialData.dimensions,
-        critical: initialData.critical,
-        dangerous: initialData.dangerous,
-        requiresSpecialHandling: initialData.requiresSpecialHandling,
-        perishable: initialData.perishable,
-        expirationDate: initialData.expirationDate,
-        itemLine: initialData.itemLine,
-        accountingAccount: initialData.accountingAccount,
-        availableForLoan: initialData.availableForLoan,
-      });
-    }
-  }, [initialData, isEditing, form]);
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
@@ -176,7 +141,7 @@ export const RegisterForm = ({ initialData, isEditing = false }: RegisterFormPro
       // Mostrar errores específicos
       const errors = form.formState.errors;
       Object.keys(errors).forEach((key) => {
-        const error = errors[key as keyof RegisterFormData];
+        const error = errors[key as keyof typeof errors];
         if (error?.message) {
           toast.error(error.message);
         }

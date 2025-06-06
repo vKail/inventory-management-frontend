@@ -56,9 +56,9 @@ export const InventoryDetailsModal = ({ isOpen, onClose, product }: InventoryDet
                     {/* Left side - Image */}
                     <div className="col-span-12 md:col-span-4">
                         <div className="aspect-square rounded-lg border overflow-hidden">
-                            {product.images && product.images.length > 0 ? (
+                            {product.imageUrl ? (
                                 <img
-                                    src={product.images[0]}
+                                    src={product.imageUrl}
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                 />
