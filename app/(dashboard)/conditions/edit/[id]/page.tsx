@@ -1,3 +1,5 @@
+'use client'
+
 import ConditionFormView from "@/features/conditions/presentation/views/condition-form-view";
 import { useParams } from "next/navigation";
 

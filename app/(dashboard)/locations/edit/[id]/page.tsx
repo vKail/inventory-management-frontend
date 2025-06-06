@@ -1,3 +1,5 @@
+'use client'
+
 import { LocationView } from '@/features/locations/presentation/views/location-view';
 import { useParams } from 'next/navigation';
 

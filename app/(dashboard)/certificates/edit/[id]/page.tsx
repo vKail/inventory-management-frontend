@@ -1,3 +1,5 @@
+'use client'
+
 import CertificateFormView from '@/features/certificates/presentation/views/certificate-form-view';
 import { useParams } from 'next/navigation';
 

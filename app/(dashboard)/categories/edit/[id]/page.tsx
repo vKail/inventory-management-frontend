@@ -1,3 +1,5 @@
+'use client'
+
 import { useParams } from 'next/navigation';
 import CategoryFormView from '@/features/categories/presentation/views/category-form-view';
 
