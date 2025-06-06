@@ -7,8 +7,13 @@ const dateSchema = z.union([
   z.date().transform(date => date.toISOString())
 ]);
 
-export const registerSchema = z.object({
-  code: z.string().min(1, "El código es requerido"),
+export const RegisterSchema = z.object({
+  code: z.string().min(1, "El código del bien es requerido"),
+  identificador: z.string().min(1, "El identificador es requerido"),
+  nroActaMatriz: z.string().min(1, "El número de acta/matriz es requerido"),
+  bldBca: z.enum(["BLD", "BCA"], {
+    required_error: "Debe seleccionar un tipo",
+  }),
   stock: z.number().min(0, "El stock no puede ser negativo"),
   name: z.string().min(1, "El nombre es requerido"),
   description: z.string().optional(),
@@ -20,7 +25,6 @@ export const registerSchema = z.object({
   locationId: z.number().min(1, "La ubicación es requerida"),
   custodianId: z.number().min(1, "El custodio es requerido"),
   availableForLoan: z.boolean(),
-  identifier: z.string().min(1, "El identificador es requerido"),
   previousCode: z.string().optional(),
   conditionId: z.number().min(1, "La condición es requerida"),
   certificateId: z.number().optional(),
@@ -44,4 +48,4 @@ export const registerSchema = z.object({
   imageUrl: z.union([z.string(), z.instanceof(File)]).optional(),
 });
 
-export type RegisterFormData = z.infer<typeof registerSchema>;
+export type RegisterFormValues = z.infer<typeof RegisterSchema>;

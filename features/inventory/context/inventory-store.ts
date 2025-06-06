@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { toast } from "sonner";
 import { inventoryService } from "../services/inventory.service";
-import { InventoryItem } from "../data/interfaces/inventory.interface";
+import { InventoryItem, PaginatedResponse, FilterOption, LocationOption } from "../data/interfaces/inventory.interface";
 
 type ViewMode = "table" | "list" | "grid";
 
@@ -27,7 +27,7 @@ interface InventoryState {
 
   // Methods
   getInventoryItems: (page?: number) => Promise<void>;
-  getInventoryItemById: (id: number) => Promise<void>;
+  getInventoryItemById: (id: number) => Promise<InventoryItem | undefined>;
   getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
   setSelectedItem: (item: InventoryItem | null) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -35,6 +35,14 @@ interface InventoryState {
   applyFilters: () => void;
   clearFilters: () => void;
   setPage: (page: number) => void;
+  createInventoryItem: (item: Partial<InventoryItem>) => Promise<void>;
+  updateInventoryItem: (id: number, item: Partial<InventoryItem>) => Promise<void>;
+  deleteInventoryItem: (id: number) => Promise<void>;
+  refreshTable: () => Promise<void>;
+  getCategories: () => Promise<FilterOption[]>;
+  getLocations: () => Promise<LocationOption[]>;
+  getStates: () => Promise<FilterOption[]>;
+  getColors: () => Promise<FilterOption[]>;
 }
 
 export const useInventoryStore = create<InventoryState>((set, get) => ({
@@ -75,6 +83,7 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       set({ loading: true, error: null });
       const item = await inventoryService.getInventoryItemById(id);
       set({ selectedItem: item, loading: false });
+      return item;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error al obtener el item";
       set({ error: message, loading: false, selectedItem: null });
@@ -148,5 +157,82 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
     if (page !== store.currentPage) {
       store.getInventoryItems(page);
     }
-  }
+  },
+
+  createInventoryItem: async (item: Partial<InventoryItem>) => {
+    try {
+      set({ loading: true, error: null });
+      await inventoryService.createInventoryItem(item);
+      await get().refreshTable();
+      set({ loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  updateInventoryItem: async (id: number, item: Partial<InventoryItem>) => {
+    try {
+      set({ loading: true, error: null });
+      await inventoryService.updateInventoryItem(id, item);
+      await get().refreshTable();
+      set({ loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  deleteInventoryItem: async (id: number) => {
+    try {
+      set({ loading: true, error: null });
+      await inventoryService.deleteInventoryItem(id);
+      await get().refreshTable();
+      set({ loading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, loading: false });
+      throw error;
+    }
+  },
+
+  refreshTable: async () => {
+    const { currentPage } = get();
+    await get().getInventoryItems(currentPage);
+  },
+
+  getCategories: async () => {
+    try {
+      return await inventoryService.getCategories();
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
+  },
+
+  getLocations: async () => {
+    try {
+      return await inventoryService.getLocations();
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      return [];
+    }
+  },
+
+  getStates: async () => {
+    try {
+      return await inventoryService.getStates();
+    } catch (error) {
+      console.error('Error fetching states:', error);
+      return [];
+    }
+  },
+
+  getColors: async () => {
+    try {
+      return await inventoryService.getColors();
+    } catch (error) {
+      console.error('Error fetching colors:', error);
+      return [];
+    }
+  },
 }));

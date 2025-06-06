@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useInventoryStore } from "../../context/inventory-store";
 import { RegisterForm } from "../components/register-form";
-import { LoaderComponent } from "@/components/ui/loader";
+import LoaderComponent from "@/shared/components/ui/Loader";
 
 interface FormViewProps {
     id?: number;
@@ -14,13 +14,13 @@ interface FormViewProps {
 
 export const FormView = ({ id }: FormViewProps) => {
     const router = useRouter();
-    const { selectedItem: item, loading, getInventoryItem } = useInventoryStore();
+    const { selectedItem: item, loading, getInventoryItems } = useInventoryStore();
 
     useEffect(() => {
         if (id) {
-            getInventoryItem(id);
+            getInventoryItems(id);
         }
-    }, [getInventoryItem, id]);
+    }, [getInventoryItems, id]);
 
     if (id && loading) {
         return <LoaderComponent rows={5} columns={2} />;

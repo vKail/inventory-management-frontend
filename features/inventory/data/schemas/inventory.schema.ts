@@ -133,4 +133,34 @@ export const inventoryItemResponseSchema = z.object({
     data: inventoryItemSchema
 });
 
-export type InventoryItemResponse = z.infer<typeof inventoryItemResponseSchema>; 
+export type InventoryItemResponse = z.infer<typeof inventoryItemResponseSchema>;
+
+export const InventorySchema = z.object({
+    code: z.string().min(1, "El código es requerido"),
+    name: z.string().min(1, "El nombre es requerido"),
+    stock: z.number().min(0, "El stock no puede ser negativo"),
+    description: z.string().optional(),
+    itemTypeId: z.number().min(1, "El tipo de item es requerido"),
+    categoryId: z.number().min(1, "La categoría es requerida"),
+    statusId: z.number().min(1, "El estado es requerido"),
+    normativeType: z.string().min(1, "El tipo normativo es requerido"),
+    origin: z.string().min(1, "El origen es requerido"),
+    acquisitionDate: z.string().min(1, "La fecha de adquisición es requerida"),
+    acquisitionValue: z.number().min(0, "El valor de adquisición no puede ser negativo"),
+    currentValue: z.number().min(0, "El valor actual no puede ser negativo"),
+    usefulLife: z.number().min(0, "La vida útil no puede ser negativa"),
+    depreciationRate: z.number().min(0, "La tasa de depreciación no puede ser negativa"),
+    annualDepreciation: z.number().min(0, "La depreciación anual no puede ser negativa"),
+    accumulatedDepreciation: z.number().min(0, "La depreciación acumulada no puede ser negativa"),
+    locationId: z.number().min(1, "La ubicación es requerida"),
+    colorId: z.number().optional(),
+    brandId: z.number().optional(),
+    modelId: z.number().optional(),
+    supplierId: z.number().optional(),
+    serialNumber: z.string().optional(),
+    modelCharacteristics: z.string().optional(),
+    brandBreedOther: z.string().optional(),
+    observations: z.string().optional(),
+});
+
+export type InventoryFormValues = z.infer<typeof InventorySchema>; 

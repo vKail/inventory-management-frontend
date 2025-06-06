@@ -123,7 +123,7 @@ export const TechnicalSection = ({ form }: TechnicalSectionProps) => {
                                             <Calendar
                                                 mode="single"
                                                 selected={field.value ? new Date(field.value) : undefined}
-                                                onSelect={(date) => handleDateChange(field, date)}
+                                                onSelect={(date) => handleDateChange(field, date || null)}
                                                 disabled={(date) =>
                                                     date < new Date()
                                                 }
@@ -239,7 +239,7 @@ export const TechnicalSection = ({ form }: TechnicalSectionProps) => {
                                             <Calendar
                                                 mode="single"
                                                 selected={field.value ? new Date(field.value) : undefined}
-                                                onSelect={(date) => handleDateChange(field, date)}
+                                                onSelect={(date) => handleDateChange(field, date || null)}
                                                 disabled={(date) =>
                                                     date < new Date()
                                                 }

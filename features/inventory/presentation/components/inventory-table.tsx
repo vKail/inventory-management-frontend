@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { Plus, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { useInventoryStore } from '../../context/inventory-store';
 import LoaderComponent from '@/shared/components/ui/Loader';
@@ -19,17 +19,19 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { InventoryForm } from './inventory-form';
+import { columns, ActionsCell } from './columns';
+import { InventoryItem } from '../../data/interfaces/inventory.interface';
 
 export default function InventoryTable() {
     const router = useRouter();
-    const { items, loading, currentPage, totalPages, getInventoryItems, createInventoryItem, deleteInventoryItem } = useInventoryStore();
+    const { items, loading, currentPage, totalPages, getInventoryItems, createInventoryItem } = useInventoryStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const itemsPerPage = 10;
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                await getInventoryItems(1, itemsPerPage);
+                await getInventoryItems(1);
             } catch (error) {
                 console.error('Error loading data:', error);
                 toast.error('Error al cargar los datos');
@@ -41,31 +43,29 @@ export default function InventoryTable() {
 
     const handlePageChange = async (page: number) => {
         try {
-            await getInventoryItems(page, itemsPerPage);
+            await getInventoryItems(page);
         } catch (error) {
             console.error('Error changing page:', error);
             toast.error('Error al cambiar de página');
         }
     };
 
-    const handleCreateItem = async (data: any) => {
+    const handleCreateItem = async (formData: any) => {
         try {
+            // Convertir la fecha a string si es necesario
+            const data: Partial<InventoryItem> = {
+                ...formData,
+                acquisitionDate: formData.acquisitionDate instanceof Date
+                    ? formData.acquisitionDate.toISOString().split('T')[0]
+                    : formData.acquisitionDate
+            };
+
             await createInventoryItem(data);
             setIsModalOpen(false);
             toast.success('Item creado exitosamente');
         } catch (error) {
             console.error('Error creating item:', error);
             toast.error('Error al crear el item');
-        }
-    };
-
-    const handleDeleteItem = async (id: number) => {
-        try {
-            await deleteInventoryItem(id);
-            toast.success('Item eliminado exitosamente');
-        } catch (error) {
-            console.error('Error deleting item:', error);
-            toast.error('Error al eliminar el item');
         }
     };
 
@@ -100,18 +100,16 @@ export default function InventoryTable() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Código</TableHead>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Categoría</TableHead>
-                                <TableHead>Ubicación</TableHead>
-                                <TableHead>Estado</TableHead>
+                                {columns.map((column) => (
+                                    <TableHead key={column.accessorKey}>{column.header}</TableHead>
+                                ))}
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {items.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-10">
+                                    <TableCell colSpan={columns.length + 1} className="text-center py-10">
                                         <div className="flex flex-col items-center gap-2">
                                             <Package className="h-10 w-10 text-gray-400" />
                                             <p className="text-sm text-gray-600">No hay items registrados</p>
@@ -121,28 +119,13 @@ export default function InventoryTable() {
                             ) : (
                                 items.map((item) => (
                                     <TableRow key={item.id}>
-                                        <TableCell>{item.code}</TableCell>
-                                        <TableCell>{item.name}</TableCell>
-                                        <TableCell>{item.category.name}</TableCell>
-                                        <TableCell>{item.location.name}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{item.status.name}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                onClick={() => router.push(`/inventory/${item.id}`)}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="icon"
-                                                onClick={() => handleDeleteItem(item.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                        {columns.map((column) => (
+                                            <TableCell key={column.accessorKey}>
+                                                {String(item[column.accessorKey])}
+                                            </TableCell>
+                                        ))}
+                                        <TableCell className="text-right">
+                                            <ActionsCell item={item} />
                                         </TableCell>
                                     </TableRow>
                                 ))

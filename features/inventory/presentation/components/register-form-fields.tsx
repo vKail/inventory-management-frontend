@@ -18,16 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScanLine } from "lucide-react";
-import { RegisterFormSchema } from "@/features/inventory/data/schemas/register-schema";
+import { RegisterSchema, RegisterFormValues } from "@/features/inventory/data/schemas/register-schema";
 import { ScanModal } from "./scan-modal";
 
 interface RegisterFormFieldsProps {
-  control: Control<RegisterFormSchema>;
+  control: Control<RegisterFormValues>;
 }
 
 export const RegisterFormFields = ({ control }: RegisterFormFieldsProps) => {
   const [scanOpen, setScanOpen] = useState(false);
-  const [onScan, setOnScan] = useState<(code: string) => void>(() => () => {});
+  const [onScan, setOnScan] = useState<(code: string) => void>(() => () => { });
 
   return (
     <>
@@ -44,7 +44,7 @@ export const RegisterFormFields = ({ control }: RegisterFormFieldsProps) => {
         {/* Código del Bien con botón de escanear */}
         <FormField
           control={control}
-          name="codigoBien"
+          name="code"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Código del Bien</FormLabel>

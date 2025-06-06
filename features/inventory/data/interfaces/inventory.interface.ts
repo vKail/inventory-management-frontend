@@ -60,6 +60,57 @@ export interface FilterOption {
   name: string;
 }
 
+export interface LocationOption extends FilterOption {
+  type: string;
+}
+
+export interface Category extends FilterOption {
+  code: string;
+  description: string;
+  standardUsefulLife: number;
+  parentCategory?: any;
+}
+
+export interface Status extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface ItemType extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface Location extends FilterOption {
+  code: string;
+  description: string;
+  type: string;
+}
+
+export interface Color extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface Brand extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface Model extends FilterOption {
+  code: string;
+  description: string;
+  brand: Brand;
+}
+
+export interface Supplier extends FilterOption {
+  code: string;
+  description: string;
+  contact: string;
+  phone: string;
+  email: string;
+  address: string;
+}
 
 // Departamentos
 export enum Department {
@@ -76,12 +127,6 @@ export enum ProductStatus {
   IN_USE = 'in_use',
   MAINTENANCE = 'maintenance',
   DAMAGED = 'damaged',
-}
-
-export interface LocationOption {
-  id: number;
-  name: string;
-  type: string;
 }
 
 export interface ApiResponse<T> {
@@ -105,90 +150,37 @@ export interface InventoryItem {
   id: number;
   code: string;
   name: string;
-  description: string;
   stock: number;
-  itemType: {
-    id: number;
-    name: string;
-    code: string;
-    description: string;
-  };
-  category: {
-    id: number;
-    name: string;
-    code: string;
-    description: string;
-    standardUsefulLife: number;
-    parentCategory?: {
-      id: number;
-      name: string;
-      code: string;
-      description: string;
-    };
-  };
-  location: {
-    id: number;
-    name: string;
-    description: string;
-    type: string;
-    floor: string;
-    capacity: number;
-    capacityUnit: string;
-    occupancy: number;
-    coordinates: string;
-    reference: string;
-    notes: string;
-    qrCode: string;
-    parentLocationId: number | null;
-  };
-  condition: {
-    id: number;
-    name: string;
-    description: string;
-    requiresMaintenance: boolean;
-  };
-  status: {
-    id: number;
-    name: string;
-    description: string;
-  };
-  certificate: {
-    id: number;
-    number: number;
-    date: string;
-    type: string;
-    status: string;
-    deliveryResponsibleId: number;
-    receptionResponsibleId: number;
-    observations: string;
-  };
+  description: string;
+  itemTypeId: number;
+  itemType: ItemType;
+  categoryId: number;
+  category: Category;
+  statusId: number;
+  status: Status;
   normativeType: string;
-  origin: "PURCHASE" | "DONATION" | "MANUFACTURING" | "TRANSFER";
-  observations: string;
-  custodianId: number;
-  identifier: string;
-  previousCode: string;
-  entryOrigin: string;
-  entryType: string;
+  origin: string;
   acquisitionDate: string;
-  commitmentNumber: string;
+  acquisitionValue: number;
+  currentValue: number;
+  usefulLife: number;
+  depreciationRate: number;
+  annualDepreciation: number;
+  accumulatedDepreciation: number;
+  locationId: number;
+  location: Location;
+  colorId: number;
+  color: Color;
+  brandId: number;
+  brand: Brand;
+  modelId: number;
+  model: Model;
+  supplierId: number;
+  supplier: Supplier;
+  serialNumber: string;
   modelCharacteristics: string;
   brandBreedOther: string;
-  identificationSeries: string;
-  warrantyDate: string;
-  dimensions: string;
-  critical: boolean;
-  dangerous: boolean;
-  requiresSpecialHandling: boolean;
-  perishable: boolean;
-  expirationDate: string;
-  itemLine: number;
-  accountingAccount: string;
-  availableForLoan: boolean;
-  images: string[];
-  colors: string[];
-  materials: string[];
-  barcode?: string;
+  observations: string;
 }
 
 export type InventoryListResponse = ApiResponse<PaginatedResponse<InventoryItem>>;

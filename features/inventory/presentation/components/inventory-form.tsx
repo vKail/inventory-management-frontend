@@ -3,17 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
     Select,
     SelectContent,
@@ -21,490 +20,486 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
-import { useLocationStore } from '@/features/locations/context/location-store';
-import { useCategoryStore } from '@/features/categories/context/category-store';
-import { useStateStore } from '@/features/states/context/state-store';
-import { useConditionStore } from '@/features/conditions/context/condition-store';
-import { useItemTypeStore } from '@/features/item-types/context/item-types-store';
-import { NormativeType, Origin } from '../../data/schemas/inventory.schema';
-import { formSchema } from '@/features/inventory/data/schemas/form.schema';
-
-
-type InventoryFormData = z.infer<typeof formSchema>;
+import { InventoryItem } from "../../data/interfaces/inventory.interface";
+import { useInventoryStore } from "../../context/inventory-store";
+import { FilterOption, LocationOption } from "../../data/interfaces/inventory.interface";
+import { InventorySchema, InventoryFormValues } from "../../data/schemas/inventory.schema";
 
 interface InventoryFormProps {
-    onSubmit: (data: InventoryFormData) => void;
-    initialData?: Partial<InventoryFormData>;
+    onSubmit: (data: InventoryFormValues) => void;
     isLoading?: boolean;
+    initialData?: Partial<InventoryItem>;
 }
 
-export function InventoryForm({ onSubmit, initialData, isLoading = false }: InventoryFormProps) {
-    const form = useForm<InventoryFormData>({
-        resolver: zodResolver(formSchema),
-        defaultValues: initialData || {
-            availableForLoan: true,
-            critical: false,
-            dangerous: false,
-            requiresSpecialHandling: false,
-            perishable: false
-        }
-    });
+export function InventoryForm({ onSubmit, isLoading, initialData }: InventoryFormProps) {
+    const [categories, setCategories] = useState<FilterOption[]>([]);
+    const [locations, setLocations] = useState<LocationOption[]>([]);
+    const [states, setStates] = useState<FilterOption[]>([]);
+    const [colors, setColors] = useState<FilterOption[]>([]);
+    const [brands, setBrands] = useState<FilterOption[]>([]);
+    const [models, setModels] = useState<FilterOption[]>([]);
+    const [suppliers, setSuppliers] = useState<FilterOption[]>([]);
+    const { getCategories, getLocations, getStates, getColors } = useInventoryStore();
 
-    const { locations, getLocations } = useLocationStore();
-    const { categories, getCategories } = useCategoryStore();
-    const { states, getStates } = useStateStore();
-    const { conditions, getConditions } = useConditionStore();
-    const { itemTypes, getItemTypes } = useItemTypeStore();
+    const form = useForm<InventoryFormValues>({
+        resolver: zodResolver(InventorySchema),
+        defaultValues: {
+            code: initialData?.code || "",
+            name: initialData?.name || "",
+            stock: initialData?.stock || 0,
+            description: initialData?.description || "",
+            itemTypeId: initialData?.itemTypeId || 0,
+            categoryId: initialData?.categoryId || 0,
+            statusId: initialData?.statusId || 0,
+            normativeType: initialData?.normativeType || "",
+            origin: initialData?.origin || "",
+            acquisitionDate: initialData?.acquisitionDate || new Date().toISOString().split('T')[0],
+            acquisitionValue: initialData?.acquisitionValue || 0,
+            currentValue: initialData?.currentValue || 0,
+            usefulLife: initialData?.usefulLife || 0,
+            depreciationRate: initialData?.depreciationRate || 0,
+            annualDepreciation: initialData?.annualDepreciation || 0,
+            accumulatedDepreciation: initialData?.accumulatedDepreciation || 0,
+            locationId: initialData?.locationId || 0,
+            colorId: initialData?.colorId || 0,
+            brandId: initialData?.brandId || 0,
+            modelId: initialData?.modelId || 0,
+            supplierId: initialData?.supplierId || 0,
+            serialNumber: initialData?.serialNumber || "",
+            modelCharacteristics: initialData?.modelCharacteristics || "",
+            brandBreedOther: initialData?.brandBreedOther || "",
+            observations: initialData?.observations || "",
+        },
+    });
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                await Promise.all([
-                    getLocations(1, 100),
-                    getCategories(1, 100),
-                    getStates(1, 100),
-                    getConditions(1, 100),
-                    getItemTypes(1, 100)
+                const [categoriesData, locationsData, statesData, colorsData] = await Promise.all([
+                    getCategories(),
+                    getLocations(),
+                    getStates(),
+                    getColors(),
                 ]);
+                setCategories(categoriesData);
+                setLocations(locationsData);
+                setStates(statesData);
+                setColors(colorsData);
             } catch (error) {
-                console.error('Error loading form data:', error);
+                console.error("Error loading form data:", error);
             }
         };
-
         loadData();
-    }, [getLocations, getCategories, getStates, getConditions, getItemTypes]);
+    }, [getCategories, getLocations, getStates, getColors]);
+
+    const handleSubmit = (data: InventoryFormValues) => {
+        onSubmit(data);
+    };
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="code"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Código</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Código del item" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nombre</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Nombre del item" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Descripción</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Descripción del item" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="itemTypeId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Tipo de Item</FormLabel>
-                                    <Select onValueChange={val => field.onChange(Number(val))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione un tipo" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {itemTypes.map(type => (
-                                                <SelectItem key={type.id} value={type.id.toString()}>
-                                                    {type.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="categoryId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Categoría</FormLabel>
-                                    <Select onValueChange={val => field.onChange(Number(val))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione una categoría" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {categories.map(category => (
-                                                <SelectItem key={category.id} value={category.id.toString()}>
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="statusId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Estado</FormLabel>
-                                    <Select onValueChange={val => field.onChange(Number(val))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione un estado" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {states.map(state => (
-                                                <SelectItem key={state.id} value={state.id.toString()}>
-                                                    {state.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="locationId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Ubicación</FormLabel>
-                                    <Select onValueChange={val => field.onChange(Number(val))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione una ubicación" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {locations.map(location => (
-                                                <SelectItem key={location.id} value={location.id?.toString() ?? ''}>
-                                                    {location.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="conditionId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Condición</FormLabel>
-                                    <Select onValueChange={val => field.onChange(Number(val))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione una condición" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {conditions.map(condition => (
-                                                <SelectItem key={condition.id} value={condition.id.toString()}>
-                                                    {condition.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Información Básica */}
+                    <div className="col-span-2">
+                        <h3 className="text-lg font-semibold mb-4">Información Básica</h3>
                     </div>
 
-                    <div className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="normativeType"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Tipo Normativo</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione un tipo normativo" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {Object.values(NormativeType).map(type => (
-                                                <SelectItem key={type} value={type}>
-                                                    {type}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    <FormField
+                        control={form.control}
+                        name="code"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Código</FormLabel>
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        <FormField
-                            control={form.control}
-                            name="origin"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Origen</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione un origen" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {Object.values(Origin).map(origin => (
-                                                <SelectItem key={origin} value={origin}>
-                                                    {origin}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nombre</FormLabel>
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        <FormField
-                            control={form.control}
-                            name="acquisitionDate"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Fecha de Adquisición</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full pl-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value ? (
-                                                        format(field.value, "PPP", { locale: es })
-                                                    ) : (
-                                                        <span>Seleccione una fecha</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                    date > new Date() || date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    <FormField
+                        control={form.control}
+                        name="stock"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Stock</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        <FormField
-                            control={form.control}
-                            name="warrantyDate"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Fecha de Garantía</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full pl-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value ? (
-                                                        format(field.value, "PPP", { locale: es })
-                                                    ) : (
-                                                        <span>Seleccione una fecha</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                    date < new Date()
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Descripción</FormLabel>
+                                <FormControl>
+                                    <Textarea {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="critical"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>Crítico</FormLabel>
-                                            <FormDescription>
-                                                Es un item crítico
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="dangerous"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>Peligroso</FormLabel>
-                                            <FormDescription>
-                                                Es un item peligroso
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="requiresSpecialHandling"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>Manejo Especial</FormLabel>
-                                            <FormDescription>
-                                                Requiere manejo especial
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="perishable"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>Perecedero</FormLabel>
-                                            <FormDescription>
-                                                Es un item perecedero
-                                            </FormDescription>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <FormField
-                            control={form.control}
-                            name="observations"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Observaciones</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Observaciones del item" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    {/* Clasificación */}
+                    <div className="col-span-2">
+                        <h3 className="text-lg font-semibold mb-4">Clasificación</h3>
                     </div>
+
+                    <FormField
+                        control={form.control}
+                        name="categoryId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Categoría</FormLabel>
+                                <Select
+                                    onValueChange={(value) => field.onChange(Number(value))}
+                                    defaultValue={field.value?.toString()}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccione una categoría" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {categories.map((category) => (
+                                            <SelectItem
+                                                key={category.id}
+                                                value={category.id.toString()}
+                                            >
+                                                {category.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="statusId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Estado</FormLabel>
+                                <Select
+                                    onValueChange={(value) => field.onChange(Number(value))}
+                                    defaultValue={field.value?.toString()}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccione un estado" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {states.map((state) => (
+                                            <SelectItem
+                                                key={state.id}
+                                                value={state.id.toString()}
+                                            >
+                                                {state.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="locationId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Ubicación</FormLabel>
+                                <Select
+                                    onValueChange={(value) => field.onChange(Number(value))}
+                                    defaultValue={field.value?.toString()}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccione una ubicación" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {locations.map((location) => (
+                                            <SelectItem
+                                                key={location.id}
+                                                value={location.id.toString()}
+                                            >
+                                                {location.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="colorId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Color</FormLabel>
+                                <Select
+                                    onValueChange={(value) => field.onChange(Number(value))}
+                                    defaultValue={field.value?.toString()}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccione un color" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {colors.map((color) => (
+                                            <SelectItem
+                                                key={color.id}
+                                                value={color.id.toString()}
+                                            >
+                                                {color.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Información de Adquisición */}
+                    <div className="col-span-2">
+                        <h3 className="text-lg font-semibold mb-4">Información de Adquisición</h3>
+                    </div>
+
+                    <FormField
+                        control={form.control}
+                        name="acquisitionDate"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Fecha de Adquisición</FormLabel>
+                                <FormControl>
+                                    <Input type="date" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="acquisitionValue"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Valor de Adquisición</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="currentValue"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Valor Actual</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Información de Depreciación */}
+                    <div className="col-span-2">
+                        <h3 className="text-lg font-semibold mb-4">Información de Depreciación</h3>
+                    </div>
+
+                    <FormField
+                        control={form.control}
+                        name="usefulLife"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Vida Útil (años)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="depreciationRate"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Tasa de Depreciación (%)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="annualDepreciation"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Depreciación Anual</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="accumulatedDepreciation"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Depreciación Acumulada</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Información del Producto */}
+                    <div className="col-span-2">
+                        <h3 className="text-lg font-semibold mb-4">Información del Producto</h3>
+                    </div>
+
+                    <FormField
+                        control={form.control}
+                        name="serialNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Número de Serie</FormLabel>
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="modelCharacteristics"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Características del Modelo</FormLabel>
+                                <FormControl>
+                                    <Textarea {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="brandBreedOther"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Marca/Raza/Otro</FormLabel>
+                                <FormControl>
+                                    <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="observations"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Observaciones</FormLabel>
+                                <FormControl>
+                                    <Textarea {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
 
                 <div className="flex justify-end space-x-4">
-                    <Button variant="outline" type="button">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => form.reset()}
+                        disabled={isLoading}
+                    >
                         Cancelar
                     </Button>
                     <Button type="submit" disabled={isLoading}>
-                        {isLoading ? 'Guardando...' : 'Guardar'}
+                        {isLoading ? "Guardando..." : "Guardar"}
                     </Button>
                 </div>
             </form>
