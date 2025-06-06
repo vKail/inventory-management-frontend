@@ -188,6 +188,7 @@ export interface InventoryItem {
   requiresSpecialHandling: boolean;
   perishable: boolean;
   images: string[];
+  imageUrl: string
 }
 
 export type InventoryListResponse = ApiResponse<PaginatedResponse<InventoryItem>>;
