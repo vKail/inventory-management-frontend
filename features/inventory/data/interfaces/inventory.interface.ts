@@ -181,6 +181,13 @@ export interface InventoryItem {
   modelCharacteristics: string;
   brandBreedOther: string;
   observations: string;
+  availableForLoan: boolean;
+  condition: string;
+  critical: boolean;
+  dangerous: boolean;
+  requiresSpecialHandling: boolean;
+  perishable: boolean;
+  images: string[];
 }
 
 export type InventoryListResponse = ApiResponse<PaginatedResponse<InventoryItem>>;

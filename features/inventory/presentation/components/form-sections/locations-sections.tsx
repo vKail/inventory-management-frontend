@@ -9,7 +9,7 @@ import { useLocationStore } from "@/features/locations/context/location-store";
 import { useUserStore } from "@/features/users/context/user-store";
 import { useCertificateStore } from "@/features/certificates/context/certificate-store";
 import { useEffect } from "react";
-import { RegisterFormData } from "../../../data/schemas/register-schema";
+import { RegisterFormData } from "../../../data/interfaces/register.interface";
 
 interface LocationsSectionsProps {
     form: UseFormReturn<RegisterFormData>;
@@ -18,14 +18,14 @@ interface LocationsSectionsProps {
 export const LocationsSections = ({ form }: LocationsSectionsProps) => {
     const { getLocations, locations, isLoading } = useLocationStore();
     const { users, loading: loadingUsers } = useUserStore();
-    const { getCertificates, certificates, isLoading: loadingCertificates } = useCertificateStore();
+    const { getCertificates, certificates, loading: loadingCertificates } = useCertificateStore();
 
     useEffect(() => {
         getLocations();
         getCertificates();
     }, [getLocations, getCertificates]);
 
-    if (isLoading.fetch || loadingUsers || loadingCertificates.fetch) {
+    if (isLoading || loadingUsers || loadingCertificates) {
         return <LoaderComponent rows={3} columns={2} />;
     }
 
@@ -42,7 +42,7 @@ export const LocationsSections = ({ form }: LocationsSectionsProps) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                             control={form.control}
-                            name="locationId"
+                            name="ubicacion"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Ubicación</FormLabel>
@@ -73,7 +73,7 @@ export const LocationsSections = ({ form }: LocationsSectionsProps) => {
 
                         <FormField
                             control={form.control}
-                            name="custodianId"
+                            name="custodioActual"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Custodio</FormLabel>
@@ -104,7 +104,7 @@ export const LocationsSections = ({ form }: LocationsSectionsProps) => {
 
                         <FormField
                             control={form.control}
-                            name="certificateId"
+                            name="nroActaMatriz"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Numero de Acta</FormLabel>

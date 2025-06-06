@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { InventoryItem } from "../../data/interfaces/inventory.interface";
 import { useInventoryStore } from "../../context/inventory-store";
-import { registerSchema, RegisterFormData } from "../../data/schemas/register-schema";
+import { RegisterSchema, RegisterFormValues } from "../../data/schemas/register-schema";
 import { ScanModal } from "./scan-modal";
 import { useItemTypeStore } from "@/features/item-types/context/item-types-store";
 import { useConditionStore } from "@/features/conditions/context/condition-store";
@@ -44,8 +44,8 @@ export const RegisterForm = ({ initialData, isEditing = false }: RegisterFormPro
     getStates();
   }, [getItemTypes, getConditions, getStates]);
 
-  const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+  const form = useForm<RegisterFormValues>({
+    resolver: zodResolver(RegisterSchema),
     defaultValues: {
       code: initialData?.code || "",
       name: initialData?.name || "",
@@ -124,7 +124,7 @@ export const RegisterForm = ({ initialData, isEditing = false }: RegisterFormPro
     }
   }, [initialData, isEditing, form]);
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
       // Separar imageUrl del resto de los datos
