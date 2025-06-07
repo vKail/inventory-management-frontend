@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { fetchItemTypes, deleteItemType } from '../../services/item-type.service'
 import { ItemType } from '../../data/interfaces/item-type.interface'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { itemTypeService } from '../../services/item-type.service'
 
 export default function ItemTypesView() {
   const [itemTypes, setItemTypes] = useState<ItemType[]>([])
@@ -20,7 +20,7 @@ export default function ItemTypesView() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchItemTypes()
+        const data = await itemTypeService.getItemTypes()
         setItemTypes(data.records)
       } catch (error) {
         toast.error('Error cargando tipos de item')
@@ -37,7 +37,7 @@ export default function ItemTypesView() {
         label: 'Eliminar',
         onClick: async () => {
           try {
-            await deleteItemType(id)
+            await itemTypeService.deleteItemType(id)
             setItemTypes(prev => prev.filter(i => i.id !== id))
             toast.success('Tipo de item eliminado')
           } catch (err) {

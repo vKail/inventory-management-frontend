@@ -29,7 +29,7 @@ export class CategoryService implements CategoryServiceProps {
 
   public async getCategories(page = 1, limit = 10): Promise<PaginatedCategories> {
     try {
-      const response = await this.httpClient.get<ApiResponse<PaginatedCategories>>(
+      const response = await this.httpClient.get<PaginatedCategories>(
         `${CategoryService.url}?page=${page}&limit=${limit}`
       );
       if (response.success) {
@@ -44,7 +44,7 @@ export class CategoryService implements CategoryServiceProps {
 
   public async getCategoryById(id: number): Promise<ICategory | undefined> {
     try {
-      const response = await this.httpClient.get<ApiResponse<ICategory>>(`${CategoryService.url}/${id}`);
+      const response = await this.httpClient.get<ICategory>(`${CategoryService.url}/${id}`);
       if (response.success) {
         return response.data;
       }
@@ -57,7 +57,7 @@ export class CategoryService implements CategoryServiceProps {
 
   public async createCategory(category: CreateCategoryDTO): Promise<ICategory | undefined> {
     try {
-      const response = await this.httpClient.post<ApiResponse<ICategory>>(CategoryService.url, category);
+      const response = await this.httpClient.post<ICategory>(CategoryService.url, category);
       if (response.success) {
         return response.data;
       }
@@ -70,7 +70,7 @@ export class CategoryService implements CategoryServiceProps {
 
   public async updateCategory(id: number, category: UpdateCategoryDTO): Promise<ICategory | undefined> {
     try {
-      const response = await this.httpClient.patch<ApiResponse<ICategory>>(`${CategoryService.url}/${id}`, category);
+      const response = await this.httpClient.patch<ICategory>(`${CategoryService.url}/${id}`, category);
       if (response.success) {
         return response.data;
       }

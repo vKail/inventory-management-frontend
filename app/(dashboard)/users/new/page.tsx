@@ -1,7 +1,7 @@
-import dynamic from 'next/dynamic'
+'use client';
 
-const UserForm = dynamic(() => import('@/features/users/presentation/components/user-form'))
+import UserFormView from '@/features/users/presentation/views/user-form-view';
 
-export default function Page() {
-  return <UserForm />
+export default function NewUserPage() {
+  return <UserFormView/>;
 }

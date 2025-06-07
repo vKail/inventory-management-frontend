@@ -1,59 +1,98 @@
-import { User, PaginatedUsers, ApiResponse } from '../data/interfaces/user.interface'
+import { IUser, PaginatedResponse, ApiResponse } from '@/features/users/data/interfaces/user.interface';
+import { API_URL } from '@/config/constants';
 
-const BASE_URL = `${process.env.NEXT_PUBLIC_API_URL}users`
+export class UserService {
+  private static instance: UserService;
+  private baseUrl: string;
 
-function getHeaders() {
-  const token = localStorage.getItem('token')
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+  private constructor() {
+    this.baseUrl = `${API_URL}users`;
   }
-}
 
-export async function fetchUsers(page = 1, limit = 10): Promise<PaginatedUsers> {
-  const res = await fetch(`${BASE_URL}?page=${page}&limit=${limit}`, {
-    headers: getHeaders(),
-  })
-  if (!res.ok) throw new Error('Error fetching users')
-  const json: ApiResponse<PaginatedUsers> = await res.json()
-  return json.data
-}
+  public static getInstance(): UserService {
+    if (!UserService.instance) {
+      UserService.instance = new UserService();
+    }
+    return UserService.instance;
+  }
 
-export async function fetchUserById(id: string): Promise<User> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    headers: getHeaders(),
-  })
-  if (!res.ok) throw new Error('Error fetching user')
-  const json: ApiResponse<User> = await res.json()
-  return json.data
-}
+  async getUsers(page: number = 1, limit: number = 10): Promise<PaginatedResponse> {
+    const response = await fetch(`${this.baseUrl}?page=${page}&limit=${limit}`);
+    if (!response.ok) {
+      throw new Error('Error fetching users');
+    }
+    const apiResponse: ApiResponse<PaginatedResponse> = await response.json();
+    return apiResponse.data;
+  }
 
-export async function createUser(data: Partial<User>): Promise<User> {
-  const res = await fetch(`${BASE_URL}`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Error creating user')
-  const json: ApiResponse<User> = await res.json()
-  return json.data
-}
+  async getUserById(id: string): Promise<IUser> {
+    const response = await fetch(`${this.baseUrl}/${id}`);
+    if (!response.ok) {
+      throw new Error('Error fetching user');
+    }
+    const apiResponse: ApiResponse<IUser> = await response.json();
+    return apiResponse.data;
+  }
 
-export async function updateUser(id: string, data: Partial<User>): Promise<User> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: 'PATCH',
-    headers: getHeaders(),
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error('Error updating user')
-  const json: ApiResponse<User> = await res.json()
-  return json.data
-}
-export async function changeUserStatus(id: string, status: 'ACTIVE' | 'INACTIVE'): Promise<void> {
-  const res = await fetch(`${BASE_URL}/change-status/${id}`, {
-    method: 'PATCH',
-    headers: getHeaders(),
-    body: JSON.stringify({ status }),
-  })
-  if (!res.ok) throw new Error('Error changing user status')
+  async createUser(user: Partial<IUser>): Promise<IUser> {
+    const userData = {
+      userName: user.userName,
+      password: user.password,
+      career: user.career,
+      userType: user.userType,
+      status: user.status || 'ACTIVE',
+      person: user.person
+    };
+    
+    const response = await fetch(this.baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+      throw new Error('Error creating user');
+    }
+    const apiResponse: ApiResponse<IUser> = await response.json();
+    return apiResponse.data;
+  }
+
+  async updateUser(id: string, user: Partial<IUser>): Promise<IUser> {
+    const userData = {
+      userName: user.userName,
+      password: user.password,
+      career: user.career,
+      userType: user.userType,
+      status: user.status || 'ACTIVE',
+      person: user.person
+    };
+    
+    const response = await fetch(`${this.baseUrl}/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+      throw new Error('Error updating user');
+    }
+    const apiResponse: ApiResponse<IUser> = await response.json();
+    return apiResponse.data;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/change-status/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: 'INACTIVE' }),
+    });
+    if (!response.ok) {
+      throw new Error('Error deleting user');
+    }
+    await response.json();
+  }
 }

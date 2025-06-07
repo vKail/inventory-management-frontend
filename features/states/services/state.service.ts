@@ -28,7 +28,7 @@ export class StateService implements StateServiceProps {
 
   public async getStates(page = 1, limit = 10): Promise<PaginatedResponse<IState>> {
     try {
-      const response = await this.httpClient.get<ApiResponse<PaginatedResponse<IState>>>(
+      const response = await this.httpClient.get<PaginatedResponse<IState>>(
         `${StateService.url}?page=${page}&limit=${limit}`
       );
       if (response.success) {
@@ -43,7 +43,7 @@ export class StateService implements StateServiceProps {
 
   public async getStateById(id: number): Promise<IState | undefined> {
     try {
-      const response = await this.httpClient.get<ApiResponse<IState>>(`${StateService.url}/${id}`);
+      const response = await this.httpClient.get<IState>(`${StateService.url}/${id}`);
       if (response.success) {
         return response.data;
       }
@@ -56,11 +56,11 @@ export class StateService implements StateServiceProps {
 
   public async createState(state: Partial<IState>): Promise<IState | undefined> {
     try {
-      const response = await this.httpClient.post<ApiResponse<IState>>(
+      const response = await this.httpClient.post<IState>(
         StateService.url,
         state
       );
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('Error creating state:', error);
       throw error;
@@ -69,11 +69,11 @@ export class StateService implements StateServiceProps {
 
   public async updateState(id: number, state: Partial<IState>): Promise<IState | undefined> {
     try {
-      const response = await this.httpClient.patch<ApiResponse<IState>>(
+      const response = await this.httpClient.patch<IState>(
         `${StateService.url}/${id}`,
         state
       );
-      return response.data.data;
+      return response.data;
     } catch (error) {
       console.error('Error updating state:', error);
       throw error;

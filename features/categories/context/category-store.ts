@@ -2,7 +2,7 @@
 // context/category-store.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ICategory, PaginatedCategories, ApiResponse } from '../data/interfaces/category.interface';
+import { ICategory, PaginatedCategories } from '../data/interfaces/category.interface';
 import { CategoryService } from '../services/category.service';
 
 interface CategoryStore {
@@ -39,7 +39,7 @@ export const useCategoryStore = create<CategoryStore>()(
             });
             return response;
           } else {
-            throw new Error('Invalid response format');
+            throw new Error('formato de respuesta inválido');
           }
         } catch (error) {
           console.error('Error in getCategories:', error);

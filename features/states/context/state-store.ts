@@ -28,6 +28,7 @@ export const useStateStore = create<StateStore>()(
                 try {
                     const response = await StateService.getInstance().getStates(page, limit);
 
+                    console.log("response 1", response);
                     if (response && response.records) {
                         set({
                             states: response.records,

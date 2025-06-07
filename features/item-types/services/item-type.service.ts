@@ -28,7 +28,7 @@ export class ItemTypeService implements ItemTypeServiceProps {
 
   public async getItemTypes(page = 1, limit = 10): Promise<PaginatedItemTypes> {
     try {
-      const response = await this.httpClient.get<ApiResponse<PaginatedItemTypes>>(
+      const response = await this.httpClient.get<PaginatedItemTypes>(
         `${ItemTypeService.url}?page=${page}&limit=${limit}`
       );
       if (response.success) {
@@ -43,7 +43,7 @@ export class ItemTypeService implements ItemTypeServiceProps {
 
   public async getItemTypeById(id: string): Promise<ItemType | undefined> {
     try {
-      const response = await this.httpClient.get<ApiResponse<ItemType>>(`${ItemTypeService.url}/${id}`);
+      const response = await this.httpClient.get<ItemType>(`${ItemTypeService.url}/${id}`);
       if (response.success) {
         return response.data;
       }
@@ -56,7 +56,7 @@ export class ItemTypeService implements ItemTypeServiceProps {
 
   public async createItemType(itemType: Omit<ItemType, 'id' | 'active'>): Promise<ItemType | undefined> {
     try {
-      const response = await this.httpClient.post<ApiResponse<ItemType>>(
+      const response = await this.httpClient.post<ItemType>(
         ItemTypeService.url,
         itemType
       );
@@ -72,7 +72,7 @@ export class ItemTypeService implements ItemTypeServiceProps {
 
   public async updateItemType(id: string, itemType: Partial<Omit<ItemType, 'id' | 'active'>>): Promise<ItemType | undefined> {
     try {
-      const response = await this.httpClient.patch<ApiResponse<ItemType>>(
+      const response = await this.httpClient.patch<ItemType>(
         `${ItemTypeService.url}/${id}`,
         itemType
       );

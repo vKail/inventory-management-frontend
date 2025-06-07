@@ -1,7 +1,6 @@
-/* eslint-disable react/react-in-jsx-scope */
 'use client';
 
-import { Settings } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import {
     Breadcrumb,
     BreadcrumbList,
@@ -24,7 +23,7 @@ export default function ConditionView() {
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
-                                <Settings className="inline mr-1 h-4 w-4 text-red-600 align-middle" />
+                                <ShieldCheck className="inline mr-1 h-4 w-4 text-primary align-middle" />
                                 <BreadcrumbPage>Condiciones</BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>

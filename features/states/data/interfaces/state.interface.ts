@@ -14,6 +14,10 @@ export interface CreateStateDTO {
 export interface UpdateStateDTO extends Partial<CreateStateDTO> { }
 
 export interface PaginatedResponse<T> {
+  success: boolean;
+  message: {
+    content: string[];
+  };
   records: T[];
   total: number;
   limit: number;
@@ -26,5 +30,9 @@ export interface ApiResponse<T> {
   message: {
     content: string[];
   };
-  data: T;
+  records: T[];
+  total: number;
+  limit: number;
+  page: number;
+  pages: number;
 }

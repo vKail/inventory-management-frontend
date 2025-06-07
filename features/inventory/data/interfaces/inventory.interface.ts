@@ -1,46 +1,49 @@
-export interface InventoryItem {
-  id: number; // Identificador único del ítem
-  barcode: string; // Código del producto
-  name: string; // Nombre del producto
-  category: string; // Categoría del producto
-  department: string; // Departamento asociado
-  quantity: number; // Cantidad en inventario
-  description: string; // Descripción del producto
-  imageUrl?: string; // URL de imagen (opcional)
-  cost?: number; // Costo (opcional)
-  status: ProductStatus; // Estado del producto
-  createdAt?: Date; // Fecha de creación (opcional)
-  updatedAt?: Date; // Fecha de actualización (opcional)
-  // Campos adicionales del backend que no se editan en el modal
-  itemTypeId?: number; // Tipo de ítem (del backend)
-  normativeType?: string; // Tipo normativo (del backend)
-  origin?: string; // Origen del ítem (del backend)
-  locationId?: number; // ID de ubicación (del backend)
-  custodianId?: number; // ID del custodio (del backend)
-  availableForLoan?: boolean; // Disponible para préstamo (del backend)
-  identifier?: string; // Identificador adicional (del backend)
-  previousCode?: string; // Código anterior (del backend)
-  certificateId?: number; // ID del certificado (del backend)
-  conditionId?: number; // ID de condición (del backend)
-  entryOrigin?: string; // Origen de entrada (del backend)
-  entryType?: string; // Tipo de entrada (del backend)
-  acquisitionDate?: string; // Fecha de adquisición (del backend)
-  commitmentNumber?: string; // Número de compromiso (del backend)
-  modelCharacteristics?: string; // Características del modelo (del backend)
-  brandBreedOther?: string; // Marca u otro (del backend)
-  identificationSeries?: string; // Serie de identificación (del backend)
-  warrantyDate?: string; // Fecha de garantía (del backend)
-  dimensions?: string; // Dimensiones (del backend)
-  critical?: boolean; // Crítico (del backend)
-  dangerous?: boolean; // Peligroso (del backend)
-  requiresSpecialHandling?: boolean; // Requiere manejo especial (del backend)
-  perishable?: boolean; // Perecedero (del backend)
-  expirationDate?: string; // Fecha de expiración (del backend)
-  itemLine?: number; // Línea del ítem (del backend)
-  accountingAccount?: string; // Cuenta contable (del backend)
-  observations?: string; // Observaciones (del backend)
-  activeCustodian?: boolean; // Custodio activo (del backend)
-  registrationUserId?: number; // ID del usuario de registro (del backend)
+export interface Certificate {
+  id: number;
+  number: number;
+  date: string;
+  type: string;
+  status: string;
+  deliveryResponsibleId: number;
+  receptionResponsibleId: number;
+  observations: string;
+  accounted: boolean;
+  registrationDate: string;
+  updateDate: string;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  description: string;
+  warehouseId: number;
+  parentLocationId: number | null;
+  type: string;
+  building: string;
+  floor: string;
+  reference: string;
+  capacity: number;
+  capacityUnit: string;
+  occupancy: number;
+  qrCode: string;
+  coordinates: string;
+  notes: string;
+}
+
+export interface Category {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  standardUsefulLife: number;
+  depreciationPercentage: number;
+  parentCategory?: any;
+}
+
+export interface Status {
+  id: string;
+  name: string;
+  description: string;
 }
 
 // Inventory filters interface
@@ -57,14 +60,56 @@ export interface FilterOption {
   name: string;
 }
 
-// Product categories
-export enum ProductCategory {
-  TECHNOLOGY = 'technology',
-  FURNITURE = 'furniture',
-  ELECTRONICS = 'electronics',
-  TOOLS = 'tools',
-  MATERIALS = 'materials',
-  OTHER = 'other',
+export interface LocationOption extends FilterOption {
+  type: string;
+}
+
+export interface Category extends FilterOption {
+  code: string;
+  description: string;
+  standardUsefulLife: number;
+  parentCategory?: any;
+}
+
+export interface Status extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface ItemType extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface Location extends FilterOption {
+  code: string;
+  description: string;
+  type: string;
+}
+
+export interface Color extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface Brand extends FilterOption {
+  code: string;
+  description: string;
+}
+
+export interface Model extends FilterOption {
+  code: string;
+  description: string;
+  brand: Brand;
+}
+
+export interface Supplier extends FilterOption {
+  code: string;
+  description: string;
+  contact: string;
+  phone: string;
+  email: string;
+  address: string;
 }
 
 // Departamentos
@@ -83,8 +128,105 @@ export enum ProductStatus {
   MAINTENANCE = 'maintenance',
   DAMAGED = 'damaged',
 }
-export interface LocationOption {
-  id: number;
-  name: string;
-  type: string;
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: {
+    content: string[];
+    displayable: boolean;
+  };
+  data: T;
 }
+
+export interface PaginatedResponse<T> {
+  total: number;
+  limit: number;
+  page: number;
+  pages: number;
+  records: T[];
+}
+
+export interface InventoryItem {
+  id: number;
+  // Información Básica
+  code: string;
+  identificador: string;
+  nroActaMatriz: string;
+  bldBca: "BLD" | "BCA";
+  name: string;
+  stock: number;
+  description?: string;  
+  itemType: {
+    id: number;
+    name: string;
+  };
+  // Clasificación
+  categoryId: number;
+  category: {
+    id: number;
+    name: string;
+  };
+  statusId: number;
+  status: {
+    id: number;
+    name: string;
+  };
+  locationId: number;
+  location: {
+    id: number;
+    name: string;
+  };
+  custodianId: number;
+  availableForLoan: boolean;
+  previousCode?: string;
+  condition: {
+    id: number;
+    name: string;
+  }
+  colorId: number;
+  color: {
+    id: number;
+    name: string;
+  };
+  certificate?: {
+    id: number;
+    name: string;
+  };
+  entryOrigin: string;
+  entryType: string;
+  normativeType: "PROPERTY" | "ADMINISTRATIVE_CONTROL" | "INVENTORY";
+  origin: "PURCHASE" | "DONATION" | "MANUFACTURING" | "TRANSFER";
+
+  // Información de Adquisición
+  acquisitionDate: string;
+  acquisitionValue: number;
+  commitmentNumber?: string;
+  currentValue: number;  // Información de Depreciación
+  usefulLife: number;
+  depreciationRate: number;
+  annualDepreciation: number;
+  accumulatedDepreciation: number;
+
+  // Información del Producto
+  serialNumber: string;
+  modelCharacteristics: string;
+  brandBreedOther: string;
+  identifier: string;
+  identificationSeries: string;
+  warrantyDate?: string;
+  dimensions?: string;
+  critical: boolean;
+  dangerous: boolean;
+  requiresSpecialHandling: boolean;
+  perishable: boolean;
+  expirationDate?: string;
+  itemLine: number;
+  accountingAccount: string;
+  observations?: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InventoryListResponse = ApiResponse<PaginatedResponse<InventoryItem>>;
+export type InventoryItemResponse = ApiResponse<InventoryItem>;

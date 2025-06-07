@@ -40,6 +40,7 @@ import { useEffect, useState } from 'react';
 import { useCategoryStore } from '@/features/categories/context/category-store';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import LoaderComponent from '@/shared/components/ui/Loader';
 
 interface CategoryTableProps {
   currentPage: number;
@@ -88,7 +89,38 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
   };
 
   if (loading) {
-    return <div>Cargando...</div>;
+    return (
+      <Card className="w-full max-w-[1200px]">
+        <CardHeader className="px-4 md:px-8 pb-0">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+              <Input
+                placeholder="Buscar por nombre o código..."
+                className="w-full md:w-64"
+                disabled
+              />
+              <Select disabled>
+                <SelectTrigger className="w-full md:w-56">
+                  <SelectValue placeholder="Todas las categorías padre" />
+                </SelectTrigger>
+              </Select>
+            </div>
+
+            <Button
+              onClick={() => router.push('/categories/new')}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Nueva Categoría
+            </Button>
+          </div>
+          <hr className="border-t border-muted mt-4" />
+        </CardHeader>
+        <CardContent className="px-4 md:px-8 pb-6">
+          <LoaderComponent rows={5} columns={8} />
+        </CardContent>
+      </Card>
+    );
   }
 
   if (categories.length === 0) {
@@ -162,7 +194,7 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(category.id)}
                       >
@@ -171,11 +203,11 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
                             onClick={() => setCategoryToDelete(category.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>

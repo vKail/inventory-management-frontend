@@ -1,154 +1,129 @@
-import { InventoryItem, FilterOption , LocationOption} from "../data/interfaces/inventory.interface";
+import { InventoryItem, FilterOption, LocationOption, PaginatedResponse, ApiResponse } from "../data/interfaces/inventory.interface";
 import { AxiosClient } from "@/core/infrestucture/AxiosClient";
-import { IHttpResponse } from "@/core/data/interfaces/HttpHandler";
-import { HTTP_STATUS_CODE } from "@/core/data/HttpStatus";
+import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
+import { API_URL } from "@/config/constants";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+export class InventoryService {
+  private static instance: InventoryService;
+  private httpClient: HttpHandler;
+  private static readonly url = `${API_URL}/items`;
 
-const apiClient = AxiosClient.getInstance();
-
-function getAuthHeaders() {
-  return {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
-  };
-}
-
-
-export const getInventoryItems = async (page: number = 1, limit: number = 20): Promise<IHttpResponse<any>> => {
-  if (!API_URL) {
-    throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
+  private constructor() {
+    this.httpClient = AxiosClient.getInstance();
   }
 
-  try {
-    const response = await apiClient.get<IHttpResponse<any>>(`/items`, {
-      ...getAuthHeaders(),
-      params: { page, limit },
-    });
-    if (!response.success) {
-      throw new Error(response.message.content[0] || "Error al cargar los ítems de inventario");
+  public static getInstance(): InventoryService {
+    if (!InventoryService.instance) {
+      InventoryService.instance = new InventoryService();
     }
-    return response;
-  } catch (error) {
-    const axiosError = error as any;
-    console.error("Error fetching inventory items:", axiosError.message);
-    if (axiosError.response?.data?.message?.content) {
-      throw new Error(axiosError.response.data.message.content[0]);
-    }
-    if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-      throw new Error("No autorizado: Verifique el token de autenticación.");
-    }
-    throw new Error("Error al cargar los ítems de inventario");
-  }
-};
-
-export const getInventoryItemById = async (id: number): Promise<IHttpResponse<any>> => {
-  if (!API_URL) {
-    throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
+    return InventoryService.instance;
   }
 
-  try {
-    const response = await apiClient.get<IHttpResponse<any>>(`/items/${id}`, getAuthHeaders());
-    if (!response.success) {
-      throw new Error(response.message.content[0] || "Error al cargar el ítem por ID");
-    }
-    return response;
-  } catch (error) {
-    const axiosError = error as any;
-    console.error("Error fetching inventory item by ID:", axiosError.message);
-    if (axiosError.response?.data?.message?.content) {
-      throw new Error(axiosError.response.data.message.content[0]);
-    }
-    if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-      throw new Error("No autorizado: Verifique el token de autenticación.");
-    }
-    throw new Error("Error al cargar el ítem por ID");
-  }
-};
-
-export const createInventoryItem = async (item: Partial<InventoryItem>): Promise<IHttpResponse<InventoryItem>> => {
-  if (!API_URL) {
-    throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
-  }
-
-  try {
-    const response = await apiClient.post<IHttpResponse<InventoryItem>>("/items", item, getAuthHeaders());
-    if (!response.success) {
-      throw new Error(response.message.content[0] || "Error al crear el ítem de inventario");
-    }
-    return response.data;
-  } catch (error) {
-    const axiosError = error as any;
-    console.error("Error creating inventory item:", axiosError.message);
-    if (axiosError.response?.data?.message?.content) {
-      throw new Error(axiosError.response.data.message.content[0]);
-    }
-    if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-      throw new Error("No autorizado: Verifique el token de autenticación.");
-    }
-    throw new Error("Error al crear el ítem de inventario");
-  }
-};
-
-export const updateInventoryItem = async (id: number, item: Partial<any>): Promise<IHttpResponse<any>> => {
-  if (!API_URL) {
-    throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
-  }
-
-  try {
-    const response = await apiClient.patch<IHttpResponse<any>>(`/items/${id}`, item, getAuthHeaders());
-    if (!response.success) {
-      throw new Error(response.message.content[0] || "Error al actualizar el ítem de inventario");
-    }
-    return response;
-  } catch (error) {
-    const axiosError = error as any;
-    console.error("Error updating inventory item:", axiosError.message);
-    if (axiosError.response?.data?.message?.content) {
-      throw new Error(axiosError.response.data.message.content[0]);
-    }
-    if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-      throw new Error("No autorizado: Verifique el token de autenticación.");
-    }
-    throw new Error("Error al actualizar el ítem de inventario");
-  }
-};
-
-export const deleteInventoryItem = async (id: number): Promise<IHttpResponse<void>> => {
-  if (!API_URL) {
-    throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
-  }
-
-  try {
-    const response = await apiClient.delete<IHttpResponse<void>>(`/items/${id}`, getAuthHeaders());
-    if (!response.success) {
-      throw new Error(response.message.content[0] || "Error al eliminar el ítem de inventario");
-    }
-    return response.data;
-  } catch (error) {
-    const axiosError = error as any;
-    console.error("Error deleting inventory item:", axiosError.message);
-    if (axiosError.response?.data?.message?.content) {
-      throw new Error(axiosError.response.data.message.content[0]);
-    }
-    if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-      throw new Error("No autorizado: Verifique el token de autenticación.");
-    }
-    throw new Error("Error al eliminar el ítem de inventario");
-  }
-};
-
-export class InventoryFilterService {
-  static async getCategories(): Promise<FilterOption[]> {
-    if (!API_URL) {
-      throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
-    }
-
+  public async getInventoryItems(page = 1, limit = 10): Promise<PaginatedResponse<InventoryItem>> {
     try {
-      const response = await apiClient.get<IHttpResponse<any>>("/categories", {
+      const response = await this.httpClient.get<PaginatedResponse<InventoryItem>>(
+        `${InventoryService.url}?page=${page}&limit=${limit}`
+      );
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error) {
+      console.error('Error fetching inventory items:', error);
+      throw error;
+    }
+  }
+
+  public async getInventoryItemById(id: number): Promise<InventoryItem> {
+    try {
+      const response = await this.httpClient.get<InventoryItem>(
+        `${InventoryService.url}/${id}`
+      );
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', ') || 'Producto no encontrado');
+    } catch (error: any) {
+      console.error('Error fetching inventory item:', error);
+      throw new Error(error.message || 'Error al cargar el producto');
+    }
+  }
+
+  public async createInventoryItem(item: Partial<InventoryItem>): Promise<InventoryItem> {
+    try {
+      const response = await this.httpClient.post<InventoryItem>(
+        InventoryService.url,
+        item
+      );
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error: any) {
+      console.error('Error creating inventory item:', error);
+      throw new Error(error.message || 'Error al crear el producto');
+    }
+  }
+
+  public async updateInventoryItem(id: number, item: Partial<InventoryItem>): Promise<InventoryItem> {
+    try {
+      const response = await this.httpClient.patch<InventoryItem>(
+        `${InventoryService.url}/${id}`,
+        item
+      );
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error: any) {
+      console.error('Error updating inventory item:', error);
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado');
+      }
+      throw new Error(error.message || 'Error al actualizar el producto');
+    }
+  }
+
+  public async deleteInventoryItem(id: number): Promise<void> {
+    try {
+      const response = await this.httpClient.delete<ApiResponse<void>>(
+        `${InventoryService.url}/${id}`
+      );
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+      throw new Error(response.message.content.join(', '));
+    } catch (error: any) {
+      console.error('Error updating inventory item:', error);
+      if (error.response?.status === 404) {
+        throw new Error('Producto no encontrado');
+      }
+      throw new Error(error.message || 'Error al eliminar un producto');
+    }
+  }
+
+  public async getInventoryItemByCode(code: string): Promise<InventoryItem | null> {
+    try {
+      const response = await this.httpClient.get<PaginatedResponse<InventoryItem>>(
+        `${InventoryService.url}`,
+        { params: { code, limit: 1 } }
+      );
+
+      if (response.success && response.data?.records?.length > 0) {
+        return response.data.records[0];
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching inventory item by code:', error);
+      return null;
+    }
+  }
+
+  // Filter services
+  public async getCategories(): Promise<FilterOption[]> {
+    try {
+      const response = await this.httpClient.get<PaginatedResponse<any>>("/categories", {
         params: { limit: 1000, page: 1 },
-        ...getAuthHeaders(),
       });
 
       if (!response.success) {
@@ -160,61 +135,36 @@ export class InventoryFilterService {
         name: category.name,
       }));
     } catch (error) {
-      const axiosError = error as any;
-      console.error("Error fetching categories:", axiosError.message);
-      if (axiosError.response?.data?.message?.content) {
-        throw new Error(axiosError.response.data.message.content[0]);
-      }
-      if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-        throw new Error("No autorizado: Verifique el token de autenticación.");
-      }
+      console.error("Error fetching categories:", error);
       return [];
     }
   }
 
-  static async getLocations(): Promise<LocationOption[]> {
-  if (!API_URL) {
-    throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
-  }
-
-  try {
-    const response = await apiClient.get<IHttpResponse<{ records: any[] }>>("/locations", {
-      params: { limit: 1000, page: 1 },
-      ...getAuthHeaders()
-    });
-
-    if (!response.success) {
-      throw new Error(response.message.content[0] || "Error al cargar las ubicaciones");
-    }
-
-    return response.data.records.map((loc: any) => ({
-      id: loc.id,
-      name: loc.name,
-      type: loc.type,
-    }));
-  } catch (error) {
-    const axiosError = error as any;
-    console.error("Error fetching locations:", axiosError.message);
-    if (axiosError.response?.data?.message?.content) {
-      throw new Error(axiosError.response.data.message.content[0]);
-    }
-    if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-      throw new Error("No autorizado: Verifique el token de autenticación.");
-    }
-    return [];
-  }
-}
-
-
-  static async getStates(): Promise<FilterOption[]> {
-    if (!API_URL) {
-      throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
-    }
-
+  public async getLocations(): Promise<LocationOption[]> {
     try {
-      const response = await apiClient.get<IHttpResponse<any>>("/states", {
+      const response = await this.httpClient.get<PaginatedResponse<any>>("/locations", {
         params: { limit: 1000, page: 1 },
-        ...getAuthHeaders(),
+      });
+
+      if (!response.success) {
+        throw new Error(response.message.content[0] || "Error al cargar las ubicaciones");
+      }
+
+      return response.data.records.map((loc: any) => ({
+        id: loc.id,
+        name: loc.name,
+        type: loc.type,
+      }));
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      return [];
+    }
+  }
+
+  public async getStates(): Promise<FilterOption[]> {
+    try {
+      const response = await this.httpClient.get<PaginatedResponse<any>>("/states", {
+        params: { limit: 1000, page: 1 },
       });
 
       if (!response.success) {
@@ -226,50 +176,39 @@ export class InventoryFilterService {
         name: state.name,
       }));
     } catch (error) {
-      const axiosError = error as any;
-      console.error("Error fetching states:", axiosError.message);
-      if (axiosError.response?.data?.message?.content) {
-        throw new Error(axiosError.response.data.message.content[0]);
-      }
-      if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-        throw new Error("No autorizado: Verifique el token de autenticación.");
-      }
+      console.error("Error fetching states:", error);
       return [];
     }
   }
 
-  static async getColors(): Promise<FilterOption[]> {
-  if (!API_URL) {
-    throw new Error("La variable de entorno NEXT_PUBLIC_API_URL no está definida.");
+  public async getColors(): Promise<FilterOption[]> {
+    try {
+      const response = await this.httpClient.get<PaginatedResponse<any>>("/colors", {
+        params: { limit: 1000, page: 1 },
+      });
+
+      if (!response.success) {
+        throw new Error(response.message.content[0] || "Error al cargar los colores");
+      }
+
+      return response.data.records.map((color: any) => ({
+        id: color.id,
+        name: color.name,
+      }));
+    } catch (error) {
+      console.error("Error fetching colors:", error);
+      return [];
+    }
   }
 
-  try {
-    const response = await apiClient.get<IHttpResponse<{ records: FilterOption[] }>>("/colors", {
-      params: { limit: 1000, page: 1 },
-      ...getAuthHeaders()
+  async uploadItemImage(id: number, formData: FormData): Promise<void> {
+    const response = await this.httpClient.post(`/inventory/${id}/image`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     });
-
-    if (!response.success) {
-      throw new Error(response.message.content[0] || "Error al cargar los colores");
-    }
-
-    return response.data.records.map((color: any) => ({
-      id: color.id,
-      name: color.name,
-    }));
-  } catch (error) {
-    const axiosError = error as any;
-    console.error("Error fetching colors:", axiosError.message);
-    if (axiosError.response?.data?.message?.content) {
-      throw new Error(axiosError.response.data.message.content[0]);
-    }
-    if (axiosError.response?.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-      throw new Error("No autorizado: Verifique el token de autenticación.");
-    }
-    return [];
   }
 }
 
-  
-}
+export const inventoryService = InventoryService.getInstance();
 

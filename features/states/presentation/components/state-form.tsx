@@ -39,8 +39,7 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
         resolver: zodResolver(stateSchema),
         defaultValues: {
             name: initialData?.name || '',
-            description: initialData?.description || '',
-            active: initialData?.active ?? true,
+            description: initialData?.description || ''
         },
     });
 
@@ -48,8 +47,7 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
         if (initialData) {
             form.reset({
                 name: initialData.name,
-                description: initialData.description,
-                active: initialData.active,
+                description: initialData.description
             });
         }
     }, [initialData, form]);
@@ -113,29 +111,6 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="active"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <div className="flex items-center justify-between space-x-2">
-                                                    <div className="space-y-0.5">
-                                                        <FormLabel>Estado Activo</FormLabel>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Determina si el estado está activo en el sistema
-                                                        </p>
-                                                    </div>
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                </div>
                                             </FormItem>
                                         )}
                                     />

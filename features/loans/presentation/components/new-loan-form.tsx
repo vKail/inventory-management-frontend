@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Handshake, ScanBarcode, AlertCircle } from "lucide-react";
+import { CalendarIcon, Handshake, ScanBarcode, AlertCircle, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Breadcrumb, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage, BreadcrumbItem, BreadcrumbList } from "@/components/ui/breadcrumb";
+import { Badge } from "@/components/ui/badge";
 import { ScanModal } from "./scan-modal";
 import { BlackListModal } from "./black-list-modal";
 
@@ -49,6 +50,8 @@ export default function NewLoanForm() {
     setSearchQuery,
     setScanOpen,
     handleCancel,
+    selectedItems,
+    handleRemoveItem,
   } = useNewLoanForm();
 
   // Estado para el modal de la lista negra
@@ -109,6 +112,36 @@ export default function NewLoanForm() {
                       <div className="space-y-4 w-full">
                         <div className="grid grid-cols-2 gap-4 w-full">
                           <div>
+                            <label className="block mb-1 font-medium" htmlFor="cedula">Cédula</label>
+                            <Input
+                              id="cedula"
+                              name="cedula"
+                              value={formData.cedula}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full"
+                            />
+                            {formErrors.cedula && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.cedula}</p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block mb-1 font-medium" htmlFor="telefono">Número de Teléfono</label>
+                            <Input
+                              id="telefono"
+                              name="telefono"
+                              value={formData.telefono}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full"
+                            />
+                            {formErrors.telefono && (
+                              <p className="text-red-500 text-sm mt-1">{formErrors.telefono}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 w-full">
+                          <div>
                             <label className="block mb-1 font-medium" htmlFor="nombres">Nombres</label>
                             <Input
                               id="nombres"
@@ -151,36 +184,6 @@ export default function NewLoanForm() {
                           {formErrors.correo && (
                             <p className="text-red-500 text-sm mt-1">{formErrors.correo}</p>
                           )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 w-full">
-                          <div>
-                            <label className="block mb-1 font-medium" htmlFor="telefono">Número de Teléfono</label>
-                            <Input
-                              id="telefono"
-                              name="telefono"
-                              value={formData.telefono}
-                              onChange={handleInputChange}
-                              required
-                              className="w-full"
-                            />
-                            {formErrors.telefono && (
-                              <p className="text-red-500 text-sm mt-1">{formErrors.telefono}</p>
-                            )}
-                          </div>
-                          <div>
-                            <label className="block mb-1 font-medium" htmlFor="cedula">Cédula</label>
-                            <Input
-                              id="cedula"
-                              name="cedula"
-                              value={formData.cedula}
-                              onChange={handleInputChange}
-                              required
-                              className="w-full"
-                            />
-                            {formErrors.cedula && (
-                              <p className="text-red-500 text-sm mt-1">{formErrors.cedula}</p>
-                            )}
-                          </div>
                         </div>
                         <div>
                           <label className="block mb-1 font-medium" htmlFor="rol">Rol</label>
@@ -258,13 +261,25 @@ export default function NewLoanForm() {
                         </Button>
                       </div>
 
-                      {formData.bienNombre && (
-                        <div className="mt-2 p-2 bg-muted rounded-md">
-                          <p className="font-medium">{formData.bienNombre}</p>
+                      {/* Lista de items seleccionados */}
+                      {selectedItems.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="font-medium mb-2">Items Seleccionados:</h4>
+                          <div className="space-y-2">
+                            {selectedItems.map((item) => (
+                              <div key={item.id} className="flex items-center justify-between bg-muted p-2 rounded-md">
+                                <span>{item.name} - {item.barcode}</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveItem(item.id)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      )}
-                      {formErrors.bienId && (
-                        <p className="text-red-500 text-sm">{formErrors.bienId}</p>
                       )}
 
                       <div>
@@ -409,7 +424,7 @@ export default function NewLoanForm() {
               <Button type="button" variant="outline" onClick={handleCancel}>Cancelar</Button>
               <Button
                 type="submit"
-                disabled={!formData.aceptaResponsabilidad}
+                disabled={!formData.aceptaResponsabilidad || selectedItems.length === 0}
                 className="bg-primary text-white"
               >
                 Solicitar Préstamo

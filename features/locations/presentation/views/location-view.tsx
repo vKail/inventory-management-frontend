@@ -1,62 +1,78 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { LocationTable } from '../components/location-table';
-import { LocationPagination } from '../components/location-pagination';
-import { MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LocationForm } from '../components/location-form';
 import { useLocationStore } from '../../context/location-store';
-import {
-    Breadcrumb,
-    BreadcrumbList,
-    BreadcrumbItem,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+import { LocationFormValues } from '../../schemas/location.schema';
+import { useState, useEffect } from 'react';
+import { Wrench } from 'lucide-react';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from '@/components/ui/breadcrumb';
+interface LocationViewProps {
+    locationId?: number;
+}
 
-export default function LocationView() {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const itemsPerPage = 10;
-    const { getLocations } = useLocationStore();
+export function LocationView({ locationId }: LocationViewProps) {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const { addLocation, updateLocation, getLocationById } = useLocationStore();
+    const [initialData, setInitialData] = useState<any>(null);
 
+    // Cargar datos iniciales si es una edición
     useEffect(() => {
-        const loadLocations = async () => {
-            const response = await getLocations(currentPage, itemsPerPage);
-            setTotalPages(response.pages);
+        const loadLocation = async () => {
+            if (locationId) {
+                const location = await getLocationById(locationId);
+                if (location) {
+                    setInitialData(location);
+                }
+            }
         };
-        loadLocations();
-    }, [currentPage, getLocations]);
+        loadLocation();
+    }, [locationId, getLocationById]);
+
+    const handleSubmit = async (data: LocationFormValues) => {
+        setIsLoading(true);
+        try {
+            if (locationId) {
+                await updateLocation(locationId, data);
+            } else {
+                await addLocation(data);
+            }
+            router.push('/locations');
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
-            <div className="mb-6">
-                <Breadcrumb className="mb-4">
+        <div className="container mx-auto py-6">
+
+            {/* Breadcrumbs, título y descripción */}
+            <div className="w-full">
+                <Breadcrumb className="mb-6">
                     <BreadcrumbList>
                         <BreadcrumbItem>
-                            <span className="text-muted-foreground font-medium">
-                                Configuración
-                            </span>
+                            <span className="text-muted-foreground font-medium">Configuración</span>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <MapPin className="inline mr-1 h-4 w-4 text-primary align-middle" />
-                            <BreadcrumbPage>Ubicaciones</BreadcrumbPage>
+                            <Wrench className="inline mr-1 h-4 w-4 text-primary align-middle" />
+                            <BreadcrumbLink href="/locations">Ubicaciones</BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>{locationId ? "Editar Ubicación" : "Nueva Ubicación"}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
             </div>
-
-            <div className="space-y-4">
-                <LocationTable
-                    currentPage={currentPage}
-                    itemsPerPage={itemsPerPage}
-                />
-                <LocationPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                />
-            </div>
+            <LocationForm
+                initialData={initialData}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+            />
         </div>
     );
 } 

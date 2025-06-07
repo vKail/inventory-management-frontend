@@ -1,4 +1,3 @@
-/* eslint-disable react/react-in-jsx-scope */
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -21,8 +20,7 @@ import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, Breadc
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { id } from 'date-fns/locale';
-import { Wrench } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useEffect } from 'react';
 import { useConditionStore } from '../../context/condition-store';
 
@@ -67,7 +65,7 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <Wrench className="inline mr-1 h-4 w-4 text-primary align-middle" />
+                            <ShieldCheck className="inline mr-1 h-4 w-4 text-primary align-middle" />
                             <BreadcrumbLink href="/conditions">Condiciones</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />

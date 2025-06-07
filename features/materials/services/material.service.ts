@@ -28,7 +28,7 @@ export class MaterialService implements MaterialServiceProps {
 
   public async getMaterials(page = 1, limit = 10): Promise<PaginatedMaterials> {
     try {
-      const response = await this.httpClient.get<ApiResponse<PaginatedMaterials>>(
+      const response = await this.httpClient.get<PaginatedMaterials>(
         `${MaterialService.url}?page=${page}&limit=${limit}`
       );
       return response.data;
@@ -40,7 +40,7 @@ export class MaterialService implements MaterialServiceProps {
 
   public async getMaterialById(id: number): Promise<IMaterial | undefined> {
     try {
-      const response = await this.httpClient.get<ApiResponse<IMaterial>>(`${MaterialService.url}/${id}`);
+      const response = await this.httpClient.get<IMaterial>(`${MaterialService.url}/${id}`);
       console.log(response.data)
       return response.data;
     } catch (error) {
@@ -51,7 +51,7 @@ export class MaterialService implements MaterialServiceProps {
 
   public async createMaterial(material: Partial<IMaterial>): Promise<IMaterial | undefined> {
     try {
-      const response = await this.httpClient.post<ApiResponse<IMaterial>>(
+      const response = await this.httpClient.post<IMaterial>(
         MaterialService.url,
         material
       );
@@ -64,7 +64,7 @@ export class MaterialService implements MaterialServiceProps {
 
   public async updateMaterial(id: number, material: Partial<IMaterial>): Promise<IMaterial | undefined> {
     try {
-      const response = await this.httpClient.patch<ApiResponse<IMaterial>>(
+      const response = await this.httpClient.patch<IMaterial>(
         `${MaterialService.url}/${id}`,
         material
       );

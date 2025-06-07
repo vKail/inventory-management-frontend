@@ -1,3 +1,8 @@
+import { UserRole, UserStatus, UserFormValues } from '../schemas/user.schema';
+
+export type { UserFormValues };
+export { UserRole, UserStatus };
+
 export interface Person {
   dni: string;
   firstName: string;
@@ -9,22 +14,27 @@ export interface Person {
   phone?: string;
 }
 
-export interface User {
-  id: number;
+export interface IUser {
+  id: string;
   userName: string;
-  password:string;
-  career: string;
+  password?: string;
+  career: string | null;
   userType: string;
   status: string;
   person: Person;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface PaginatedUsers {
-  total: number;
+// UserFormValues is now imported from the schema file
+
+export interface PaginatedResponse {
   limit: number;
   page: number;
   pages: number;
-  records: User[];
+  records: IUser[];
+  total: number;
 }
 
 export interface ApiResponse<T> {

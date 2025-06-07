@@ -1,4 +1,3 @@
-/* eslint-disable react/react-in-jsx-scope */
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,7 @@ import { useMaterialStore } from '@/features/materials/context/material-store';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { MaterialPaginator } from './material-paginator';
+import LoaderComponent from '@/shared/components/ui/Loader';
 
 export default function MaterialTable() {
     const router = useRouter();
@@ -123,8 +123,8 @@ export default function MaterialTable() {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center">
-                                        Cargando...
+                                    <TableCell colSpan={4}>
+                                        <LoaderComponent rows={5} columns={4} />
                                     </TableCell>
                                 </TableRow>
                             ) : materials.length === 0 ? (

@@ -17,10 +17,12 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Tags } from 'lucide-react';
 
-export default function CategoryFormView() {
+interface CategoryFormViewProps {
+  id: string;
+}
+
+export default function CategoryFormView({ id }: CategoryFormViewProps) {
   const router = useRouter();
-  const params = useParams();
-  const id = params?.id as string | undefined;
   const isEdit = id !== undefined && id !== 'new';
 
   const {
