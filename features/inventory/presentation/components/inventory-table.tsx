@@ -1,162 +1,105 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Package } from 'lucide-react';
-import { toast } from 'sonner';
-import { useInventoryStore } from '../../context/inventory-store';
-import LoaderComponent from '@/shared/components/ui/Loader';
-import { InventoryPaginator } from './inventory-paginator';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { InventoryForm } from './inventory-form';
-import { columns, ActionsCell } from './columns';
-import { InventoryItem } from '../../data/interfaces/inventory.interface';
+import { InventoryItem } from "../../data/interfaces/inventory.interface";
+import { useInventoryStore } from "../../context/inventory-store";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Pencil, Trash2 } from "lucide-react";
 
-export default function InventoryTable() {
+interface InventoryTableProps {
+    currentPage: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
+    searchTerm: string;
+}
+
+export const InventoryTable = ({
+    currentPage,
+    itemsPerPage,
+    onPageChange,
+    searchTerm
+}: InventoryTableProps) => {
     const router = useRouter();
-    const { items, loading, currentPage, totalPages, getInventoryItems, createInventoryItem } = useInventoryStore();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const itemsPerPage = 10;
+    const { items, deleteInventoryItem, loading } = useInventoryStore();
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                await getInventoryItems(1);
-            } catch (error) {
-                console.error('Error loading data:', error);
-                toast.error('Error al cargar los datos');
-            }
-        };
-
-        loadData();
-    }, [getInventoryItems]);
-
-    const handlePageChange = async (page: number) => {
+    const handleDelete = async (id: string) => {
         try {
-            await getInventoryItems(page);
+            await deleteInventoryItem(id);
+            toast.success("Item eliminado correctamente");
         } catch (error) {
-            console.error('Error changing page:', error);
-            toast.error('Error al cambiar de página');
+            toast.error("Error al eliminar el item");
         }
     };
 
-    const handleCreateItem = async (formData: any) => {
-        try {
-            // Convertir la fecha a string si es necesario
-            const data: Partial<InventoryItem> = {
-                ...formData,
-                acquisitionDate: formData.acquisitionDate instanceof Date
-                    ? formData.acquisitionDate.toISOString().split('T')[0]
-                    : formData.acquisitionDate
-            };
-
-            await createInventoryItem(data);
-            setIsModalOpen(false);
-            toast.success('Item creado exitosamente');
-        } catch (error) {
-            console.error('Error creating item:', error);
-            toast.error('Error al crear el item');
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="container mx-auto py-10">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-2xl font-bold">Inventario</CardTitle>
-                        <Button onClick={() => setIsModalOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" /> Nuevo Item
-                        </Button>
-                    </CardHeader>
-                    <CardContent>
-                        <LoaderComponent rows={5} columns={6} />
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    const filteredItems = items.filter(item =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.identifier.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
-        <div className="container mx-auto py-10">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-2xl font-bold">Inventario</CardTitle>
-                    <Button onClick={() => setIsModalOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> Nuevo Item
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                {columns.map((column) => (
-                                    <TableHead key={column.accessorKey}>{column.header}</TableHead>
-                                ))}
-                                <TableHead className="text-right">Acciones</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {items.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={columns.length + 1} className="text-center py-10">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Package className="h-10 w-10 text-gray-400" />
-                                            <p className="text-sm text-gray-600">No hay items registrados</p>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                items.map((item) => (
-                                    <TableRow key={item.id}>
-                                        {columns.map((column) => (
-                                            <TableCell key={column.accessorKey}>
-                                                {String(item[column.accessorKey])}
-                                            </TableCell>
-                                        ))}
-                                        <TableCell className="text-right">
-                                            <ActionsCell item={item} />
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-
-                    {items.length > 0 && (
-                        <div className="mt-4 flex justify-center">
-                            <InventoryPaginator
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={handlePageChange}
-                            />
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="max-w-4xl">
-                    <DialogHeader>
-                        <DialogTitle>Nuevo Item</DialogTitle>
-                        <DialogDescription>
-                            Complete los detalles del item. Todos los campos marcados con * son obligatorios.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <InventoryForm onSubmit={handleCreateItem} isLoading={loading} />
-                </DialogContent>
-            </Dialog>
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Identificador</TableHead>
+                        <TableHead>Stock</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Acciones</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredItems.map((item) => (
+                        <TableRow key={item.id}>
+                            <TableCell>{item.code}</TableCell>
+                            <TableCell>{item.name}</TableCell>
+                            <TableCell>{item.identifier}</TableCell>
+                            <TableCell>{item.stock}</TableCell>
+                            <TableCell>{item.statusId}</TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => router.push(`/inventory/edit/${item.id}`)}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Esta acción no se puede deshacer. Se eliminará permanentemente el item.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={() => handleDelete(item.id.toString())}
+                                                    disabled={loading}
+                                                >
+                                                    Eliminar
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </div>
     );
-} 
+}; 

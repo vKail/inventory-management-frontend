@@ -1,491 +1,160 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Resolver, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { InventoryItem } from "../../data/interfaces/inventory.interface";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { InventoryFormData } from "../../data/interfaces/inventory.interface";
+import { inventorySchema } from "../../data/schemas/inventory.schema";
+import { IdentificationSection } from "./form-sections/identification-section";
+import { GeneralInfoSection } from "./form-sections/general-info-section";
+import { AdministrativeSection } from "./form-sections/administrative-section";
+import { TechnicalSection } from "./form-sections/technical-section";
+import { AccountingSection } from "./form-sections/accounting-section";
+import { ImageSection } from "./form-sections/image-section";
 import { useInventoryStore } from "../../context/inventory-store";
-import { FilterOption, LocationOption } from "../../data/interfaces/inventory.interface";
-import { InventorySchema, InventoryFormValues } from "../../data/schemas/inventory.schema";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useState } from "react";
+import { inventoryService } from "../../services/inventory.service";
 
 interface InventoryFormProps {
-    onSubmit: (data: InventoryFormValues) => void;
-    isLoading?: boolean;
-    initialData?: Partial<InventoryItem>;
+    initialData?: Partial<InventoryFormData>;
 }
 
-export function InventoryForm({ onSubmit, isLoading, initialData }: InventoryFormProps) {
-    const [categories, setCategories] = useState<FilterOption[]>([]);
-    const [locations, setLocations] = useState<LocationOption[]>([]);
-    const [states, setStates] = useState<FilterOption[]>([]);
-    const [colors, setColors] = useState<FilterOption[]>([]);
-    const [brands, setBrands] = useState<FilterOption[]>([]);
-    const [models, setModels] = useState<FilterOption[]>([]);
-    const [suppliers, setSuppliers] = useState<FilterOption[]>([]);
-    const { getCategories, getLocations, getStates, getColors } = useInventoryStore();
+export const InventoryForm = ({ initialData }: InventoryFormProps) => {
+    const router = useRouter();
+    const { createInventoryItem } = useInventoryStore();
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [imageType, setImageType] = useState<'PRIMARY' | 'SECONDARY' | 'DETAIL'>('PRIMARY');
+    const [isPrimary, setIsPrimary] = useState(false);
+    const [description, setDescription] = useState('');
+    const [photoDate, setPhotoDate] = useState('');
 
-    const defaultValues: InventoryFormValues = {
-        code: initialData?.code || "",
-        name: initialData?.name || "",
-        stock: initialData?.stock || 0,
-        description: initialData?.description || "",
-        itemTypeId: initialData?.itemType?.id || 0,
-        categoryId: initialData?.category?.id || 0,
-        statusId: initialData?.status?.id || 0,
-        normativeType: initialData?.normativeType || "ADMINISTRATIVE_CONTROL",
-        origin: initialData?.origin || "PURCHASE",
-        acquisitionDate: initialData?.acquisitionDate || new Date().toISOString().split('T')[0],
-        locationId: initialData?.location?.id || 1,
-        colorId: initialData?.color?.id || 0,
-        acquisitionValue: initialData?.acquisitionValue || 0,
-        currentValue: initialData?.currentValue || 0,
-        usefulLife: initialData?.usefulLife || 0,
-        depreciationRate: initialData?.depreciationRate || 0,
-        annualDepreciation: initialData?.annualDepreciation || 0,
-        accumulatedDepreciation: initialData?.accumulatedDepreciation || 0,
-        serialNumber: initialData?.serialNumber || "",
-        modelCharacteristics: initialData?.modelCharacteristics || "",
-        brandBreedOther: initialData?.brandBreedOther || "",
-        observations: initialData?.observations || "",
-    };
-
-    const form = useForm<InventoryFormValues>({
-        resolver: zodResolver(InventorySchema) as Resolver<InventoryFormValues>,
-        defaultValues,
-        mode: "onChange"
+    const form = useForm<InventoryFormData>({
+        resolver: zodResolver(inventorySchema),
+        defaultValues: {
+            code: "",
+            stock: 0,
+            name: "",
+            description: "",
+            itemTypeId: 0,
+            categoryId: 0,
+            statusId: 0,
+            normativeType: "PROPERTY",
+            origin: "PURCHASE",
+            locationId: 0,
+            custodianId: 0,
+            availableForLoan: false,
+            identifier: "",
+            previousCode: "",
+            conditionId: 0,
+            certificateId: 0,
+            entryOrigin: "",
+            entryType: "",
+            acquisitionDate: "",
+            commitmentNumber: "",
+            modelCharacteristics: "",
+            brandBreedOther: "",
+            identificationSeries: "",
+            warrantyDate: "",
+            dimensions: "",
+            critical: false,
+            dangerous: false,
+            requiresSpecialHandling: false,
+            perishable: false,
+            expirationDate: "",
+            itemLine: 0,
+            accountingAccount: "",
+            observations: "",
+            ...initialData,
+        },
     });
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                const [categoriesData, locationsData, statesData, colorsData] = await Promise.all([
-                    getCategories(),
-                    getLocations(),
-                    getStates(),
-                    getColors(),
-                ]);
-                setCategories(categoriesData);
-                setLocations(locationsData);
-                setStates(statesData);
-                setColors(colorsData);
-            } catch (error) {
-                console.error("Error loading form data:", error);
-            }
-        };
-        loadData();
-    }, [getCategories, getLocations, getStates, getColors]);
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
 
-    const handleSubmit = (data: InventoryFormValues) => {
-        onSubmit(data);
+        const newFiles: File[] = [];
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file) {
+                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    toast.error(`El archivo ${file.name} excede el límite de 10MB`);
+                    continue;
+                }
+                newFiles.push(file);
+            }
+        }
+
+        setSelectedFiles(newFiles);
+    };
+
+    const handleSubmit = async () => {
+        try {
+            const formData = new FormData();
+            const values = form.getValues();
+
+            Object.entries(values).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value.toString());
+                }
+            });
+
+            const response = await createInventoryItem(formData);
+
+            if (response.success && response.data?.id) {
+                toast.success("Item creado exitosamente");
+
+                // Subir imágenes si hay archivos seleccionados
+                if (selectedFiles.length > 0) {
+                    try {
+                        for (const file of selectedFiles) {
+                            await inventoryService.addImageToId(response.data.id, file, {
+                                type: imageType,
+                                isPrimary,
+                                description,
+                                photoDate
+                            });
+                        }
+                        toast.success("Imágenes subidas exitosamente");
+                    } catch (error) {
+                        toast.error("Error al subir las imágenes");
+                        console.error(error);
+                    }
+                }
+
+                router.push("/inventory");
+            } else {
+                toast.error("Error al crear el item");
+            }
+        } catch (error) {
+            toast.error("Error al crear el item");
+            console.error(error);
+        }
     };
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Información Básica */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información Básica</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="code"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Código</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nombre</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="stock"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Stock</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Descripción</FormLabel>
-                                <FormControl>
-                                    <Textarea {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Clasificación */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Clasificación</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="categoryId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Categoría</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione una categoría" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {categories.map((category) => (
-                                            <SelectItem
-                                                key={category.id}
-                                                value={category.id.toString()}
-                                            >
-                                                {category.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="statusId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Estado</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione un estado" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {states.map((state) => (
-                                            <SelectItem
-                                                key={state.id}
-                                                value={state.id.toString()}
-                                            >
-                                                {state.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="locationId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Ubicación</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione una ubicación" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {locations.map((location) => (
-                                            <SelectItem
-                                                key={location.id}
-                                                value={location.id.toString()}
-                                            >
-                                                {location.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="colorId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Color</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione un color" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {colors.map((color) => (
-                                            <SelectItem
-                                                key={color.id}
-                                                value={color.id.toString()}
-                                            >
-                                                {color.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Información de Adquisición */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información de Adquisición</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="acquisitionDate"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Fecha de Adquisición</FormLabel>
-                                <FormControl>
-                                    <Input type="date" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="acquisitionValue"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Valor de Adquisición</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="currentValue"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Valor Actual</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Información de Depreciación */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información de Depreciación</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="usefulLife"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Vida Útil (años)</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="depreciationRate"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Tasa de Depreciación (%)</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="annualDepreciation"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Depreciación Anual</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="accumulatedDepreciation"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Depreciación Acumulada</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Información del Producto */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información del Producto</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="serialNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Número de Serie</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="modelCharacteristics"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Características del Modelo</FormLabel>
-                                <FormControl>
-                                    <Textarea {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="brandBreedOther"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Marca/Raza/Otro</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="observations"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Observaciones</FormLabel>
-                                <FormControl>
-                                    <Textarea {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 gap-8">
+                    <IdentificationSection />
+                    <GeneralInfoSection />
+                    <AdministrativeSection />
+                    <TechnicalSection />
+                    <AccountingSection />
+                    <ImageSection
+                        onImageChange={handleImageChange}
+                        selectedFiles={selectedFiles}
+                        imageType={imageType}
+                        setImageType={setImageType}
+                        isPrimary={isPrimary}
+                        setIsPrimary={setIsPrimary}
+                        description={description}
+                        setDescription={setDescription}
+                        photoDate={photoDate}
+                        setPhotoDate={setPhotoDate}
                     />
                 </div>
 
@@ -493,16 +162,18 @@ export function InventoryForm({ onSubmit, isLoading, initialData }: InventoryFor
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => form.reset()}
-                        disabled={isLoading}
+                        onClick={() => router.push("/inventory")}
                     >
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Guardando..." : "Guardar"}
+                    <Button
+                        type="button"
+                        onClick={handleSubmit}
+                    >
+                        Guardar
                     </Button>
                 </div>
-            </form>
+            </div>
         </Form>
     );
-} 
+}; 
