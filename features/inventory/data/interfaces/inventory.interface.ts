@@ -41,6 +41,10 @@ export interface BaseInventoryItem {
 
 export interface InventoryItem extends BaseInventoryItem {
     id: number;
+    status?: Status;
+    certificate?: Certificate;
+    location?: Location;
+    category?: Category
 }
 
 export interface PaginatedInventoryResponse {

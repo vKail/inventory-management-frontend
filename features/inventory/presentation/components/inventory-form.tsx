@@ -112,11 +112,11 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     toast.error("Error al crear el item");
                 }
             } else {
-                if (!initialData?.id) {
+                if (!initialData?.code) {
                     toast.error("No se puede editar el item");
                     return;
                 }
-                await updateInventoryItem(initialData.id.toString(), formData);
+                await updateInventoryItem(initialData.code.toString(), formData);
                 toast.success("Item actualizado exitosamente");
                 router.push("/inventory");
             }

@@ -19,7 +19,7 @@ interface CreateInventoryResponse {
 }
 
 interface InventoryServiceProps {
-    getInventoryItems: (page?: number, limit?: number) => Promise<PaginatedInventoryResponse>;
+    getInventoryItems: (page?: number, limit?: number, queryParams?: string) => Promise<PaginatedInventoryResponse>;
     getInventoryItemById: (id: string) => Promise<InventoryItem | undefined>;
     createInventoryItem: (item: FormData) => Promise<IHttpResponse<InventoryItem>>;
     updateInventoryItem: (id: string, item: Partial<FormData>) => Promise<InventoryItem | undefined>;
@@ -43,11 +43,10 @@ export class InventoryService implements InventoryServiceProps {
         return InventoryService.instance;
     }
 
-    public async getInventoryItems(page = 1, limit = 10): Promise<PaginatedInventoryResponse> {
+    public async getInventoryItems(page = 1, limit = 10, queryParams = ''): Promise<PaginatedInventoryResponse> {
         try {
-            const response = await this.httpClient.get<PaginatedInventoryResponse>(
-                `${InventoryService.url}?page=${page}&limit=${limit}`
-            );
+            const url = `${InventoryService.url}?page=${page}&limit=${limit}${queryParams ? `&${queryParams}` : ''}`;
+            const response = await this.httpClient.get<PaginatedInventoryResponse>(url);
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));
             }

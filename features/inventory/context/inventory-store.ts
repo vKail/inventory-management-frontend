@@ -4,6 +4,14 @@ import { InventoryItem, PaginatedInventoryResponse } from '../data/interfaces/in
 import { InventoryService } from '../services/inventory.service';
 import { IHttpResponse } from '@/core/data/interfaces/HttpHandler';
 
+interface InventoryFilters {
+    search?: string;
+    categoryId?: string;
+    statusId?: string;
+    itemTypeId?: string;
+    view?: 'table' | 'grid' | 'list';
+}
+
 interface InventoryState {
     items: InventoryItem[];
     selectedItem: InventoryItem | null;
@@ -12,12 +20,14 @@ interface InventoryState {
     totalPages: number;
     currentPage: number;
     isEmpty: boolean;
+    filters: InventoryFilters;
     getInventoryItems: (page?: number, limit?: number) => Promise<void>;
     getInventoryItem: (id: string) => Promise<InventoryItem | undefined>;
     createInventoryItem: (data: FormData) => Promise<IHttpResponse<InventoryItem>>;
     updateInventoryItem: (id: string, data: FormData) => Promise<void>;
     deleteInventoryItem: (id: string) => Promise<void>;
     setSelectedItem: (item: InventoryItem | null) => void;
+    setFilters: (filters: Partial<InventoryFilters>) => void;
     refreshTable: () => Promise<void>;
 }
 
@@ -34,18 +44,35 @@ export const useInventoryStore = create<InventoryState>()(
             totalPages: 1,
             currentPage: 1,
             isEmpty: true,
+            filters: {},
+
+            setFilters: (newFilters) => {
+                set((state) => ({
+                    filters: { ...state.filters, ...newFilters },
+                    currentPage: 1
+                }));
+                get().refreshTable();
+            },
 
             refreshTable: async () => {
-                const { currentPage } = get();
+                const { currentPage, filters } = get();
                 await get().getInventoryItems(currentPage, 10);
             },
 
             getInventoryItems: async (page = 1, limit = 10) => {
                 try {
                     set({ loading: true, error: null });
-                    const response = await inventoryService.getInventoryItems(page);
+                    const { filters } = get();
 
-                    // Si estamos en una página que ya no existe, volvemos a la primera
+                    // Construir query params
+                    const queryParams = new URLSearchParams();
+                    if (filters.search) queryParams.append('search', filters.search);
+                    if (filters.categoryId && filters.categoryId !== 'all') queryParams.append('categoryId', filters.categoryId);
+                    if (filters.statusId && filters.statusId !== 'all') queryParams.append('statusId', filters.statusId);
+                    if (filters.itemTypeId && filters.itemTypeId !== 'all') queryParams.append('itemTypeId', filters.itemTypeId);
+
+                    const response = await inventoryService.getInventoryItems(page, limit, queryParams.toString());
+
                     if (response.pages > 0 && page > response.pages) {
                         await get().getInventoryItems(1, limit);
                         return;
