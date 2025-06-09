@@ -53,7 +53,7 @@ export function InventoryTableView({ items }: InventoryTableViewProps) {
                         {items.map((item) => (
                             <TableRow
                                 key={`row-${item.id}`}
-                                className="cursor-pointer"
+                                className="cursor-pointer hover:bg-muted/50"
                                 onClick={() => handleItemClick(item)}
                             >
                                 {columns.map((column) => (

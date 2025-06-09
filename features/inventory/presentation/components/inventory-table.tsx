@@ -98,10 +98,11 @@ export const InventoryTable = ({
                         <TableRow>
                             <TableHead>Código</TableHead>
                             <TableHead>Nombre</TableHead>
-                            <TableHead>Stock</TableHead>
+                            <TableHead>Categoría</TableHead>
+                            <TableHead>Departamento</TableHead>
+                            <TableHead>Cantidad</TableHead>
                             <TableHead>Estado</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead>Habilitado/DesHabilitado</TableHead>
+                            <TableHead>Disponible para Préstamo</TableHead>
                             <TableHead>Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -110,14 +111,35 @@ export const InventoryTable = ({
                             <TableRow key={item.id}>
                                 <TableCell>{item.code}</TableCell>
                                 <TableCell>{item.name}</TableCell>
+                                <TableCell>{item.category?.name || 'Sin categoría'}</TableCell>
+                                <TableCell>{item.location?.name || 'Sin departamento'}</TableCell>
                                 <TableCell>{item.stock}</TableCell>
                                 <TableCell>
-                                    <Badge>{item.status?.name}</Badge>
+                                    <Badge
+                                        variant={
+                                            item.status?.name?.toLowerCase() === 'disponible' ? 'default' :
+                                                item.status?.name?.toLowerCase() === 'en uso' ? 'secondary' :
+                                                    item.status?.name?.toLowerCase() === 'en mantenimiento' ? 'destructive' :
+                                                        'outline'
+                                        }
+                                        className={
+                                            item.status?.name?.toLowerCase() === 'disponible' ? 'bg-green-500 hover:bg-green-600' :
+                                                item.status?.name?.toLowerCase() === 'en uso' ? 'bg-yellow-500 hover:bg-yellow-600' :
+                                                    item.status?.name?.toLowerCase() === 'en mantenimiento' ? 'bg-red-500 hover:bg-red-600' :
+                                                        'bg-blue-200 hover:bg-blue-300'
+                                        }
+                                    >
+                                        {item.status?.name || 'Sin estado'}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline">{item.normativeType}</Badge>
+                                    <Badge
+                                        variant={item.availableForLoan ? 'default' : 'destructive'}
+                                        className={item.availableForLoan ? 'bg-green-500 hover:bg-green-600' : ''}
+                                    >
+                                        {item.availableForLoan ? 'Sí' : 'No'}
+                                    </Badge>
                                 </TableCell>
-                                <TableCell>{item.availableForLoan}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <Button

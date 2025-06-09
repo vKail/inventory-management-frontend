@@ -17,6 +17,8 @@ interface InventoryServiceProps {
     deleteInventoryItem: (id: string) => Promise<void>;
     addImageToId: (itemId: number, file: File, imageData?: ImageUploadData) => Promise<void>;
     getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
+    addMultipleImagesToId: (itemId: number, files: File[], imageData?: ImageUploadData) => Promise<void>;
+    getInventoryItemByName: (name: string) => Promise<InventoryItem[]>;
 }
 
 export class InventoryService implements InventoryServiceProps {
@@ -79,44 +81,33 @@ export class InventoryService implements InventoryServiceProps {
     }
 
     private transformEditData(data: Record<string, any>): Record<string, any> {
-        // Campos que deben ser eliminados
-        const fieldsToRemove = [
-            'id', 'activeCustodian', 'itemType', 'registrationUserId',
-            'certificate', 'colors', 'materials', 'status', 'condition',
-            'location', 'category', 'active', 'images'
+        const transformed: Record<string, any> = {};
+
+        // Convertir strings numéricos a números
+        const numericFields = [
+            'stock', 'itemTypeId', 'categoryId', 'statusId',
+            'locationId', 'conditionId', 'certificateId', 'itemLine'
         ];
 
-        // Crear una copia del objeto sin los campos a eliminar
-        const cleanedData = Object.fromEntries(
-            Object.entries(data).filter(([key]) => !fieldsToRemove.includes(key))
-        );
+        // Convertir strings booleanos a booleanos
+        const booleanFields = [
+            'critical', 'dangerous', 'requiresSpecialHandling',
+            'perishable', 'availableForLoan'
+        ];
 
-        // Transformar los valores
-        const transformedData: Record<string, any> = {};
+        Object.entries(data).forEach(([key, value]) => {
+            if (key === 'id') return; // Ignorar el campo id
 
-        Object.entries(cleanedData).forEach(([key, value]) => {
-            // Convertir strings a números para campos específicos
-            if (['stock', 'itemTypeId', 'categoryId', 'statusId', 'locationId',
-                'custodianId', 'conditionId', 'certificateId', 'itemLine'].includes(key)) {
-                transformedData[key] = parseInt(value.toString());
-            }
-            // Convertir strings a booleanos
-            else if (['availableForLoan', 'critical', 'dangerous',
-                'requiresSpecialHandling', 'perishable'].includes(key)) {
-                transformedData[key] = value.toString().toLowerCase() === 'true';
-            }
-            // Convertir strings a fechas para campos de fecha
-            else if (['acquisitionDate', 'warrantyDate', 'expirationDate'].includes(key)) {
-                const date = value.toString();
-                transformedData[key] = date ? new Date(date).toISOString().split('T')[0] : null;
-            }
-            // Mantener como string para el resto
-            else {
-                transformedData[key] = value.toString();
+            if (numericFields.includes(key)) {
+                transformed[key] = parseInt(value as string, 10);
+            } else if (booleanFields.includes(key)) {
+                transformed[key] = value === 'true';
+            } else {
+                transformed[key] = value;
             }
         });
 
-        return transformedData;
+        return transformed;
     }
 
     public async getInventoryItemById(id: string): Promise<InventoryItem | undefined> {
@@ -148,19 +139,9 @@ export class InventoryService implements InventoryServiceProps {
         }
     }
 
-    public async updateInventoryItem(id: string, item: Partial<FormData>): Promise<InventoryItem | undefined> {
+    public async updateInventoryItem(id: string, data: Record<string, any>): Promise<InventoryItem | undefined> {
         try {
-            const formData = new FormData();
-            Object.entries(item).forEach(([key, value]) => {
-                if (value instanceof Blob) {
-                    formData.append(key, value);
-                } else {
-                    formData.append(key, String(value));
-                }
-            });
-
-            const transformedData = this.transformEditData(Object.fromEntries(formData.entries()));
-
+            const transformedData = this.transformEditData(data);
             const response = await this.httpClient.patch<InventoryItem>(
                 `${InventoryService.url}/${id}`,
                 transformedData
@@ -194,8 +175,11 @@ export class InventoryService implements InventoryServiceProps {
             formData.append('itemId', itemId.toString());
 
             if (imageData) {
-                if (imageData.type) formData.append('type', imageData.type);
-                if (imageData.isPrimary !== undefined) formData.append('isPrimary', imageData.isPrimary.toString());
+                if (imageData.type) {
+                    formData.append('type', imageData.type);
+                    // Si el tipo es PRIMARY, forzar isPrimary a true
+                    formData.append('isPrimary', (imageData.type === 'PRIMARY').toString());
+                }
                 if (imageData.description) formData.append('description', imageData.description);
                 if (imageData.photoDate) formData.append('photoDate', imageData.photoDate);
             }
@@ -219,6 +203,18 @@ export class InventoryService implements InventoryServiceProps {
         }
     }
 
+    public async addMultipleImagesToId(itemId: number, files: File[], imageData?: ImageUploadData): Promise<void> {
+        try {
+            // Procesar cada imagen en paralelo
+            await Promise.all(
+                files.map(file => this.addImageToId(itemId, file, imageData))
+            );
+        } catch (error) {
+            console.error('Error uploading multiple images:', error);
+            throw error;
+        }
+    }
+
     public async getInventoryItemByCode(code: string): Promise<InventoryItem | null> {
         try {
             const url = `${InventoryService.url}?code=${code}`;
@@ -230,6 +226,20 @@ export class InventoryService implements InventoryServiceProps {
         } catch (error) {
             console.error('Error fetching inventory item by code:', error);
             return null;
+        }
+    }
+
+    public async getInventoryItemByName(name: string): Promise<InventoryItem[]> {
+        try {
+            const url = `${InventoryService.url}?name=${name}`;
+            const response = await this.httpClient.get<PaginatedInventoryResponse>(url);
+            if (!response.success) {
+                return [];
+            }
+            return response.data.records;
+        } catch (error) {
+            console.error('Error fetching inventory items by name:', error);
+            return [];
         }
     }
 }

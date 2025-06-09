@@ -25,7 +25,7 @@ interface InventoryState {
     getInventoryItem: (id: string) => Promise<InventoryItem | undefined>;
     getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
     createInventoryItem: (data: FormData) => Promise<IHttpResponse<InventoryItem>>;
-    updateInventoryItem: (id: string, data: FormData) => Promise<void>;
+    updateInventoryItem: (id: string, data: Record<string, any>) => Promise<void>;
     deleteInventoryItem: (id: string) => Promise<void>;
     setSelectedItem: (item: InventoryItem | null) => void;
     setFilters: (filters: Partial<InventoryFilters>) => void;
@@ -73,7 +73,7 @@ export const useInventoryStore = create<InventoryState>()(
 
                     // Construir query params
                     const queryParams = new URLSearchParams();
-                    if (filters.search) queryParams.append('search', filters.search);
+                    if (filters.search) queryParams.append('name', filters.search);
                     if (filters.categoryId && filters.categoryId !== 'all') queryParams.append('categoryId', filters.categoryId);
                     if (filters.statusId && filters.statusId !== 'all') queryParams.append('statusId', filters.statusId);
                     if (filters.itemTypeId && filters.itemTypeId !== 'all') queryParams.append('itemTypeId', filters.itemTypeId);
@@ -152,10 +152,21 @@ export const useInventoryStore = create<InventoryState>()(
                 }
             },
 
-            updateInventoryItem: async (id: string, data: FormData) => {
+            updateInventoryItem: async (id: string, data: Record<string, any>) => {
                 try {
                     set({ loading: true, error: null });
-                    await inventoryService.updateInventoryItem(id, data);
+
+                    // Separar las imágenes del resto de los datos
+                    const { images, ...itemData } = data;
+
+                    // Actualizar el item primero
+                    await inventoryService.updateInventoryItem(id, itemData);
+
+                    // Si hay imágenes nuevas, subirlas en una petición separada
+                    if (images && images.length > 0) {
+                        await inventoryService.addMultipleImagesToId(parseInt(id), images);
+                    }
+
                     // Mantenemos la página actual después de actualizar
                     await get().refreshTable();
                 } catch (error) {
