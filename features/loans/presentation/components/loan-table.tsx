@@ -16,7 +16,7 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogFooter, 
-  DialogDescription // Added missing import
+  DialogDescription 
 } from '@/components/ui/dialog';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -26,6 +26,11 @@ interface LoanTableProps {
   onReturnClick: (loan: Loan) => void;
 }
 
+/**
+ * Devuelve un Badge con el estado del préstamo según su estado.
+ * @param status Estado del préstamo
+ * @returns ReactNode con el Badge
+ */
 const getLoanStatusBadge = (status: LoanStatus) => {
   const variants: { [key in LoanStatus]: 'default' | 'secondary' | 'destructive' | 'outline' } = {
     PENDING: 'secondary',
@@ -48,6 +53,11 @@ const getLoanStatusBadge = (status: LoanStatus) => {
   return <Badge variant={variants[status]}>{labels[status]}</Badge>;
 };
 
+/**
+ * Formatea una fecha ISO o devuelve '-' si no es válida.
+ * @param dateString Fecha en formato ISO o null
+ * @returns String con la fecha formateada o '-'
+ */
 const formatDate = (dateString: string | null) => {
   if (!dateString) return '-';
   try {
@@ -77,7 +87,7 @@ export default function LoanTable({ onReturnClick }: LoanTableProps) {
   }, [getLoans]);
 
   const handleCopyLoan = (loan: Loan) => {
-    router.push(`/loans/new?copy=${loan.id}`);
+    router.push(`/loans/request?copy=${loan.id}`);
     setSelectedLoan(null);
   };
 
@@ -87,7 +97,7 @@ export default function LoanTable({ onReturnClick }: LoanTableProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-2xl font-bold">Préstamos</CardTitle>
-            <Button onClick={() => router.push('/loans/new')}>
+            <Button onClick={() => router.push('/loans/request')}>
               <Plus className="mr-2 h-4 w-4" /> Nuevo Préstamo
             </Button>
           </CardHeader>
@@ -104,7 +114,7 @@ export default function LoanTable({ onReturnClick }: LoanTableProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">Préstamos</CardTitle>
-          <Button onClick={() => router.push('/loans/new')}>
+          <Button onClick={() => router.push('/loans/request')}>
             <Plus className="mr-2 h-4 w-4" /> Nuevo Préstamo
           </Button>
         </CardHeader>
@@ -168,7 +178,7 @@ export default function LoanTable({ onReturnClick }: LoanTableProps) {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Detalles del Préstamo</DialogTitle>
-            <DialogDescription>Información detallada del préstamo seleccionado</DialogDescription> {/* Ensured this is imported */}
+            <DialogDescription>Información detallada del préstamo seleccionado</DialogDescription>
           </DialogHeader>
           {selectedLoan && (
             <div className="grid grid-cols-2 gap-4">

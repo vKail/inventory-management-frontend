@@ -21,6 +21,10 @@ import { Button } from '@/components/ui/button';
 import { Table, List, LayoutGrid, Plus, Handshake } from 'lucide-react';
 import { toast } from 'sonner';
 
+/**
+ * Componente principal para la gestión de préstamos.
+ * Muestra una lista de préstamos con filtros y opciones de vista.
+ */
 export default function LoansView() {
   const router = useRouter();
 
@@ -30,6 +34,10 @@ export default function LoansView() {
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'list' | 'grid'>('table');
 
+  /**
+   * Maneja el clic para devolver un préstamo.
+   * @param loan Objeto Loan a devolver
+   */
   const handleReturnClick = (loan: Loan) => {
     if (loan.status === LoanStatus.DELIVERED) {
       setSelectedLoan(loan);
@@ -37,6 +45,10 @@ export default function LoansView() {
     }
   };
 
+  /**
+   * Confirma la devolución de un préstamo mediante una llamada al backend.
+   * @param loan Objeto Loan a devolver
+   */
   const handleConfirmReturn = async (loan: Loan) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}loans/return`, {
@@ -68,6 +80,9 @@ export default function LoansView() {
     }
   };
 
+  /**
+   * Redirige al formulario de solicitud de nuevo préstamo.
+   */
   const handleRegisterLoan = () => {
     router.push('/loans/request');
   };

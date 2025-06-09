@@ -1,8 +1,9 @@
-import { useRouter } from "next/navigation";
-import { useState, useCallback, useEffect } from "react";
-import { toast } from "sonner";
-import { loanRequestSchema } from "../data/schemas/loan-request-schema";
-import { useInventoryStore } from "@/features/inventory/context/inventory-store";
+import { useRouter } from 'next/navigation';
+import { useState, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
+import { useLoanStore } from '../context/loan-store';
+import { CreateLoanDto } from '../data/dtos/create-loan.dto';
+import { useInventoryStore } from '@/features/inventory/context/inventory-store';
 
 interface FormData {
   cedula: string;
@@ -30,6 +31,7 @@ interface Item {
 export function useNewLoanForm() {
   const router = useRouter();
   const { getInventoryItems, items: inventoryItems, loading } = useInventoryStore();
+  const { createLoan } = useLoanStore();
 
   const [formData, setFormData] = useState<FormData>({
     cedula: '',
@@ -55,7 +57,6 @@ export function useNewLoanForm() {
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
 
   useEffect(() => {
-    // Cargar items del inventario al montar el componente
     getInventoryItems();
   }, [getInventoryItems]);
 
@@ -96,26 +97,18 @@ export function useNewLoanForm() {
       toast.error('Ingrese un término de búsqueda');
       return;
     }
-
-    try {
-      // Filtrar items del inventario basado en el término de búsqueda
-      const filteredItems = inventoryItems.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.barcode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
-      ).map(item => ({
-        id: item.id,
-        name: item.name,
-        barcode: item.barcode || '',
-        description: item.description
-      }));
-
-      setSearchResults(filteredItems);
-      setShowResults(true);
-    } catch (error) {
-      console.error('Error searching items:', error);
-      toast.error('Error al buscar items');
-    }
+    const filteredItems = inventoryItems.filter(item =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.barcode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchQuery.toLowerCase())
+    ).map(item => ({
+      id: item.id,
+      name: item.name,
+      barcode: item.barcode || '',
+      description: item.description
+    }));
+    setSearchResults(filteredItems);
+    setShowResults(true);
   }, [searchQuery, inventoryItems]);
 
   const handleSelectBien = (item: Item) => {
@@ -131,7 +124,6 @@ export function useNewLoanForm() {
   };
 
   const handleScanBien = (barcode: string) => {
-    // Buscar el item en el inventario por código de barras
     const item = inventoryItems.find(item => item.barcode === barcode);
     if (item) {
       handleSelectBien({
@@ -163,13 +155,26 @@ export function useNewLoanForm() {
       return;
     }
 
+    const loanData: CreateLoanDto = {
+      scheduledReturnDate: formData.fechaDevolucion!,
+      requestorId: formData.cedula,
+      reason: formData.motivo,
+      associatedEvent: formData.eventoAsociado || undefined,
+      externalLocation: formData.ubicacionExterna || undefined,
+      notes: formData.notas || undefined,
+      loanDetails: selectedItems.map(item => ({
+        itemId: item.id,
+        exitConditionId: 1, // Asumiendo una condición de salida por defecto
+        exitObservations: `Item ${item.name} en buen estado`,
+      })),
+      blockBlackListed: true,
+    };
+
     try {
-      // Simular envío del formulario - Reemplazar con llamada real a la API
-      console.log('Form submitted:', { ...formData, items: selectedItems });
+      await createLoan(loanData);
       toast.success('Préstamo registrado exitosamente');
       router.push('/loans');
     } catch (error) {
-      console.error('Error submitting form:', error);
       toast.error('Error al registrar el préstamo');
     }
   };

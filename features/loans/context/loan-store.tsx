@@ -19,6 +19,7 @@ interface LoanState {
   getLoans: (page: number, limit: number) => Promise<void>;
   getLoanById: (id: number) => Promise<Loan | null>;
   markAsReturned: (id: number) => void;
+  createLoan: (data: any) => Promise<void>;
 }
 
 const client = AxiosClient.getInstance();
@@ -98,5 +99,27 @@ export const useLoanStore = create<LoanState>((set, get) => ({
           : loan
       ),
     }));
+  },
+  createLoan: async (data: any) => {
+    set((state) => ({
+      ...state,
+      isLoading: { ...state.isLoading, create: true },
+      error: null,
+    }));
+    try {
+      await loanService.createLoan(data);
+      await get().getLoans(1, get().itemsPerPage); // Refrescar la lista después de crear
+      set((state) => ({
+        ...state,
+        isLoading: { ...state.isLoading, create: false },
+      }));
+    } catch (error) {
+      set((state) => ({
+        ...state,
+        isLoading: { ...state.isLoading, create: false },
+        error: 'Error al crear el préstamo',
+      }));
+      throw error;
+    }
   },
 }));

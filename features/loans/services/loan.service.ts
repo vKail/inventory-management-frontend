@@ -1,5 +1,6 @@
 import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
 import { LoanListResponse, LoanResponse } from '../data/dtos/loan-res.dto';
+import { CreateLoanDto } from '../data/dtos/create-loan.dto';
 
 export class LoanService {
   constructor(private readonly httpClient: HttpHandler) {}
@@ -18,7 +19,7 @@ export class LoanService {
     return response.data;
   }
 
-  async createLoan(data: any): Promise<LoanResponse> {
+  async createLoan(data: CreateLoanDto): Promise<LoanResponse> {
     const response = await this.httpClient.post<LoanResponse>(
       `${process.env.NEXT_PUBLIC_API_URL}loans`,
       data
