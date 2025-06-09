@@ -143,14 +143,14 @@ export const InventoryView = () => {
       <div className="bg-white p-4 rounded-lg border shadow-sm">
         {store.viewMode === "table" && (
           <InventoryTableView
-            items={store.filteredItems}
+            items={store.filteredItems ?? []}
             onViewDetails={handleViewDetails}
           />
         )}
 
         {store.viewMode === "grid" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {store.filteredItems.map((item) => (
+            {(store.filteredItems ?? []).map((item) => (
               <InventoryCard
                 key={item.id}
                 item={item}
@@ -162,7 +162,7 @@ export const InventoryView = () => {
 
         {store.viewMode === "list" && (
           <div className="space-y-4">
-            {store.filteredItems.map((item) => (
+            {(store.filteredItems ?? []).map((item) => (
               <InventoryListItem
                 key={item.id}
                 product={item}
@@ -172,10 +172,10 @@ export const InventoryView = () => {
           </div>
         )}
 
-        {store.filteredItems.length === 0 && (
+        {(store.filteredItems?.length ?? 0) === 0 && (
           <div className="text-center py-10">
             <p className="text-muted-foreground">
-              {store.items.length === 0
+              {(store.items?.length ?? 0) === 0
                 ? "No hay productos en el inventario."
                 : "No se encontraron productos que coincidan con los filtros."}
             </p>
