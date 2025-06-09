@@ -1,6 +1,5 @@
 import { useFormContext } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
 import { useLocationStore } from "@/features/locations/context/location-store";
 import { useUserStore } from "@/features/users/context/user-store";
@@ -8,6 +7,7 @@ import { useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { useConditionStore } from "@/features/conditions/context/condition-store";
+import { Combobox } from "@/components/ui/combobox";
 
 export const AdministrativeSection = () => {
     const form = useFormContext<InventoryFormData>();
@@ -20,6 +20,21 @@ export const AdministrativeSection = () => {
         getConditions();
         getUsers();
     }, []);
+
+    const locationOptions = locations.map(location => ({
+        value: location.id ?? 0,
+        label: location.name ?? ''
+    }));
+
+    const userOptions = users.map(user => ({
+        value: user.id,
+        label: `${user.person.dni} - ${user.person.firstName} ${user.person.lastName}`
+    }));
+
+    const conditionOptions = conditions.map(condition => ({
+        value: condition.id,
+        label: condition.name
+    }));
 
     return (
         <Card>
@@ -38,26 +53,16 @@ export const AdministrativeSection = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Ubicación</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(parseInt(value))}
-                                        value={field.value?.toString()}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione la ubicación" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {locations.map((location) => (
-                                                <SelectItem
-                                                    key={location.id ?? ''}
-                                                    value={(location.id ?? '').toString()}
-                                                >
-                                                    {location.name ?? ''}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={locationOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar ubicación"
+                                            searchPlaceholder="Buscar ubicación..."
+                                            emptyMessage="No se encontraron ubicaciones"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -69,23 +74,16 @@ export const AdministrativeSection = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Custodio</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(parseInt(value))}
-                                        value={field.value?.toString()}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione el custodio" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {users.map((user) => (
-                                                <SelectItem key={user.id} value={user.id.toString()}>
-                                                    {user.person.dni} - {user.person.firstName} {user.person.lastName}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={userOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar custodio"
+                                            searchPlaceholder="Buscar custodio..."
+                                            emptyMessage="No se encontraron custodios"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -97,26 +95,16 @@ export const AdministrativeSection = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Condición</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(parseInt(value))}
-                                        value={field.value?.toString()}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione la condición" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {conditions.map((condition) => (
-                                                <SelectItem
-                                                    key={condition.id}
-                                                    value={condition.id.toString()}
-                                                >
-                                                    {condition.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={conditionOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar condición"
+                                            searchPlaceholder="Buscar condición..."
+                                            emptyMessage="No se encontraron condiciones"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}

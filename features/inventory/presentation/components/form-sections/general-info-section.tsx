@@ -1,14 +1,13 @@
 import { useFormContext } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
 import { useItemTypeStore } from "@/features/item-types/context/item-types-store";
 import { useCategoryStore } from "@/features/categories/context/category-store";
 import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { useStateStore } from "@/features/states/context/state-store";
+import { Combobox } from "@/components/ui/combobox";
 
 export const GeneralInfoSection = () => {
     const form = useFormContext<InventoryFormData>();
@@ -19,8 +18,23 @@ export const GeneralInfoSection = () => {
     useEffect(() => {
         getItemTypes();
         getCategories();
-
+        getStates();
     }, []);
+
+    const itemTypeOptions = itemTypes.map(type => ({
+        value: type.id,
+        label: type.name
+    }));
+
+    const categoryOptions = categories.map(category => ({
+        value: category.id,
+        label: category.name
+    }));
+
+    const stateOptions = states.map(state => ({
+        value: state.id,
+        label: state.name
+    }));
 
     return (
         <Card>
@@ -86,26 +100,16 @@ export const GeneralInfoSection = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Tipo de Item</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(parseInt(value))}
-                                        value={field.value?.toString()}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione el tipo" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {itemTypes.map((type) => (
-                                                <SelectItem
-                                                    key={type.id}
-                                                    value={type.id.toString()}
-                                                >
-                                                    {type.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={itemTypeOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar tipo de item"
+                                            searchPlaceholder="Buscar tipo de item..."
+                                            emptyMessage="No se encontraron tipos de item"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -117,26 +121,16 @@ export const GeneralInfoSection = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Categoría</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(parseInt(value))}
-                                        value={field.value?.toString()}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione la categoría" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {categories.map((category) => (
-                                                <SelectItem
-                                                    key={category.id}
-                                                    value={category.id.toString()}
-                                                >
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={categoryOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar categoría"
+                                            searchPlaceholder="Buscar categoría..."
+                                            emptyMessage="No se encontraron categorías"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -148,26 +142,16 @@ export const GeneralInfoSection = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Estado</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(parseInt(value))}
-                                        value={field.value?.toString()}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione el estado" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {states.map((state) => (
-                                                <SelectItem
-                                                    key={state.id}
-                                                    value={state.id.toString()}
-                                                >
-                                                    {state.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={stateOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar estado"
+                                            searchPlaceholder="Buscar estado..."
+                                            emptyMessage="No se encontraron estados"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}

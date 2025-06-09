@@ -1,3 +1,5 @@
+import { IHttpResponse } from "@/core/data/interfaces/HttpHandler";
+
 // Interfaces base
 export interface BaseInventoryItem {
     code: string;
@@ -42,13 +44,13 @@ export interface InventoryItem extends BaseInventoryItem {
 }
 
 export interface PaginatedInventoryResponse {
-    data: {
-        records: InventoryItem[];
-        page: number;
-        pages: number;
-        total: number;
-    };
+    records: InventoryItem[];
+    page: number;
+    pages: number;
+    total: number;
 }
+
+export type InventoryResponse = IHttpResponse<PaginatedInventoryResponse>;
 
 export type InventoryFormData = {
     code: string;

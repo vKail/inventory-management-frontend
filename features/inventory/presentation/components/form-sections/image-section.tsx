@@ -4,6 +4,11 @@ import { Upload, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface ImageSectionProps {
     onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -148,11 +153,30 @@ export const ImageSection = ({
                                     <div className="space-y-4">
                                         <div>
                                             <label className="text-sm font-medium">Fecha de la Foto</label>
-                                            <Input
-                                                type="date"
-                                                value={photoDate}
-                                                onChange={(e) => setPhotoDate(e.target.value)}
-                                            />
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={`w-full pl-3 text-left font-normal ${!photoDate && "text-muted-foreground"}`}
+                                                    >
+                                                        {photoDate ? (
+                                                            format(new Date(photoDate), "PPP", { locale: es })
+                                                        ) : (
+                                                            <span>Seleccionar fecha</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={photoDate ? new Date(photoDate) : undefined}
+                                                        onSelect={(date) => setPhotoDate(date?.toISOString() || '')}
+                                                        disabled={(date) => date > new Date()}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
                                         </div>
 
                                         <div className="flex items-center space-x-2">

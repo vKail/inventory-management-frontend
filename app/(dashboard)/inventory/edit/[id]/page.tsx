@@ -1,3 +1,5 @@
+"use client"
+
 import { InventoryForm } from '@/features/inventory/presentation/components/inventory-form';
 import { useInventoryStore } from '@/features/inventory/context/inventory-store';
 import { useEffect } from 'react';

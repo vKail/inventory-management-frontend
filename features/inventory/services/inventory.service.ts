@@ -1,5 +1,5 @@
 import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
-import { InventoryItem, PaginatedInventoryResponse } from '../data/interfaces/inventory.interface';
+import { InventoryItem, InventoryResponse, PaginatedInventoryResponse } from '../data/interfaces/inventory.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 interface ImageUploadData {
