@@ -20,11 +20,12 @@ import { inventoryService } from "../../services/inventory.service";
 
 interface InventoryFormProps {
     initialData?: Partial<InventoryFormData>;
+    mode?: 'create' | 'edit';
 }
 
-export const InventoryForm = ({ initialData }: InventoryFormProps) => {
+export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormProps) => {
     const router = useRouter();
-    const { createInventoryItem } = useInventoryStore();
+    const { createInventoryItem, updateInventoryItem } = useInventoryStore();
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [imageType, setImageType] = useState<'PRIMARY' | 'SECONDARY' | 'DETAIL'>('PRIMARY');
     const [isPrimary, setIsPrimary] = useState(false);
@@ -102,35 +103,25 @@ export const InventoryForm = ({ initialData }: InventoryFormProps) => {
                 }
             });
 
-            const response = await createInventoryItem(formData);
-
-            if (response.success && response.data?.id) {
-                toast.success("Item creado exitosamente");
-
-                // Subir imágenes si hay archivos seleccionados
-                if (selectedFiles.length > 0) {
-                    try {
-                        for (const file of selectedFiles) {
-                            await inventoryService.addImageToId(response.data.id, file, {
-                                type: imageType,
-                                isPrimary,
-                                description,
-                                photoDate
-                            });
-                        }
-                        toast.success("Imágenes subidas exitosamente");
-                    } catch (error) {
-                        toast.error("Error al subir las imágenes");
-                        console.error(error);
-                    }
+            if (mode === 'create') {
+                const response = await createInventoryItem(formData);
+                if (response.success) {
+                    toast.success("Item creado exitosamente");
+                    router.push("/inventory");
+                } else {
+                    toast.error("Error al crear el item");
                 }
-
-                router.push("/inventory");
             } else {
-                toast.error("Error al crear el item");
+                if (!initialData?.id) {
+                    toast.error("No se puede editar el item");
+                    return;
+                }
+                await updateInventoryItem(initialData.id.toString(), formData);
+                toast.success("Item actualizado exitosamente");
+                router.push("/inventory");
             }
         } catch (error) {
-            toast.error("Error al crear el item");
+            toast.error(`Error al ${mode === 'create' ? 'crear' : 'actualizar'} el item`);
             console.error(error);
         }
     };
@@ -170,7 +161,7 @@ export const InventoryForm = ({ initialData }: InventoryFormProps) => {
                         type="button"
                         onClick={handleSubmit}
                     >
-                        Guardar
+                        {mode === 'create' ? 'Guardar' : 'Editar'}
                     </Button>
                 </div>
             </div>

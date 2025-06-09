@@ -1,32 +1,34 @@
 "use client"
 
-import { InventoryForm } from '@/features/inventory/presentation/components/inventory-form';
-import { useInventoryStore } from '@/features/inventory/context/inventory-store';
-import { useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useInventoryStore } from "@/features/inventory/context/inventory-store";
+import { InventoryForm } from "@/features/inventory/presentation/components/inventory-form";
+import { useParams } from "next/navigation";
+import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";
 
 export default function EditInventoryPage() {
     const { id } = useParams();
-    const { getInventoryItem, selectedItem, loading } = useInventoryStore();
+    const { getInventoryItem } = useInventoryStore();
+    const [item, setItem] = useState<InventoryItem | undefined>();
 
     useEffect(() => {
-        if (id) {
-            getInventoryItem(id as string);
-        }
+        const fetchItem = async () => {
+            if (id) {
+                const fetchedItem = await getInventoryItem(id.toString());
+                setItem(fetchedItem);
+            }
+        };
+        fetchItem();
     }, [id, getInventoryItem]);
 
-    if (loading) {
+    if (!item) {
         return <div>Cargando...</div>;
-    }
-
-    if (!selectedItem) {
-        return <div>Item no encontrado</div>;
     }
 
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-2xl font-bold mb-8">Editar Item</h1>
-            <InventoryForm initialData={selectedItem} />
+            <InventoryForm mode="edit" initialData={item} />
         </div>
     );
 } 

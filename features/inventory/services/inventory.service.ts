@@ -86,6 +86,47 @@ export class InventoryService implements InventoryServiceProps {
         return data;
     }
 
+    private transformEditData(data: Record<string, any>): Record<string, any> {
+        // Campos que deben ser eliminados
+        const fieldsToRemove = [
+            'id', 'activeCustodian', 'itemType', 'registrationUserId',
+            'certificate', 'colors', 'materials', 'status', 'condition',
+            'location', 'category', 'active', 'images'
+        ];
+
+        // Crear una copia del objeto sin los campos a eliminar
+        const cleanedData = Object.fromEntries(
+            Object.entries(data).filter(([key]) => !fieldsToRemove.includes(key))
+        );
+
+        // Transformar los valores
+        const transformedData: Record<string, any> = {};
+
+        Object.entries(cleanedData).forEach(([key, value]) => {
+            // Convertir strings a números para campos específicos
+            if (['stock', 'itemTypeId', 'categoryId', 'statusId', 'locationId',
+                'custodianId', 'conditionId', 'certificateId', 'itemLine'].includes(key)) {
+                transformedData[key] = parseInt(value.toString());
+            }
+            // Convertir strings a booleanos
+            else if (['availableForLoan', 'critical', 'dangerous',
+                'requiresSpecialHandling', 'perishable'].includes(key)) {
+                transformedData[key] = value.toString().toLowerCase() === 'true';
+            }
+            // Convertir strings a fechas para campos de fecha
+            else if (['acquisitionDate', 'warrantyDate', 'expirationDate'].includes(key)) {
+                const date = value.toString();
+                transformedData[key] = date ? new Date(date).toISOString().split('T')[0] : null;
+            }
+            // Mantener como string para el resto
+            else {
+                transformedData[key] = value.toString();
+            }
+        });
+
+        return transformedData;
+    }
+
     public async getInventoryItemById(id: string): Promise<InventoryItem | undefined> {
         try {
             const response = await this.httpClient.get<InventoryItem>(`${InventoryService.url}/${id}`);
@@ -117,9 +158,20 @@ export class InventoryService implements InventoryServiceProps {
 
     public async updateInventoryItem(id: string, item: Partial<FormData>): Promise<InventoryItem | undefined> {
         try {
+            const formData = new FormData();
+            Object.entries(item).forEach(([key, value]) => {
+                if (value instanceof Blob) {
+                    formData.append(key, value);
+                } else {
+                    formData.append(key, String(value));
+                }
+            });
+
+            const transformedData = this.transformEditData(Object.fromEntries(formData.entries()));
+
             const response = await this.httpClient.patch<InventoryItem>(
                 `${InventoryService.url}/${id}`,
-                item
+                transformedData
             );
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));
