@@ -81,7 +81,7 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             if (file) {
-                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                if (file.size > 10 * 1024 * 1024) {
                     toast.error(`El archivo ${file.name} excede el límite de 10MB`);
                     continue;
                 }
@@ -112,11 +112,11 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     toast.error("Error al crear el item");
                 }
             } else {
-                if (!initialData?.code) {
+                if (!initialData?.id) {
                     toast.error("No se puede editar el item");
                     return;
                 }
-                await updateInventoryItem(initialData.code.toString(), formData);
+                await updateInventoryItem(initialData.id.toString(), formData);
                 toast.success("Item actualizado exitosamente");
                 router.push("/inventory");
             }

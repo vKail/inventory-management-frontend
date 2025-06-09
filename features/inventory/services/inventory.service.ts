@@ -1,5 +1,5 @@
 import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
-import { InventoryItem, InventoryResponse, PaginatedInventoryResponse } from '../data/interfaces/inventory.interface';
+import { InventoryItem, PaginatedInventoryResponse } from '../data/interfaces/inventory.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 interface ImageUploadData {
@@ -9,15 +9,6 @@ interface ImageUploadData {
     photoDate?: string;
 }
 
-interface CreateInventoryResponse {
-    success: boolean;
-    message: {
-        content: string[];
-        displayable: boolean;
-    };
-    data: InventoryItem;
-}
-
 interface InventoryServiceProps {
     getInventoryItems: (page?: number, limit?: number, queryParams?: string) => Promise<PaginatedInventoryResponse>;
     getInventoryItemById: (id: string) => Promise<InventoryItem | undefined>;
@@ -25,11 +16,13 @@ interface InventoryServiceProps {
     updateInventoryItem: (id: string, item: Partial<FormData>) => Promise<InventoryItem | undefined>;
     deleteInventoryItem: (id: string) => Promise<void>;
     addImageToId: (itemId: number, file: File, imageData?: ImageUploadData) => Promise<void>;
+    getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
 }
 
 export class InventoryService implements InventoryServiceProps {
     private static instance: InventoryService;
     private httpClient: HttpHandler;
+    private static readonly urlImage = `${process.env.NEXT_PUBLIC_API_URLIMAGE}`;
     private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}items`;
 
     private constructor() {
@@ -223,6 +216,20 @@ export class InventoryService implements InventoryServiceProps {
         } catch (error) {
             console.error('Error uploading image:', error);
             throw error;
+        }
+    }
+
+    public async getInventoryItemByCode(code: string): Promise<InventoryItem | null> {
+        try {
+            const url = `${InventoryService.url}?code=${code}`;
+            const response = await this.httpClient.get<PaginatedInventoryResponse>(url);
+            if (!response.success) {
+                return null;
+            }
+            return response.data.records[0];
+        } catch (error) {
+            console.error('Error fetching inventory item by code:', error);
+            return null;
         }
     }
 }

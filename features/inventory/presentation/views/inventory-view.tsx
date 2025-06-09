@@ -3,21 +3,19 @@
 import { useEffect } from "react";
 import { useInventoryStore } from "../../context/inventory-store";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { useRouter } from "next/navigation";
 import { InventoryHeader } from "../components/inventory-header";
 import { InventoryTableView } from "../components/inventory-table-view";
 import { InventoryGridView } from "../components/inventory-grid-view";
 import { InventoryListView } from "../components/inventory-list-view";
-import { InventoryItem } from "../../data/interfaces/inventory.interface";
 import { useCategoryStore } from "@/features/categories/context/category-store";
 import { useItemTypeStore } from "@/features/item-types/context/item-types-store";
 import { useStateStore } from "@/features/states/context/state-store";
+import { Pagination } from "@/components/ui/pagination";
 
 type ViewType = 'table' | 'grid' | 'list';
 
 export const InventoryView = () => {
-    const router = useRouter();
-    const { getInventoryItems, loading, items, filters, setFilters } = useInventoryStore();
+    const { getInventoryItems, loading, items, filters, setFilters, currentPage, totalPages, setPage } = useInventoryStore();
     const { getCategories } = useCategoryStore();
     const { getItemTypes } = useItemTypeStore();
     const { getStates } = useStateStore();
@@ -29,12 +27,12 @@ export const InventoryView = () => {
         getStates();
     }, [getInventoryItems, getCategories, getItemTypes, getStates]);
 
-    const handleItemClick = (item: InventoryItem) => {
-        router.push(`/inventory/edit/${item.id}`);
-    };
-
     const handleViewChange = (view: ViewType) => {
         setFilters({ ...filters, view });
+    };
+
+    const handlePageChange = (page: number) => {
+        setPage(page);
     };
 
     const currentView = (filters as any).view || 'table';
@@ -66,22 +64,29 @@ export const InventoryView = () => {
                     {currentView === 'table' && (
                         <InventoryTableView
                             items={items || []}
-                            onItemClick={handleItemClick}
                         />
                     )}
                     {currentView === 'grid' && (
                         <InventoryGridView
                             items={items || []}
-                            onItemClick={handleItemClick}
                         />
                     )}
                     {currentView === 'list' && (
                         <InventoryListView
                             items={items || []}
-                            onItemClick={handleItemClick}
                         />
                     )}
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="mt-4 flex justify-center">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

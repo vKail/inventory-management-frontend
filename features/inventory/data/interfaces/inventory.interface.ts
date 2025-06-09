@@ -1,4 +1,6 @@
 import { IHttpResponse } from "@/core/data/interfaces/HttpHandler";
+import { ICondition } from "@/features/conditions/data/interfaces/condition.interface";
+import { ItemType } from "@/features/item-types/data/interfaces/item-type.interface";
 
 // Interfaces base
 export interface BaseInventoryItem {
@@ -44,7 +46,20 @@ export interface InventoryItem extends BaseInventoryItem {
     status?: Status;
     certificate?: Certificate;
     location?: Location;
-    category?: Category
+    category?: Category;
+    itemType?: ItemType;
+    condition?: ICondition;
+    images?: Images[];
+}
+
+export interface Images {
+    id: number;
+    filePath: string;
+    type?: string;
+    isPrimary?: boolean;
+    description?: string;
+    photoDate?: string;
+    active?: boolean
 }
 
 export interface PaginatedInventoryResponse {
@@ -57,6 +72,7 @@ export interface PaginatedInventoryResponse {
 export type InventoryResponse = IHttpResponse<PaginatedInventoryResponse>;
 
 export type InventoryFormData = {
+    id?: number;
     code: string;
     stock: number;
     name: string;

@@ -4,12 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useCategoryStore } from "@/features/categories/context/category-store";
-import { useItemTypeStore } from "@/features/item-types/context/item-types-store";
 import { useStateStore } from "@/features/states/context/state-store";
 
 export const useColumns = () => {
     const { categories } = useCategoryStore();
-    const { itemTypes } = useItemTypeStore();
     const { states } = useStateStore();
 
     const columns: ColumnDef<InventoryItem>[] = [
@@ -41,7 +39,7 @@ export const useColumns = () => {
             accessorKey: "statusId",
             header: "Estado",
             cell: ({ row }) => {
-                const statusId = row.getValue("statusId") as number;
+                const statusId = row.getValue("id") as number;
                 const status = states.find(s => s.id === statusId);
                 return (
                     <Badge variant="outline">

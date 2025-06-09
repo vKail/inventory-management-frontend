@@ -23,11 +23,13 @@ interface InventoryState {
     filters: InventoryFilters;
     getInventoryItems: (page?: number, limit?: number) => Promise<void>;
     getInventoryItem: (id: string) => Promise<InventoryItem | undefined>;
+    getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
     createInventoryItem: (data: FormData) => Promise<IHttpResponse<InventoryItem>>;
     updateInventoryItem: (id: string, data: FormData) => Promise<void>;
     deleteInventoryItem: (id: string) => Promise<void>;
     setSelectedItem: (item: InventoryItem | null) => void;
     setFilters: (filters: Partial<InventoryFilters>) => void;
+    setPage: (page: number) => void;
     refreshTable: () => Promise<void>;
 }
 
@@ -45,6 +47,11 @@ export const useInventoryStore = create<InventoryState>()(
             currentPage: 1,
             isEmpty: true,
             filters: {},
+
+            setPage: (page: number) => {
+                set({ currentPage: page });
+                get().refreshTable();
+            },
 
             setFilters: (newFilters) => {
                 set((state) => ({
@@ -114,6 +121,19 @@ export const useInventoryStore = create<InventoryState>()(
                     set({ error: 'Error al cargar el item', loading: false });
                     console.error('Error fetching item:', error);
                     return undefined;
+                }
+            },
+
+            getInventoryItemByCode: async (code: string) => {
+                try {
+                    set({ loading: true, error: null });
+                    const response = await inventoryService.getInventoryItemByCode(code);
+                    set({ loading: false });
+                    return response;
+                } catch (error) {
+                    set({ loading: false, error: 'Error al buscar el item' });
+                    console.error('Error fetching item by code:', error);
+                    return null;
                 }
             },
 

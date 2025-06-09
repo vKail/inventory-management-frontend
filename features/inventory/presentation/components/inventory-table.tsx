@@ -112,7 +112,7 @@ export const InventoryTable = ({
                                 <TableCell>{item.name}</TableCell>
                                 <TableCell>{item.stock}</TableCell>
                                 <TableCell>
-                                    <Badge>{item.statusId}</Badge>
+                                    <Badge>{item.status?.name}</Badge>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline">{item.normativeType}</Badge>
