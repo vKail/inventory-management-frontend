@@ -41,7 +41,10 @@ export function InventoryTableView({ items }: InventoryTableViewProps) {
                     <TableHeader>
                         <TableRow>
                             {columns.map((column) => (
-                                <TableHead key={`header-${column.id}`}>
+                                <TableHead
+                                    key={`header-${column.id}`}
+                                    style={{ width: (column as any).size ? `${(column as any).size}px` : 'auto' }}
+                                >
                                     {typeof column.header === 'string'
                                         ? column.header
                                         : column.header?.({ column } as HeaderContext<InventoryItem, unknown>)}
@@ -57,7 +60,10 @@ export function InventoryTableView({ items }: InventoryTableViewProps) {
                                 onClick={() => handleItemClick(item)}
                             >
                                 {columns.map((column) => (
-                                    <TableCell key={`cell-${item.id}-${column.id}`}>
+                                    <TableCell
+                                        key={`cell-${item.id}-${column.id}`}
+                                        style={{ width: (column as any).size ? `${(column as any).size}px` : 'auto' }}
+                                    >
                                         {column.cell && typeof column.cell === 'function'
                                             ? column.cell({
                                                 row: {

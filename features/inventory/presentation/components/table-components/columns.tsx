@@ -60,12 +60,13 @@ export const useColumns = () => {
             id: "stock",
             accessorKey: "stock",
             header: "Artículos en Stock",
+            size: 150,
             cell: ({ row }) => {
                 const stock = row.getValue("stock") as number;
                 return (
                     <Badge
-                        variant={stock < 10 ? "destructive" : "default"}
-                        className={stock < 10 ? "bg-red-500 hover:bg-red-600" : ""}
+                        variant={stock < 10 ? "destructive" : "outline"}
+                        className={stock < 10 ? "bg-red-500 text-white hover:bg-red-600" : ""}
                     >
                         {stock}
                     </Badge>
@@ -102,12 +103,13 @@ export const useColumns = () => {
             id: "availableForLoan",
             accessorKey: "availableForLoan",
             header: "Disponible para Préstamo",
+            size: 150,
             cell: ({ row }) => {
                 const availableForLoan = row.getValue("availableForLoan") as boolean;
                 return (
                     <Badge
                         variant={availableForLoan ? "default" : "destructive"}
-                        className={availableForLoan ? "bg-green-500 hover:bg-green-600" : ""}
+                        className={availableForLoan ? "bg-green-600 hover:bg-green-800" : "bg-red-500 text-white hover:bg-red-600"}
                     >
                         {availableForLoan ? "Sí" : "No"}
                     </Badge>
