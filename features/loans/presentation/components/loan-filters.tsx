@@ -14,12 +14,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-
 interface LoanFiltersProps {
   loans: Loan[];
   onFilter: (filtered: Loan[]) => void;
 }
-
+/**
+ * Componente que proporciona la interfaz de usuario para filtrar y ordenar préstamos
+ * @param {LoanFiltersProps} props - Propiedades del componente
+ * @returns {JSX.Element} Componente de filtros
+ */
 export default function LoanFilters({ loans, onFilter }: LoanFiltersProps) {
   const {
     filteredLoans,
@@ -30,13 +33,12 @@ export default function LoanFilters({ loans, onFilter }: LoanFiltersProps) {
     sortBy,
     setSortBy,
   } = useLoanFilter(loans);
-
   useEffect(() => {
     onFilter(filteredLoans);
   }, [filteredLoans, onFilter]);
-
   return (
     <div className="space-y-4 bg-white p-4 rounded-md border shadow-sm">
+      {/* Barra de búsqueda y ordenamiento */}
       <div className="flex flex-col md:flex-row items-center gap-3">
         <div className="relative w-full md:flex-1">
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -48,7 +50,7 @@ export default function LoanFilters({ loans, onFilter }: LoanFiltersProps) {
             className="pl-10 h-10"
           />
         </div>
-
+        {/* Selector de ordenamiento */}
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-full md:w-40 h-10">
             <SelectValue placeholder="Ordenar por" />
@@ -60,12 +62,11 @@ export default function LoanFilters({ loans, onFilter }: LoanFiltersProps) {
             <SelectItem value="nameDesc">Nombre Z-A</SelectItem>
           </SelectContent>
         </Select>
-
         <Button variant="outline" size="icon" className="h-10 w-10">
           <Filter className="h-5 w-5" />
         </Button>
       </div>
-
+      {/* Pestañas de filtro por estado */}
       <Tabs value={activeTab} onValueChange={filterByTab}>
         <TabsList>
           <TabsTrigger value="all">Todos</TabsTrigger>

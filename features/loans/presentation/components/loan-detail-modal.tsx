@@ -18,7 +18,15 @@ interface LoanDetailModalProps {
   loan?: Loan;
   onClose: () => void;
 }
-
+/**
+ * Convierte el estado del préstamo a su equivalente en español
+ * @param {string} status - Estado del préstamo en inglés
+ * @returns {string} Estado del préstamo en español
+ * @example
+ * getEstadoEnEspanol('active') // retorna 'Activo'
+ * getEstadoEnEspanol('returned') // retorna 'Devuelto'
+ * getEstadoEnEspanol('overdue') // retorna 'Vencido'
+ */
 function getEstadoEnEspanol(status: string): string {
   switch (status) {
     case 'active':
@@ -31,10 +39,13 @@ function getEstadoEnEspanol(status: string): string {
       return 'Desconocido';
   }
 }
-
+/**
+ * Genera un texto detallado con la información del préstamo
+ * @param {Loan} loan - Objeto con la información del préstamo
+ * @returns {string} Texto formateado con los detalles del préstamo
+ */
 function generarTextoDetalle(loan: Loan): string {
   const detalles: string[] = [];
-
   detalles.push(`Producto: ${loan.product?.name ?? '-'}`);
   detalles.push(`Código: ${loan.product?.barcode ?? '-'}`);
   detalles.push(`Usuario: ${loan.user?.name ?? '-'}`);
@@ -46,13 +57,10 @@ function generarTextoDetalle(loan: Loan): string {
     detalles.push(`Devuelto el: ${format(new Date(loan.returnDate), 'dd/MM/yyyy')}`);
   if (loan.notes) detalles.push(`Notas: ${loan.notes}`);
   detalles.push(`Estado: ${getEstadoEnEspanol(loan.status)}`);
-
   return detalles.join('\n');
 }
-
 export function LoanDetailModal({ open, loan, onClose }: LoanDetailModalProps) {
   if (!loan) return null;
-
   const handleCopy = () => {
     const texto = generarTextoDetalle(loan);
     navigator.clipboard.writeText(texto).then(() => {
@@ -61,7 +69,6 @@ export function LoanDetailModal({ open, loan, onClose }: LoanDetailModalProps) {
       toast.error('Error al copiar al portapapeles');
     });
   };
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
@@ -78,7 +85,6 @@ export function LoanDetailModal({ open, loan, onClose }: LoanDetailModalProps) {
             </Button>
           </div>
         </DialogHeader>
-
         <div className="space-y-2 text-sm">
           <p><strong>Producto:</strong> {loan.product?.name}</p>
           <p><strong>Código:</strong> {loan.product?.barcode}</p>
@@ -97,7 +103,6 @@ export function LoanDetailModal({ open, loan, onClose }: LoanDetailModalProps) {
           )}
           <p><strong>Estado:</strong> {getEstadoEnEspanol(loan.status)}</p>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cerrar</Button>
         </DialogFooter>

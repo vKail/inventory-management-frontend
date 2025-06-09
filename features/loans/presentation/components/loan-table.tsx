@@ -49,7 +49,15 @@ interface Loan {
     };
   }>;
 }
-
+/**
+ * Genera un badge visual para mostrar el estado del préstamo
+ * @param {LoanStatus} status - Estado del préstamo
+ * @returns {JSX.Element} Badge con el estado del préstamo
+ * @example
+ * getLoanStatusBadge('active') // retorna un badge verde con texto "Activo"
+ * getLoanStatusBadge('returned') // retorna un badge gris con texto "Devuelto"
+ * getLoanStatusBadge('overdue') // retorna un badge rojo con texto "Vencido"
+ */
 const getLoanStatusBadge = (status: string) => {
   const variants: { [key: string]: "default" | "secondary" | "destructive" | "outline" } = {
     [LoanStatus.PENDING]: "secondary",
@@ -60,7 +68,6 @@ const getLoanStatusBadge = (status: string) => {
     [LoanStatus.OVERDUE]: "destructive",
     [LoanStatus.CANCELLED]: "destructive"
   };
-
   const labels: { [key: string]: string } = {
     [LoanStatus.PENDING]: "Pendiente",
     [LoanStatus.APPROVED]: "Aprobado",
@@ -70,10 +77,12 @@ const getLoanStatusBadge = (status: string) => {
     [LoanStatus.OVERDUE]: "Vencido",
     [LoanStatus.CANCELLED]: "Cancelado"
   };
-
-  return <Badge variant={variants[status]}>{labels[status]}</Badge>;
+  return (
+    <Badge variant={variants[status]} className="capitalize">
+      {labels[status]}
+    </Badge>
+  );
 };
-
 const formatDate = (dateString: string | null) => {
   if (!dateString) return '-';
   try {
@@ -90,7 +99,6 @@ export default function LoanTable() {
   const { loans, isLoading, getLoans } = useLoanStore();
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const itemsPerPage = 10;
-
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -100,15 +108,12 @@ export default function LoanTable() {
         toast.error('Error al cargar los datos');
       }
     };
-
     loadData();
   }, [getLoans]);
-
   const handleCopyLoan = (loan: Loan) => {
     router.push(`/loans/new?copy=${loan.id}`);
     setSelectedLoan(null);
   };
-
   if (isLoading.fetch) {
     return (
       <div className="container mx-auto py-10">
@@ -126,7 +131,6 @@ export default function LoanTable() {
       </div>
     );
   }
-
   return (
     <div className="container mx-auto py-10">
       <Card>
@@ -182,7 +186,6 @@ export default function LoanTable() {
           </Table>
         </CardContent>
       </Card>
-
       <Dialog open={selectedLoan !== null} onOpenChange={() => setSelectedLoan(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -191,7 +194,6 @@ export default function LoanTable() {
               Información detallada del préstamo seleccionado
             </DialogDescription>
           </DialogHeader>
-
           {selectedLoan && (
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -224,7 +226,6 @@ export default function LoanTable() {
               </div>
             </div>
           )}
-
           <DialogFooter className="flex justify-between items-center">
             <Button
               variant="outline"

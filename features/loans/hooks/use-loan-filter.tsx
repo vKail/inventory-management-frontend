@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { Loan } from '@/features/loans/data/interfaces/loan.interface';
 
 type SortOption =
-  | 'startDateDesc' 
-  | 'startDateAsc'  
-  | 'nameAsc'      
-  | 'nameDesc';     
+  | 'startDateDesc'
+  | 'startDateAsc'
+  | 'nameAsc'
+  | 'nameDesc';
 
 interface UseLoanFilterResult {
   filteredLoans: Loan[];
@@ -18,22 +18,30 @@ interface UseLoanFilterResult {
   sortBy: SortOption;
   setSortBy: (value: SortOption) => void;
 }
-
+/**
+ * Hook personalizado para manejar el filtrado y ordenamiento de préstamos
+ * @param {Loan[]} loans - Lista de préstamos a filtrar
+ * @returns {UseLoanFilterResult} Objeto con los estados y funciones de filtrado
+ */
 export function useLoanFilter(loans: Loan[]): UseLoanFilterResult {
   const [filteredLoans, setFilteredLoans] = useState<Loan[]>(loans);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<SortOption>('startDateDesc');
 
+  /**
+   * Función que aplica los filtros y ordenamiento a la lista de préstamos
+   * @returns {void}
+   */
   const filter = useCallback(() => {
     let result = [...loans];
 
-
+    // Filtro por estado del préstamo
     if (activeTab !== 'all') {
       result = result.filter((loan) => loan.status === activeTab);
     }
 
-
+    // Filtro por texto de búsqueda
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((loan) => {
@@ -46,7 +54,7 @@ export function useLoanFilter(loans: Loan[]): UseLoanFilterResult {
         return productMatch || userMatch;
       });
     }
-    
+    // Ordenamiento de resultados
     result.sort((a, b) => {
       switch (sortBy) {
         case 'startDateAsc':
@@ -61,14 +69,12 @@ export function useLoanFilter(loans: Loan[]): UseLoanFilterResult {
           return 0;
       }
     });
-
     setFilteredLoans(result);
   }, [loans, activeTab, searchQuery, sortBy]);
 
   useEffect(() => {
     filter();
   }, [filter]);
-
   return {
     filteredLoans,
     filterByTab: setActiveTab,

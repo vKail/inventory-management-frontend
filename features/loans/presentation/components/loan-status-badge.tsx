@@ -6,8 +6,11 @@ import { LoanStatus } from '@/features/loans/data/enums/loan-status.enum';
 interface LoanStatusBadgeProps {
   status: LoanStatus;
 }
-
-
+/**
+ * Componente que muestra visualmente el estado de un préstamo usando un badge
+ * @param {LoanStatusBadgeProps} props - Propiedades del componente
+ * @returns {JSX.Element} Badge con el estado del préstamo
+ */
 export function LoanStatusBadge({ status }: LoanStatusBadgeProps) {
   switch (status) {
     case LoanStatus.ACTIVE:
