@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useUserStore } from '@/features/users/context/user-store';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,11 +33,6 @@ import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
 import { UserRole, UserStatus } from '../../data/schemas/user.schema';
 import LoaderComponent from '@/shared/components/ui/Loader';
-
-interface UserTableProps {
-  currentPage: number;
-  itemsPerPage: number;
-}
 
 const getUserTypeLabel = (type: string) => {
   switch (type) {
@@ -76,23 +71,10 @@ const getStatusLabel = (status: string) => {
   }
 };
 
-export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
+export function UserTable() {
   const router = useRouter();
-  const { users, loading, getUsers, deleteUser } = useUserStore();
+  const { users, loading, deleteUser } = useUserStore();
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        await getUsers(currentPage, itemsPerPage);
-      } catch (error) {
-        console.error('Error loading users:', error);
-        toast.error('Error al cargar los usuarios');
-      }
-    };
-
-    loadUsers();
-  }, [getUsers, currentPage, itemsPerPage]);
 
   const handleDelete = async () => {
     if (userToDelete === null) return;
@@ -101,8 +83,7 @@ export function UserTable({ currentPage, itemsPerPage }: UserTableProps) {
       await deleteUser(userToDelete);
       toast.success('Usuario eliminado exitosamente');
       setUserToDelete(null);
-    } catch (error) {
-      console.error('Error deleting user:', error);
+    } catch {
       toast.error('Error al eliminar el usuario');
     }
   };

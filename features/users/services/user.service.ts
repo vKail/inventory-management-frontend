@@ -16,8 +16,25 @@ export class UserService {
     return UserService.instance;
   }
 
-  async getUsers(page: number = 1, limit: number = 10): Promise<PaginatedResponse> {
-    const response = await fetch(`${this.baseUrl}?page=${page}&limit=${limit}`);
+  async getUsers(page: number = 1, limit: number = 10, filters?: { userName?: string; dni?: string; status?: string }): Promise<PaginatedResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (filters?.userName) {
+      params.append('userName', filters.userName);
+    }
+
+    if (filters?.dni) {
+      params.append('dni', filters.dni);
+    }
+
+    if (filters?.status) {
+      params.append('status', filters.status);
+    }
+
+    const response = await fetch(`${this.baseUrl}?${params.toString()}`);
     if (!response.ok) {
       throw new Error('Error fetching users');
     }
@@ -43,7 +60,7 @@ export class UserService {
       status: user.status || 'ACTIVE',
       person: user.person
     };
-    
+
     const response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {
@@ -67,7 +84,7 @@ export class UserService {
       status: user.status || 'ACTIVE',
       person: user.person
     };
-    
+
     const response = await fetch(`${this.baseUrl}/${id}`, {
       method: 'PATCH',
       headers: {

@@ -7,7 +7,7 @@ interface UserStore {
     users: IUser[];
     loading: boolean;
     error: string | null;
-    getUsers: (page?: number, limit?: number) => Promise<PaginatedResponse>;
+    getUsers: (page?: number, limit?: number, filters?: { userName?: string; dni?: string; status?: string }) => Promise<PaginatedResponse>;
     getUserById: (userId: string) => Promise<IUser | undefined>;
     addUser: (user: Partial<IUser>) => Promise<void>;
     updateUser: (userId: string, user: Partial<IUser>) => Promise<void>;
@@ -23,10 +23,10 @@ export const useUserStore = create<UserStore>()(
             loading: false,
             error: null,
 
-            getUsers: async (page = 1, limit = 10) => {
+            getUsers: async (page = 1, limit = 10, filters) => {
                 set({ loading: true });
                 try {
-                    const response = await UserService.getInstance().getUsers(page, limit);
+                    const response = await UserService.getInstance().getUsers(page, limit, filters);
 
                     if (response && response.records) {
                         set({
@@ -39,7 +39,6 @@ export const useUserStore = create<UserStore>()(
                         throw new Error('Invalid response format');
                     }
                 } catch (error) {
-                    console.error('Error in getUsers:', error);
                     set({
                         error: 'Error al cargar los usuarios',
                         loading: false,
@@ -65,7 +64,6 @@ export const useUserStore = create<UserStore>()(
                     await get().getUsers();
                     set({ loading: false });
                 } catch (error) {
-                    console.error('Error adding user:', error);
                     set({
                         error: 'Error al crear el usuario',
                         loading: false
@@ -81,7 +79,6 @@ export const useUserStore = create<UserStore>()(
                     await get().getUsers();
                     set({ loading: false });
                 } catch (error) {
-                    console.error('Error updating user:', error);
                     set({
                         error: 'Error al actualizar el usuario',
                         loading: false
@@ -97,7 +94,6 @@ export const useUserStore = create<UserStore>()(
                     const newUsers = get().users.filter(u => u.id !== userId);
                     set({ users: newUsers, loading: false });
                 } catch (error) {
-                    console.error('Error deleting user:', error);
                     set({
                         error: 'Error al eliminar el usuario',
                         loading: false

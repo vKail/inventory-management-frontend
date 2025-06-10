@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AuthService } from '../services/auth.service';
 import { ILogin, IUserAuth } from '../data/interfaces/login.interface';
-import { setToken, removeToken } from '@/core/utils/TokenUtils';
 
 interface AuthSession {
   user: IUserAuth | null;
@@ -26,15 +25,11 @@ export const useAuthStore = create<AuthSession>()(
       isAuthenticated: false,
       login: async user => {
         const response = await AuthService.getInstance().login(user);
-        if (response?.token) {
-          setToken(response.token);
-          set({ user: response?.user, token: response?.token, role: response?.user.userType });
-          set({ isAuthenticated: true });
-        }
+        set({ user: response?.user, token: response?.token, role: response?.user.userType });
+        set({ isAuthenticated: !!response?.token });
       },
       logout: async () => {
         await AuthService.getInstance().logout();
-        removeToken();
         set({ user: null, token: null, role: null, isAuthenticated: false });
       },
     }),

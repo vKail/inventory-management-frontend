@@ -12,7 +12,7 @@ interface LocationStore {
         delete: boolean;
     };
     error: string | null;
-    getLocations: (page?: number, limit?: number) => Promise<PaginatedLocations>;
+    getLocations: (page?: number, limit?: number, filters?: { name?: string; description?: string; type?: string; floor?: string; reference?: string }) => Promise<PaginatedLocations>;
     getLocationById: (locationId: number) => Promise<ILocation | undefined>;
     addLocation: (location: Omit<ILocation, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
     updateLocation: (locationId: number, location: Partial<ILocation>) => Promise<void>;
@@ -35,10 +35,10 @@ export const useLocationStore = create<LocationStore>()(
             error: null,
             loading: false,
 
-            getLocations: async (page = 1, limit = 10) => {
+            getLocations: async (page = 1, limit = 10, filters) => {
                 set(state => ({ isLoading: { ...state.isLoading, fetch: true } }));
                 try {
-                    const response = await LocationService.getInstance().getLocations(page, limit);
+                    const response = await LocationService.getInstance().getLocations(page, limit, filters);
                     if (response && response.records) {
                         set({
                             locations: response.records,
@@ -50,7 +50,6 @@ export const useLocationStore = create<LocationStore>()(
                         throw new Error('Invalid response format');
                     }
                 } catch (error) {
-                    console.error('Error in getLocations:', error);
                     set(state => ({
                         error: 'Error al cargar las ubicaciones',
                         isLoading: { ...state.isLoading, fetch: false },

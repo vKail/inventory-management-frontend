@@ -18,10 +18,31 @@ export class LocationService {
         return LocationService.instance;
     }
 
-    async getLocations(page = 1, limit = 10): Promise<PaginatedLocations> {
+    async getLocations(page = 1, limit = 10, filters?: { name?: string; description?: string; type?: string; floor?: string; reference?: string }): Promise<PaginatedLocations> {
         try {
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: limit.toString(),
+            });
+
+            if (filters?.name) {
+                params.append('name', filters.name);
+            }
+            if (filters?.description) {
+                params.append('description', filters.description);
+            }
+            if (filters?.type) {
+                params.append('type', filters.type);
+            }
+            if (filters?.floor) {
+                params.append('floor', filters.floor);
+            }
+            if (filters?.reference) {
+                params.append('reference', filters.reference);
+            }
+
             const response = await this.httpClient.get<PaginatedLocations>(
-                `${LocationService.url}?page=${page}&limit=${limit}`
+                `${LocationService.url}?${params.toString()}`
             );
             if (response.success) {
                 return response.data;
