@@ -29,36 +29,14 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage, Breadc
 import { Badge } from "@/components/ui/badge";
 import { ScanModal } from "./scan-modal";
 import { BlackListModal } from "./black-list-modal";
+import { useLoanStore } from "../../context/loan-store";
 
 export default function NewLoanForm() {
-  const {
-    formData,
-    formErrors,
-    searchQuery,
-    searchResults,
-    showResults,
-    scanOpen,
-    handleSearchBien,
-    handleSelectBien,
-    handleScanBien,
-    handleInputChange,
-    handleSelectChange,
-    handleDateChange,
-    handleTimeChange,
-    handleCheckboxChange,
-    onSubmit,
-    setSearchQuery,
-    setScanOpen,
-    handleCancel,
-    selectedItems,
-    handleRemoveItem,
-  } = useNewLoanForm();
-
-  // Estado para el modal de la lista negra
+  const { formData, formErrors, searchQuery, searchResults, showResults, scanOpen, handleSearchBien, handleSelectBien, handleScanBien, handleInputChange, handleSelectChange, handleDateChange, handleTimeChange, handleCheckboxChange, onSubmit, setSearchQuery, setScanOpen, handleCancel, selectedItems, handleRemoveItem } = useNewLoanForm();
+  const { isLoading } = useLoanStore();
   const [blackListModalOpen, setBlackListModalOpen] = useState(false);
 
   useEffect(() => {
-    // Ensure focus is set on mount for accessibility
     const timeout = setTimeout(() => {
       const firstInput = document.querySelector<HTMLInputElement>("input[name='nombres']");
       firstInput?.focus();
@@ -68,7 +46,6 @@ export default function NewLoanForm() {
 
   return (
     <div className="mx-auto w-full p-4">
-      {/* Breadcrumb y botón Lista Negra */}
       <div className="flex justify-between items-center mb-6">
         <Button
           variant="destructive"
@@ -80,7 +57,6 @@ export default function NewLoanForm() {
         </Button>
       </div>
 
-      {/* Modales */}
       <ScanModal
         open={scanOpen}
         onClose={() => setScanOpen(false)}
@@ -94,7 +70,6 @@ export default function NewLoanForm() {
 
       <form onSubmit={onSubmit}>
         <div className="space-y-10">
-          {/* Sección Solicitante */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
             <div className="pt-2">
               <h2 className="text-lg font-bold">Solicitante</h2>
@@ -212,7 +187,6 @@ export default function NewLoanForm() {
             </div>
           </div>
 
-          {/* Sección Préstamo */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
             <div className="pt-2">
               <h2 className="text-lg font-bold">Préstamo</h2>
@@ -243,7 +217,7 @@ export default function NewLoanForm() {
                                   className="cursor-pointer hover:bg-accent px-2 py-1 rounded"
                                   onClick={() => handleSelectBien(bien)}
                                 >
-                                  {bien.nombre} <span className="text-xs text-muted-foreground">({bien.barcode})</span>
+                                  {bien.name} <span className="text-xs text-muted-foreground">({bien.barcode})</span>
                                 </div>
                               ))}
                             </div>
@@ -261,7 +235,6 @@ export default function NewLoanForm() {
                         </Button>
                       </div>
 
-                      {/* Lista de items seleccionados */}
                       {selectedItems.length > 0 && (
                         <div className="mt-4">
                           <h4 className="font-medium mb-2">Items Seleccionados:</h4>
@@ -318,7 +291,6 @@ export default function NewLoanForm() {
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Fecha de Préstamo con hora */}
                         <div className="flex flex-col h-full justify-between">
                           <label className="block mb-1 font-medium">Fecha y Hora de Préstamo</label>
                           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -354,7 +326,6 @@ export default function NewLoanForm() {
                           </div>
                         </div>
 
-                        {/* Fecha de Devolución con hora */}
                         <div className="flex flex-col h-full justify-between">
                           <label className="block mb-1 font-medium">Fecha y Hora de Devolución Programada</label>
                           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -408,7 +379,6 @@ export default function NewLoanForm() {
             </div>
           </div>
 
-          {/* Checkbox y acciones */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -424,10 +394,10 @@ export default function NewLoanForm() {
               <Button type="button" variant="outline" onClick={handleCancel}>Cancelar</Button>
               <Button
                 type="submit"
-                disabled={!formData.aceptaResponsabilidad || selectedItems.length === 0}
+                disabled={!formData.aceptaResponsabilidad || selectedItems.length === 0 || isLoading.create}
                 className="bg-primary text-white"
               >
-                Solicitar Préstamo
+                {isLoading.create ? 'Guardando...' : 'Solicitar Préstamo'}
               </Button>
             </div>
           </div>
