@@ -357,6 +357,33 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                             </div>
                                         </div>
 
+                                        {/* Colores */}
+                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                            <h4 className="font-medium text-lg">Colores</h4>
+                                            <div className="space-y-2">
+                                                {foundItem.colors && foundItem.colors.length > 0 ? (
+                                                    foundItem.colors.map((itemColor, index) => (
+                                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded-md">
+                                                            <div className="flex items-center gap-2">
+                                                                {itemColor.isMainColor && (
+                                                                    <Badge variant="secondary">Principal</Badge>
+                                                                )}
+                                                                <div className="flex items-center gap-2">
+                                                                    <div
+                                                                        className="w-4 h-4 rounded-full"
+                                                                        style={{ backgroundColor: itemColor.color?.hexCode }}
+                                                                    />
+                                                                    <span>{itemColor.color?.name}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-sm text-muted-foreground">No hay colores asignados</p>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         {/* Fechas */}
                                         <div className="bg-muted/50 p-4 rounded-lg space-y-4">
                                             <h4 className="font-medium text-lg">Fechas</h4>

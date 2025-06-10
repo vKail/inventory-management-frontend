@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { InventoryFormData, ItemMaterial } from "../../data/interfaces/inventory.interface";
+import { InventoryFormData, ItemColor, ItemMaterial } from "../../data/interfaces/inventory.interface";
 import { inventorySchema } from "../../data/schemas/inventory.schema";
 import { IdentificationSection } from "./form-sections/identification-section";
 import { GeneralInfoSection } from "./form-sections/general-info-section";
@@ -18,7 +18,9 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { inventoryService } from "../../services/inventory.service";
 import { ItemMaterialService } from "../../services/item-material.service";
+import { ItemColorService } from "../../services/item-color.service";
 import { MaterialsSection } from "./form-sections/materials-section";
+import { ColorsSection } from "./form-sections/colors-section";
 
 interface InventoryFormProps {
     initialData?: Partial<InventoryFormData>;
@@ -32,6 +34,8 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
     const [descriptions, setDescriptions] = useState<string[]>([]);
     const [photoDates, setPhotoDates] = useState<string[]>([]);
     const [selectedMaterials, setSelectedMaterials] = useState<ItemMaterial[]>([]);
+    const [selectedColors, setSelectedColors] = useState<ItemColor[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const defaultValues: Partial<InventoryFormData> = {
         code: "",
@@ -82,7 +86,15 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                 .then((materials: ItemMaterial[]) => setSelectedMaterials(materials))
                 .catch((error: Error) => {
                     console.error('Error loading materials:', error);
-                    toast.error('Error al cargar los materiales');
+                });
+
+            // Cargar colores
+            ItemColorService.getInstance().getItemColors(initialData.id)
+                .then(colors => {
+                    setSelectedColors(colors);
+                })
+                .catch(error => {
+                    console.error('Error loading colors:', error);
                 });
         }
     }, [mode, initialData]);
@@ -111,7 +123,10 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
         return String(value);
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
         try {
             const formData = new FormData();
             const currentValues = form.getValues();
@@ -138,8 +153,6 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                 });
             }
 
-            console.log("Datos a enviar:", Object.fromEntries(formData.entries()));
-
             if (mode === 'create') {
                 const response = await createInventoryItem(formData);
                 if (response.success) {
@@ -163,12 +176,22 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                         });
                     }
 
+                    // Agregar los colores seleccionados
+                    for (const color of selectedColors) {
+                        await ItemColorService.getInstance().addColorToItem({
+                            itemId: response.data.id,
+                            colorId: color.colorId,
+                            isMainColor: color.isMainColor
+                        });
+                    }
+
                     toast.success("Item creado exitosamente");
                     router.push("/inventory");
                 } else {
                     toast.error("Error al crear el item");
                 }
             } else {
+                // Modo edición
                 if (!initialData?.id) {
                     toast.error("No se puede editar el item");
                     return;
@@ -207,12 +230,44 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     }
                 }
 
+                // Actualizar colores
+                const existingColors = await ItemColorService.getInstance().getItemColors(initialData.id);
+
+                // Eliminar colores que ya no están seleccionados
+                for (const existingColor of existingColors) {
+                    if (!selectedColors.find((c: ItemColor) => c.colorId === existingColor.colorId)) {
+                        await ItemColorService.getInstance().removeColorFromItem(existingColor.id);
+                    }
+                }
+
+                // Agregar o actualizar colores seleccionados
+                for (const color of selectedColors) {
+                    const existingColor = existingColors.find((c: ItemColor) => c.colorId === color.colorId);
+                    if (existingColor) {
+                        // Actualizar si el estado de isMainColor cambió
+                        if (existingColor.isMainColor !== color.isMainColor) {
+                            await ItemColorService.getInstance().updateItemColor(existingColor.id, {
+                                isMainColor: color.isMainColor
+                            });
+                        }
+                    } else {
+                        // Agregar nuevo color
+                        await ItemColorService.getInstance().addColorToItem({
+                            itemId: initialData.id,
+                            colorId: color.colorId,
+                            isMainColor: color.isMainColor
+                        });
+                    }
+                }
+
                 toast.success("Item actualizado exitosamente");
                 router.push("/inventory");
             }
         } catch (error) {
             console.error("Error en el envío:", error);
             toast.error(`Error al ${mode === 'create' ? 'crear' : 'actualizar'} el item`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -228,6 +283,11 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     <MaterialsSection
                         selectedMaterials={selectedMaterials}
                         onMaterialsChange={setSelectedMaterials}
+                        mode={mode}
+                    />
+                    <ColorsSection
+                        selectedColors={selectedColors}
+                        onColorsChange={setSelectedColors}
                         mode={mode}
                     />
                     {mode === 'create' && (

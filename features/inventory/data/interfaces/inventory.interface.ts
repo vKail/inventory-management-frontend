@@ -2,6 +2,7 @@ import { IHttpResponse } from "@/core/data/interfaces/HttpHandler";
 import { ICondition } from "@/features/conditions/data/interfaces/condition.interface";
 import { ItemType } from "@/features/item-types/data/interfaces/item-type.interface";
 import { IMaterial } from "@/features/materials/data/interfaces/material.interface";
+import { IColor } from "@/features/colors/data/interfaces/color.interface";
 
 // Interfaces base
 export interface BaseInventoryItem {
@@ -52,6 +53,7 @@ export interface InventoryItem extends BaseInventoryItem {
     condition?: ICondition;
     images?: Images[];
     materials?: ItemMaterial[];
+    colors?: ItemColor[];
 }
 
 export interface Images {
@@ -173,4 +175,12 @@ export interface ItemMaterial {
     materialId: number;
     isMainMaterial: boolean;
     material?: IMaterial;
+}
+
+export interface ItemColor {
+    id: number;
+    itemId: number;
+    colorId: number;
+    isMainColor: boolean;
+    color?: IColor;
 } 
