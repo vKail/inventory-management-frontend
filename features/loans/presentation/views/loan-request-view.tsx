@@ -11,8 +11,11 @@ import {
 import { Card } from '@/components/ui/card';
 import NewLoanForm from '../components/new-loan-form';
 import { Handshake } from 'lucide-react';
+import { useLoanStore } from '../../context/loan-store';
 
 export default function LoanRequestView() {
+  const { isLoading } = useLoanStore();
+
   return (
     <div className="w-full mx-auto py-8 space-y-4">
       <Breadcrumb>
