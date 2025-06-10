@@ -1,6 +1,7 @@
 import { IHttpResponse } from "@/core/data/interfaces/HttpHandler";
 import { ICondition } from "@/features/conditions/data/interfaces/condition.interface";
 import { ItemType } from "@/features/item-types/data/interfaces/item-type.interface";
+import { IMaterial } from "@/features/materials/data/interfaces/material.interface";
 
 // Interfaces base
 export interface BaseInventoryItem {
@@ -50,6 +51,7 @@ export interface InventoryItem extends BaseInventoryItem {
     itemType?: ItemType;
     condition?: ICondition;
     images?: Images[];
+    materials?: ItemMaterial[];
 }
 
 export interface Images {
@@ -163,4 +165,12 @@ export interface Category {
     };
     standardUsefulLife: number;
     depreciationPercentage: number;
+}
+
+export interface ItemMaterial {
+    id: number;
+    itemId: number;
+    materialId: number;
+    isMainMaterial: boolean;
+    material?: IMaterial;
 } 

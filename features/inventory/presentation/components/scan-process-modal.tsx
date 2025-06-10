@@ -182,8 +182,8 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className={`sm:max-w-7xl w-[150vh] h-[90vh] max-h-[90vh] transition-all duration-300 ${foundItem ? 'opacity-100' : 'opacity-90'}`}>
-                <DialogTitle className="text-xl font-semibold flex items-center justify-between">
+            <DialogContent className="sm:max-w-7xl w-[90vw] h-[90vh] max-h-[90vh] transition-all duration-300 flex flex-col">
+                <DialogTitle className="text-xl font-semibold flex items-center justify-between border-b pb-4">
                     <div className="flex items-center gap-2">
                         <QrCode className="h-5 w-5" />
                         <span>Escáner de Inventario</span>
@@ -242,40 +242,43 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                             </div>
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col">
-                            <div className="flex-1 overflow-y-auto p-6">
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex-1 overflow-y-auto p-6 min-h-0">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Imágenes */}
-                                    <div className="space-y-4">
-                                        <h3 className="font-medium">Imágenes</h3>
-                                        {foundItem.images && foundItem.images.length > 0 ? (
-                                            <Carousel className="w-full">
-                                                <CarouselContent>
-                                                    {foundItem.images.map((image, index) => (
-                                                        <CarouselItem key={index}>
-                                                            <div className="aspect-square relative">
-                                                                <img
-                                                                    src={`${API_URL}${image.filePath}`}
-                                                                    alt={`Imagen ${index + 1} de ${foundItem.name}`}
-                                                                    className="object-cover rounded-lg w-full h-full"
-                                                                />
-                                                            </div>
-                                                        </CarouselItem>
-                                                    ))}
-                                                </CarouselContent>
-                                                <CarouselPrevious />
-                                                <CarouselNext />
-                                            </Carousel>
-                                        ) : (
-                                            <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                                                <Box className="h-8 w-8 text-muted-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Detalles del Item */}
-                                    <div className="space-y-6 max-h-[calc(90vh-200px)] overflow-y-auto pr-4">
+                                    {/* Columna Izquierda: Imágenes y Detalles Básicos */}
+                                    <div className="space-y-6">
+                                        {/* Imágenes */}
                                         <div className="space-y-4">
+                                            <h3 className="font-medium text-lg">Imágenes</h3>
+                                            {foundItem.images && foundItem.images.length > 0 ? (
+                                                <Carousel className="w-full">
+                                                    <CarouselContent>
+                                                        {foundItem.images.map((image, index) => (
+                                                            <CarouselItem key={index}>
+                                                                <div className="aspect-square relative">
+                                                                    <img
+                                                                        src={`${API_URL}${image.filePath}`}
+                                                                        alt={`Imagen ${index + 1} de ${foundItem.name}`}
+                                                                        className="object-cover rounded-lg w-full h-full"
+                                                                    />
+                                                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-between px-4 pointer-events-none">
+                                                                        <CarouselPrevious className="pointer-events-auto relative left-0 translate-x-0" />
+                                                                        <CarouselNext className="pointer-events-auto relative right-0 translate-x-0" />
+                                                                    </div>
+                                                                </div>
+                                                            </CarouselItem>
+                                                        ))}
+                                                    </CarouselContent>
+                                                </Carousel>
+                                            ) : (
+                                                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
+                                                    <Box className="h-8 w-8 text-muted-foreground" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Detalles Básicos */}
+                                        <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-lg font-semibold">{foundItem.name}</h3>
                                                 <div className="flex items-center gap-2">
@@ -302,9 +305,13 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                                 <p className="text-sm">{foundItem.description}</p>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className="space-y-4">
-                                            <h4 className="font-medium">Clasificación</h4>
+                                    {/* Columna Derecha: Detalles Adicionales */}
+                                    <div className="space-y-6">
+                                        {/* Clasificación */}
+                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                            <h4 className="font-medium text-lg">Clasificación</h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Tipo</p>
@@ -329,8 +336,30 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <h4 className="font-medium">Fechas</h4>
+                                        {/* Materiales */}
+                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                            <h4 className="font-medium text-lg">Materiales</h4>
+                                            <div className="space-y-2">
+                                                {foundItem.materials && foundItem.materials.length > 0 ? (
+                                                    foundItem.materials.map((itemMaterial, index) => (
+                                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded-md">
+                                                            <div className="flex items-center gap-2">
+                                                                {itemMaterial.isMainMaterial && (
+                                                                    <Badge variant="secondary">Principal</Badge>
+                                                                )}
+                                                                <span>{itemMaterial.material?.name}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-sm text-muted-foreground">No hay materiales asignados</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Fechas */}
+                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                            <h4 className="font-medium text-lg">Fechas</h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Adquisición</p>
@@ -353,20 +382,26 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                             </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <h4 className="font-medium">Características</h4>
+                                        {/* Características */}
+                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                            <h4 className="font-medium text-lg">Características</h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {foundItem.critical && <Badge variant="destructive">Crítico</Badge>}
                                                 {foundItem.dangerous && <Badge variant="destructive">Peligroso</Badge>}
                                                 {foundItem.requiresSpecialHandling && <Badge>Manejo Especial</Badge>}
                                                 {foundItem.perishable && <Badge>Perecedero</Badge>}
                                                 {foundItem.availableForLoan && <Badge variant="secondary">Disponible para Préstamo</Badge>}
+                                                {!foundItem.critical && !foundItem.dangerous && !foundItem.requiresSpecialHandling &&
+                                                    !foundItem.perishable && !foundItem.availableForLoan && (
+                                                        <p className="text-sm text-muted-foreground">No hay características especiales</p>
+                                                    )}
                                             </div>
                                         </div>
 
+                                        {/* Observaciones */}
                                         {foundItem.observations && (
-                                            <div className="space-y-2">
-                                                <h4 className="font-medium">Observaciones</h4>
+                                            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                                                <h4 className="font-medium text-lg">Observaciones</h4>
                                                 <p className="text-sm text-muted-foreground">{foundItem.observations}</p>
                                             </div>
                                         )}
@@ -374,7 +409,8 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-2 p-4 border-t">
+                            {/* Botones de Acción */}
+                            <div className="flex justify-end gap-2 p-4 border-t bg-muted/30">
                                 <Button variant="outline" onClick={onClose}>
                                     <X className="h-4 w-4 mr-2" />
                                     Cerrar

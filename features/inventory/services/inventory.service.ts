@@ -24,7 +24,6 @@ interface InventoryServiceProps {
 export class InventoryService implements InventoryServiceProps {
     private static instance: InventoryService;
     private httpClient: HttpHandler;
-    private static readonly urlImage = `${process.env.NEXT_PUBLIC_API_URLIMAGE}`;
     private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}items`;
 
     private constructor() {

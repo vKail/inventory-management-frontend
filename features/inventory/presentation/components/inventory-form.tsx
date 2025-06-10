@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { InventoryFormData } from "../../data/interfaces/inventory.interface";
+import { InventoryFormData, ItemMaterial } from "../../data/interfaces/inventory.interface";
 import { inventorySchema } from "../../data/schemas/inventory.schema";
 import { IdentificationSection } from "./form-sections/identification-section";
 import { GeneralInfoSection } from "./form-sections/general-info-section";
@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { inventoryService } from "../../services/inventory.service";
+import { ItemMaterialService } from "../../services/item-material.service";
+import { MaterialsSection } from "./form-sections/materials-section";
 
 interface InventoryFormProps {
     initialData?: Partial<InventoryFormData>;
@@ -29,6 +31,7 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [descriptions, setDescriptions] = useState<string[]>([]);
     const [photoDates, setPhotoDates] = useState<string[]>([]);
+    const [selectedMaterials, setSelectedMaterials] = useState<ItemMaterial[]>([]);
 
     const defaultValues: Partial<InventoryFormData> = {
         code: "",
@@ -71,6 +74,18 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
         resolver: zodResolver(inventorySchema),
         defaultValues,
     });
+
+    useEffect(() => {
+        if (mode === 'edit' && initialData?.id) {
+            // Cargar materiales existentes
+            ItemMaterialService.getInstance().getItemMaterials(initialData.id)
+                .then((materials: ItemMaterial[]) => setSelectedMaterials(materials))
+                .catch((error: Error) => {
+                    console.error('Error loading materials:', error);
+                    toast.error('Error al cargar los materiales');
+                });
+        }
+    }, [mode, initialData]);
 
     const handleImageChange = (newFiles: File[], newDescriptions: string[], newDates: string[]) => {
         const validFiles: File[] = [];
@@ -138,6 +153,16 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                             });
                         }
                     }
+
+                    // Agregar los materiales seleccionados
+                    for (const material of selectedMaterials) {
+                        await ItemMaterialService.getInstance().addMaterialToItem({
+                            itemId: response.data.id,
+                            materialId: material.materialId,
+                            isMainMaterial: material.isMainMaterial
+                        });
+                    }
+
                     toast.success("Item creado exitosamente");
                     router.push("/inventory");
                 } else {
@@ -148,7 +173,40 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     toast.error("No se puede editar el item");
                     return;
                 }
+
+                // Actualizar el item
                 await updateInventoryItem(initialData.id.toString(), Object.fromEntries(formData.entries()));
+
+                // Actualizar materiales
+                const existingMaterials = await ItemMaterialService.getInstance().getItemMaterials(initialData.id);
+
+                // Eliminar materiales que ya no están seleccionados
+                for (const existingMaterial of existingMaterials) {
+                    if (!selectedMaterials.find((m: ItemMaterial) => m.materialId === existingMaterial.materialId)) {
+                        await ItemMaterialService.getInstance().removeMaterialFromItem(existingMaterial.id);
+                    }
+                }
+
+                // Agregar o actualizar materiales seleccionados
+                for (const material of selectedMaterials) {
+                    const existingMaterial = existingMaterials.find((m: ItemMaterial) => m.materialId === material.materialId);
+                    if (existingMaterial) {
+                        // Actualizar si el estado de isMainMaterial cambió
+                        if (existingMaterial.isMainMaterial !== material.isMainMaterial) {
+                            await ItemMaterialService.getInstance().updateItemMaterial(existingMaterial.id, {
+                                isMainMaterial: material.isMainMaterial
+                            });
+                        }
+                    } else {
+                        // Agregar nuevo material
+                        await ItemMaterialService.getInstance().addMaterialToItem({
+                            itemId: initialData.id,
+                            materialId: material.materialId,
+                            isMainMaterial: material.isMainMaterial
+                        });
+                    }
+                }
+
                 toast.success("Item actualizado exitosamente");
                 router.push("/inventory");
             }
@@ -167,6 +225,11 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     <AdministrativeSection />
                     <TechnicalSection />
                     <AccountingSection />
+                    <MaterialsSection
+                        selectedMaterials={selectedMaterials}
+                        onMaterialsChange={setSelectedMaterials}
+                        mode={mode}
+                    />
                     {mode === 'create' && (
                         <ImageSection
                             onImageChange={handleImageChange}
