@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-export const CertificateType = z.enum(['TRANSFER', 'PURCHASE', 'DONATION', 'MANUFACTURING']);
-export const CertificateStatus = z.enum(['DRAFT', 'PENDING', 'APPROVED', 'REJECTED']);
+export const CertificateType = z.enum(['ENTRY', 'EXIT', 'TRANSFER']);
+export const CertificateStatus = z.enum(['DRAFT', 'APPROVED', 'CANCELLED']);
 
 export const certificateSchema = z.object({
     number: z.number()
