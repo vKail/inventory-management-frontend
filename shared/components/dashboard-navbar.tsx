@@ -35,11 +35,11 @@ export const DashboardNavbar = () => {
           <Avatar>
             <AvatarImage src="" />
             <AvatarFallback className="bg-primary/20 text-primary">
-              {user?.username?.charAt(0).toUpperCase() || 'U'}
+              {user?.userName?.charAt(0).toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="hidden md:block">
-            <p className="text-sm font-medium">{user?.username || 'Usuario'}</p>
+            <p className="text-sm font-medium">{user?.userName || 'Usuario'}</p>
             <p className="text-xs text-muted-foreground">{user?.userType || ''}</p>
           </div>
         </div>

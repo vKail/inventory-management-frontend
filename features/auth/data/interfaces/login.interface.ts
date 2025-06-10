@@ -10,7 +10,7 @@ export interface ILoginResponse {
 
 export interface IUserAuth {
   id: string;
-  username: string;
+  userName: string;
   career: string;
   userType: string;
   status: string;

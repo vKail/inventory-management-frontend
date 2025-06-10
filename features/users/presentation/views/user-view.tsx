@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { UserTable } from '../components/user-table';
 import { UserPagination } from '../components/user-pagination';
+import { UserFilter } from '../components/user-filter';
+import { useUserFilters } from '../../hooks/use-user-filters';
 import { Users } from 'lucide-react';
-import { useUserStore } from '../../context/user-store';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -14,23 +16,28 @@ import {
 } from '@/components/ui/breadcrumb';
 
 export default function UserView() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
-  const { getUsers } = useUserStore();
+  const { totalPages, handleFilterChange } = useUserFilters(currentPage, itemsPerPage);
 
+  // Leer página de la URL al cargar el componente
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const response = await getUsers(currentPage, itemsPerPage);
-        setTotalPages(response.pages);
-      } catch (error) {
-        console.error('Error loading users:', error);
-        setTotalPages(1);
-      }
-    };
-    loadUsers();
-  }, [currentPage, getUsers]);
+    const page = searchParams.get('page');
+    if (page) {
+      setCurrentPage(parseInt(page, 10));
+    }
+  }, [searchParams]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+
+    // Actualizar URL con la nueva página
+    const params = new URLSearchParams(searchParams);
+    params.set('page', page.toString());
+    router.push(`?${params.toString()}`);
+  }, [router, searchParams]);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -52,14 +59,12 @@ export default function UserView() {
       </div>
 
       <div className="space-y-4">
-        <UserTable
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-        />
+        <UserFilter onFilterChange={handleFilterChange} />
+        <UserTable />
         <UserPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
         />
       </div>
     </div>
