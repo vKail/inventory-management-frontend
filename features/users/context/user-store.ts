@@ -1,16 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, PaginatedResponse } from '../data/interfaces/user.interface';
+import { IUser, PaginatedResponse } from '../data/interfaces/user.interface';
 import { UserService } from '../services/user.service';
 
 interface UserStore {
-    users: User[];
+    users: IUser[];
     loading: boolean;
     error: string | null;
     getUsers: (page?: number, limit?: number) => Promise<PaginatedResponse>;
-    getUserById: (userId: string) => Promise<User | undefined>;
-    addUser: (user: Partial<User>) => Promise<void>;
-    updateUser: (userId: string, user: Partial<User>) => Promise<void>;
+    getUserById: (userId: string) => Promise<IUser | undefined>;
+    addUser: (user: Partial<IUser>) => Promise<void>;
+    updateUser: (userId: string, user: Partial<IUser>) => Promise<void>;
     deleteUser: (userId: string) => Promise<void>;
 }
 
@@ -58,7 +58,7 @@ export const useUserStore = create<UserStore>()(
                 }
             },
 
-            addUser: async (user: Partial<User>) => {
+            addUser: async (user: Partial<IUser>) => {
                 try {
                     set({ loading: true, error: null });
                     await UserService.getInstance().createUser(user);
@@ -74,7 +74,7 @@ export const useUserStore = create<UserStore>()(
                 }
             },
 
-            updateUser: async (id: string, user: Partial<User>) => {
+            updateUser: async (id: string, user: Partial<IUser>) => {
                 try {
                     set({ loading: true, error: null });
                     await UserService.getInstance().updateUser(id, user);

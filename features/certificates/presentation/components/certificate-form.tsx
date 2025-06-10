@@ -21,8 +21,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { FileText } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCertificateStore } from '../../context/certificate-store';
+import { useUserStore } from '@/features/users/context/user-store';
 import {
     Select,
     SelectContent,
@@ -40,6 +41,17 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
+import {
+    CommandDialog,
+    CommandList,
+} from "@/components/ui/command";
 
 interface CertificateFormProps {
     initialData?: Partial<ICertificate>;
@@ -51,13 +63,31 @@ interface CertificateFormProps {
 export function CertificateForm({ initialData, onSubmit, isLoading, id }: CertificateFormProps) {
     const router = useRouter();
     const { getCertificateById } = useCertificateStore();
+    const { getUsers } = useUserStore();
+    const [users, setUsers] = useState<any[]>([]);
+    const [openDelivery, setOpenDelivery] = useState(false);
+    const [openReception, setOpenReception] = useState(false);
+
+    useEffect(() => {
+        const loadUsers = async () => {
+            try {
+                const response = await getUsers(1, 100);
+                if (response && response.records) {
+                    setUsers(response.records);
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        };
+        loadUsers();
+    }, [getUsers]);
 
     const form = useForm<CertificateFormValues>({
         resolver: zodResolver(certificateSchema),
         defaultValues: {
             number: 0,
             date: '',
-            type: 'TRANSFER',
+            type: 'ENTRY',
             status: 'DRAFT',
             deliveryResponsibleId: 0,
             receptionResponsibleId: 0,
@@ -71,7 +101,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
             form.reset({
                 number: initialData.number || 0,
                 date: initialData.date || '',
-                type: initialData.type || 'TRANSFER',
+                type: initialData.type || 'ENTRY',
                 status: initialData.status || 'DRAFT',
                 deliveryResponsibleId: initialData.deliveryResponsibleId || 0,
                 receptionResponsibleId: initialData.receptionResponsibleId || 0,
@@ -80,6 +110,22 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
             });
         }
     }, [initialData, form]);
+
+    const handleSubmit = async (data: CertificateFormValues) => {
+        const formattedData = {
+            ...data,
+            number: Number(data.number),
+            deliveryResponsibleId: Number(data.deliveryResponsibleId),
+            receptionResponsibleId: Number(data.receptionResponsibleId),
+            date: data.date ? format(new Date(data.date), 'yyyy-MM-dd') : '',
+        };
+        await onSubmit(formattedData);
+    };
+
+    const getSelectedUser = (userId: number) => {
+        const user = users.find(u => u.id === userId);
+        return user ? `${user.person.dni} - ${user.person.lastName} ${user.person.firstName}` : '';
+    };
 
     return (
         <div className="flex-1 space-y-6 container mx-auto px-4 max-w-7xl">
@@ -113,7 +159,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
@@ -122,7 +168,12 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                         <FormItem>
                                             <FormLabel>Número</FormLabel>
                                             <FormControl>
-                                                <Input type="number" placeholder="Número del certificado" {...field} />
+                                                <Input
+                                                    type="number"
+                                                    placeholder="Número del certificado"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -158,7 +209,11 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                     <Calendar
                                                         mode="single"
                                                         selected={field.value ? new Date(field.value) : undefined}
-                                                        onSelect={(date) => field.onChange(date?.toISOString())}
+                                                        onSelect={(date) => {
+                                                            if (date) {
+                                                                field.onChange(format(date, 'yyyy-MM-dd'));
+                                                            }
+                                                        }}
                                                         disabled={(date) =>
                                                             date > new Date() || date < new Date("1900-01-01")
                                                         }
@@ -184,10 +239,9 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
+                                                    <SelectItem value="ENTRY">Entrada</SelectItem>
+                                                    <SelectItem value="EXIT">Salida</SelectItem>
                                                     <SelectItem value="TRANSFER">Transferencia</SelectItem>
-                                                    <SelectItem value="PURCHASE">Compra</SelectItem>
-                                                    <SelectItem value="DONATION">Donación</SelectItem>
-                                                    <SelectItem value="MANUFACTURING">Fabricación</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -209,9 +263,8 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="DRAFT">Borrador</SelectItem>
-                                                    <SelectItem value="PENDING">Pendiente</SelectItem>
                                                     <SelectItem value="APPROVED">Aprobado</SelectItem>
-                                                    <SelectItem value="REJECTED">Rechazado</SelectItem>
+                                                    <SelectItem value="CANCELLED">Cancelado</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -223,11 +276,48 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                     control={form.control}
                                     name="deliveryResponsibleId"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="flex flex-col">
                                             <FormLabel>Responsable de Entrega</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="ID del responsable" {...field} />
-                                            </FormControl>
+                                            <Popover open={openDelivery} onOpenChange={setOpenDelivery}>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant="outline"
+                                                            role="combobox"
+                                                            className={cn(
+                                                                "w-full justify-between",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value
+                                                                ? getSelectedUser(field.value)
+                                                                : "Seleccionar responsable"}
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-full p-0">
+                                                    <Command>
+                                                        <CommandInput placeholder="Buscar responsable..." />
+                                                        <CommandList>
+                                                            <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+                                                            <CommandGroup>
+                                                                {users.map((user) => (
+                                                                    <CommandItem
+                                                                        key={user.id}
+                                                                        value={`${user.person.dni} ${user.person.lastName} ${user.person.firstName}`}
+                                                                        onSelect={() => {
+                                                                            form.setValue("deliveryResponsibleId", user.id);
+                                                                            setOpenDelivery(false);
+                                                                        }}
+                                                                    >
+                                                                        {user.person.dni} - {user.person.lastName} {user.person.firstName}
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -237,11 +327,48 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                     control={form.control}
                                     name="receptionResponsibleId"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="flex flex-col">
                                             <FormLabel>Responsable de Recepción</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="ID del responsable" {...field} />
-                                            </FormControl>
+                                            <Popover open={openReception} onOpenChange={setOpenReception}>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant="outline"
+                                                            role="combobox"
+                                                            className={cn(
+                                                                "w-full justify-between",
+                                                                !field.value && "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            {field.value
+                                                                ? getSelectedUser(field.value)
+                                                                : "Seleccionar responsable"}
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-full p-0">
+                                                    <Command>
+                                                        <CommandInput placeholder="Buscar responsable..." />
+                                                        <CommandList>
+                                                            <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+                                                            <CommandGroup>
+                                                                {users.map((user) => (
+                                                                    <CommandItem
+                                                                        key={user.id}
+                                                                        value={`${user.person.dni} ${user.person.lastName} ${user.person.firstName}`}
+                                                                        onSelect={() => {
+                                                                            form.setValue("receptionResponsibleId", user.id);
+                                                                            setOpenReception(false);
+                                                                        }}
+                                                                    >
+                                                                        {user.person.dni} - {user.person.lastName} {user.person.firstName}
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -256,7 +383,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                         <FormLabel>Observaciones</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Observaciones del certificado"
+                                                placeholder="Ingrese las observaciones del certificado"
                                                 className="resize-none"
                                                 {...field}
                                             />
@@ -276,7 +403,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                 Contabilizado
                                             </FormLabel>
                                             <FormDescription>
-                                                Indica si el certificado ha sido contabilizado
+                                                Marque esta opción si el certificado ya ha sido contabilizado.
                                             </FormDescription>
                                         </div>
                                         <FormControl>
@@ -293,7 +420,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => router.push('/certificates')}
+                                    onClick={() => router.push("/certificates")}
                                     disabled={isLoading}
                                 >
                                     Cancelar

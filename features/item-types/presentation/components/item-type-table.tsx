@@ -11,11 +11,15 @@ import { toast } from 'sonner';
 import { useItemTypeStore } from '../../context/item-types-store';
 import LoaderComponent from '@/shared/components/ui/Loader';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbList, BreadcrumbPage, BreadcrumbLink } from '@/components/ui/breadcrumb';
+import { Input } from '@/components/ui/input';
 
 export default function ItemTypeTable() {
     const router = useRouter();
     const {
         itemTypes,
+        filteredItemTypes,
+        searchTerm,
+        setSearchTerm,
         loading,
         getItemTypes,
         deleteItemType,
@@ -105,9 +109,17 @@ export default function ItemTypeTable() {
                     <Button onClick={() => router.push('/item-types/new')}>
                         <Plus className="mr-2 h-4 w-4" /> Nuevo Tipo
                     </Button>
+
                 </CardHeader>
                 <CardContent>
+                    <Input
+                        placeholder="Buscar por nombre o descripción..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="mb-4 w-full md:w-1/3"
+                    />
                     <Table>
+
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Código</TableHead>
@@ -118,7 +130,7 @@ export default function ItemTypeTable() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {itemTypes.map((itemType) => (
+                            {filteredItemTypes.map((itemType) => (
                                 <TableRow key={itemType.id}>
                                     <TableCell className="font-medium">{itemType.code}</TableCell>
                                     <TableCell>{itemType.name}</TableCell>

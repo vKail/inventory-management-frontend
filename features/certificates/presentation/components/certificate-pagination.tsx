@@ -1,7 +1,9 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface InventoryPaginatorProps {
+interface CertificatePaginationProps {
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
@@ -40,15 +42,15 @@ function getPageNumbers(current: number, total: number): (number | string)[] {
     return pages;
 }
 
-export function InventoryPaginator({
+export function CertificatePagination({
     currentPage,
     totalPages,
     onPageChange,
-}: InventoryPaginatorProps) {
+}: CertificatePaginationProps) {
     const pageNumbers = getPageNumbers(currentPage, totalPages);
 
     return (
-        <div className="flex items-center justify-center space-x-2">
+        <div className="flex items-center justify-center space-x-2 mt-4">
             {/* Botón página anterior */}
             <Button
                 variant="ghost"

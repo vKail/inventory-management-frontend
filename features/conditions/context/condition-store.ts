@@ -5,6 +5,8 @@ import { ConditionService } from '../services/condition.service';
 
 interface ConditionStore {
     conditions: ICondition[];
+    filteredConditions: ICondition[];
+    searchTerm: string;
     loading: boolean;
     error: string | null;
     currentPage: number;
@@ -15,6 +17,7 @@ interface ConditionStore {
     updateCondition: (conditionId: string, condition: Partial<ICondition>) => Promise<void>;
     deleteCondition: (conditionId: string) => Promise<void>;
     refreshTable: () => Promise<void>;
+    setSearchTerm: (term: string) => void;
 }
 
 const STORE_NAME = 'condition-storage';
@@ -23,10 +26,21 @@ export const useConditionStore = create<ConditionStore>()(
     persist(
         (set, get) => ({
             conditions: [],
+            filteredConditions: [],
+            searchTerm: '',
             loading: false,
             error: null,
             currentPage: 1,
             totalPages: 1,
+
+            setSearchTerm: (term: string) => {
+                const conditions = get().conditions;
+                const filtered = conditions.filter((c) =>
+                    c.name.toLowerCase().startsWith(term.toLowerCase()) ||
+                    c.description.toLowerCase().startsWith(term.toLowerCase())
+                );
+                set({ searchTerm: term, filteredConditions: filtered });
+            },
 
             refreshTable: async () => {
                 const { currentPage } = get();
@@ -38,14 +52,24 @@ export const useConditionStore = create<ConditionStore>()(
                     set({ loading: true, error: null });
                     const response = await ConditionService.getInstance().getConditions(page, limit);
 
-                    // Si estamos en una página que ya no existe (por ejemplo, después de borrar), volvemos a la primera
                     if (response.pages > 0 && page > response.pages) {
                         await get().getConditions(1, limit);
                         return;
                     }
 
+                    const searchTerm = get().searchTerm;
+                    const allConditions = response.records;
+
+                    const filtered = searchTerm
+                        ? allConditions.filter((c) =>
+                            c.name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+                            c.description.toLowerCase().startsWith(searchTerm.toLowerCase())
+                        )
+                        : allConditions;
+
                     set({
-                        conditions: response.records,
+                        conditions: allConditions,
+                        filteredConditions: filtered,
                         currentPage: response.page,
                         totalPages: response.pages,
                         loading: false,
@@ -57,6 +81,7 @@ export const useConditionStore = create<ConditionStore>()(
                         error: 'Error al cargar las condiciones',
                         loading: false,
                         conditions: [],
+                        filteredConditions: [],
                         currentPage: 1,
                         totalPages: 1
                     });
@@ -76,7 +101,6 @@ export const useConditionStore = create<ConditionStore>()(
                 try {
                     set({ loading: true, error: null });
                     await ConditionService.getInstance().createCondition(condition);
-                    // Después de añadir, volvemos a la primera página
                     await get().getConditions(1, 10);
                 } catch (error) {
                     console.error('Error adding condition:', error);
@@ -92,7 +116,6 @@ export const useConditionStore = create<ConditionStore>()(
                 try {
                     set({ loading: true, error: null });
                     await ConditionService.getInstance().updateCondition(id, condition);
-                    // Mantenemos la página actual después de actualizar
                     await get().refreshTable();
                 } catch (error) {
                     console.error('Error updating condition:', error);
@@ -109,13 +132,10 @@ export const useConditionStore = create<ConditionStore>()(
                     set({ loading: true, error: null });
                     await ConditionService.getInstance().deleteCondition(conditionId);
 
-                    // Verificamos si necesitamos ajustar la página actual
                     const { currentPage, conditions } = get();
                     if (conditions.length === 1 && currentPage > 1) {
-                        // Si es el último item de la página actual y no es la primera página
                         await get().getConditions(currentPage - 1, 10);
                     } else {
-                        // Refrescamos la página actual
                         await get().refreshTable();
                     }
                 } catch (error) {
@@ -126,11 +146,11 @@ export const useConditionStore = create<ConditionStore>()(
                     });
                     throw error;
                 }
-            },
+            }
         }),
         {
             name: STORE_NAME,
             storage: createJSONStorage(() => sessionStorage),
         }
     )
-); 
+);

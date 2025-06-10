@@ -1,508 +1,323 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Resolver, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { InventoryItem } from "../../data/interfaces/inventory.interface";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { InventoryFormData, ItemColor, ItemMaterial } from "../../data/interfaces/inventory.interface";
+import { inventorySchema } from "../../data/schemas/inventory.schema";
+import { IdentificationSection } from "./form-sections/identification-section";
+import { GeneralInfoSection } from "./form-sections/general-info-section";
+import { AdministrativeSection } from "./form-sections/administrative-section";
+import { TechnicalSection } from "./form-sections/technical-section";
+import { AccountingSection } from "./form-sections/accounting-section";
+import { ImageSection } from "./form-sections/image-section";
 import { useInventoryStore } from "../../context/inventory-store";
-import { FilterOption, LocationOption } from "../../data/interfaces/inventory.interface";
-import { InventorySchema, InventoryFormValues } from "../../data/schemas/inventory.schema";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { inventoryService } from "../../services/inventory.service";
+import { ItemMaterialService } from "../../services/item-material.service";
+import { ItemColorService } from "../../services/item-color.service";
+import { MaterialsSection } from "./form-sections/materials-section";
+import { ColorsSection } from "./form-sections/colors-section";
 
 interface InventoryFormProps {
-    onSubmit: (data: InventoryFormValues) => void;
-    isLoading?: boolean;
-    initialData?: Partial<InventoryItem>;
+    initialData?: Partial<InventoryFormData>;
+    mode?: 'create' | 'edit';
 }
 
-export function InventoryForm({ onSubmit, isLoading, initialData }: InventoryFormProps) {
-    const [categories, setCategories] = useState<FilterOption[]>([]);
-    const [locations, setLocations] = useState<LocationOption[]>([]);
-    const [states, setStates] = useState<FilterOption[]>([]);
-    const [colors, setColors] = useState<FilterOption[]>([]);
-    const [brands, setBrands] = useState<FilterOption[]>([]);
-    const [models, setModels] = useState<FilterOption[]>([]);
-    const [suppliers, setSuppliers] = useState<FilterOption[]>([]);
-    const { getCategories, getLocations, getStates, getColors } = useInventoryStore();
+export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormProps) => {
+    const router = useRouter();
+    const { createInventoryItem, updateInventoryItem } = useInventoryStore();
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [descriptions, setDescriptions] = useState<string[]>([]);
+    const [photoDates, setPhotoDates] = useState<string[]>([]);
+    const [selectedMaterials, setSelectedMaterials] = useState<ItemMaterial[]>([]);
+    const [selectedColors, setSelectedColors] = useState<ItemColor[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const defaultValues: InventoryFormValues = {
-        code: initialData?.code || "",
-        name: initialData?.name || "",
-        stock: initialData?.stock || 0,
-        description: initialData?.description || "",
-        itemTypeId: initialData?.itemType?.id || 0,
-        categoryId: initialData?.category?.id || 0,
-        statusId: initialData?.status?.id || 0,
-        normativeType: initialData?.normativeType || "ADMINISTRATIVE_CONTROL",
-        origin: initialData?.origin || "PURCHASE",
-        acquisitionDate: initialData?.acquisitionDate || new Date().toISOString().split('T')[0],
-        locationId: initialData?.location?.id || 1,
-        colorId: initialData?.color?.id || 0,
-        acquisitionValue: initialData?.acquisitionValue || 0,
-        currentValue: initialData?.currentValue || 0,
-        usefulLife: initialData?.usefulLife || 0,
-        depreciationRate: initialData?.depreciationRate || 0,
-        annualDepreciation: initialData?.annualDepreciation || 0,
-        accumulatedDepreciation: initialData?.accumulatedDepreciation || 0,
-        serialNumber: initialData?.serialNumber || "",
-        modelCharacteristics: initialData?.modelCharacteristics || "",
-        brandBreedOther: initialData?.brandBreedOther || "",
-        observations: initialData?.observations || "",
+    const defaultValues: Partial<InventoryFormData> = {
+        code: "",
+        stock: 0,
+        name: "",
+        description: "",
+        itemTypeId: 0,
+        categoryId: 0,
+        statusId: 0,
+        normativeType: "PROPERTY",
+        origin: "PURCHASE",
+        locationId: 0,
+        custodianId: 0,
+        availableForLoan: false,
+        identifier: "",
+        previousCode: "",
+        conditionId: 0,
+        certificateId: 0,
+        entryOrigin: "",
+        entryType: "",
+        acquisitionDate: "",
+        commitmentNumber: "",
+        modelCharacteristics: "",
+        brandBreedOther: "",
+        identificationSeries: "",
+        warrantyDate: "",
+        dimensions: "",
+        critical: false,
+        dangerous: false,
+        requiresSpecialHandling: false,
+        perishable: false,
+        expirationDate: "",
+        itemLine: 0,
+        accountingAccount: "",
+        observations: "",
+        ...initialData,
     };
 
-    const form = useForm<InventoryFormValues>({
-        resolver: zodResolver(InventorySchema) as Resolver<InventoryFormValues>,
+    const form = useForm<InventoryFormData>({
+        resolver: zodResolver(inventorySchema),
         defaultValues,
-        mode: "onChange"
     });
 
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                const [categoriesData, locationsData, statesData, colorsData] = await Promise.all([
-                    getCategories(),
-                    getLocations(),
-                    getStates(),
-                    getColors(),
-                ]);
-                setCategories(categoriesData);
-                setLocations(locationsData);
-                setStates(statesData);
-                setColors(colorsData);
-            } catch (error) {
-                console.error("Error loading form data:", error);
-            }
-        };
-        loadData();
-    }, [getCategories, getLocations, getStates, getColors]);
+        if (mode === 'edit' && initialData?.id) {
+            // Cargar materiales existentes
+            ItemMaterialService.getInstance().getItemMaterials(initialData.id)
+                .then((materials: ItemMaterial[]) => setSelectedMaterials(materials))
+                .catch((error: Error) => {
+                    console.error('Error loading materials:', error);
+                });
 
-    const handleSubmit = (data: InventoryFormValues) => {
-        onSubmit(data);
+            // Cargar colores
+            ItemColorService.getInstance().getItemColors(initialData.id)
+                .then(colors => {
+                    setSelectedColors(colors);
+                })
+                .catch(error => {
+                    console.error('Error loading colors:', error);
+                });
+        }
+    }, [mode, initialData]);
+
+    const handleImageChange = (newFiles: File[], newDescriptions: string[], newDates: string[]) => {
+        const validFiles: File[] = [];
+
+        for (const file of newFiles) {
+            if (file.size > 10 * 1024 * 1024) {
+                toast.error(`El archivo ${file.name} excede el límite de 10MB`);
+                continue;
+            }
+            validFiles.push(file);
+        }
+
+        setSelectedFiles(validFiles);
+        setDescriptions(newDescriptions);
+        setPhotoDates(newDates);
+    };
+
+    // Función para convertir valores a string de manera segura
+    const safeToString = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'boolean') return value.toString();
+        if (value instanceof Date) return value.toISOString();
+        return String(value);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        try {
+            const formData = new FormData();
+            const currentValues = form.getValues();
+
+            // En modo edición, comparamos con los valores iniciales
+            if (mode === 'edit' && initialData) {
+                Object.entries(currentValues).forEach(([key, value]) => {
+                    // Solo incluimos campos que han cambiado
+                    if (JSON.stringify(value) !== JSON.stringify(initialData[key as keyof InventoryFormData])) {
+                        formData.append(key, safeToString(value));
+                    }
+                });
+
+                // Aseguramos que el ID esté incluido
+                if (initialData.id) {
+                    formData.append('id', initialData.id.toString());
+                }
+            } else {
+                // En modo creación, enviamos todos los campos
+                Object.entries(currentValues).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        formData.append(key, safeToString(value));
+                    }
+                });
+            }
+
+            if (mode === 'create') {
+                const response = await createInventoryItem(formData);
+                if (response.success) {
+                    // Subir las imágenes después de crear el item
+                    if (selectedFiles.length > 0) {
+                        for (let i = 0; i < selectedFiles.length; i++) {
+                            await inventoryService.addImageToId(response.data.id, selectedFiles[i], {
+                                type: i === 0 ? 'PRIMARY' : 'SECONDARY',
+                                description: descriptions[i] || '',
+                                photoDate: photoDates[i] || ''
+                            });
+                        }
+                    }
+
+                    // Agregar los materiales seleccionados
+                    for (const material of selectedMaterials) {
+                        await ItemMaterialService.getInstance().addMaterialToItem({
+                            itemId: response.data.id,
+                            materialId: material.materialId,
+                            isMainMaterial: material.isMainMaterial
+                        });
+                    }
+
+                    // Agregar los colores seleccionados
+                    for (const color of selectedColors) {
+                        await ItemColorService.getInstance().addColorToItem({
+                            itemId: response.data.id,
+                            colorId: color.colorId,
+                            isMainColor: color.isMainColor
+                        });
+                    }
+
+                    toast.success("Item creado exitosamente");
+                    router.push("/inventory");
+                } else {
+                    toast.error("Error al crear el item");
+                }
+            } else {
+                // Modo edición
+                if (!initialData?.id) {
+                    toast.error("No se puede editar el item");
+                    return;
+                }
+
+                // Actualizar el item
+                await updateInventoryItem(initialData.id.toString(), Object.fromEntries(formData.entries()));
+
+                // Actualizar materiales
+                const existingMaterials = await ItemMaterialService.getInstance().getItemMaterials(initialData.id);
+
+                // Eliminar materiales que ya no están seleccionados
+                for (const existingMaterial of existingMaterials) {
+                    if (!selectedMaterials.find((m: ItemMaterial) => m.materialId === existingMaterial.materialId)) {
+                        await ItemMaterialService.getInstance().removeMaterialFromItem(existingMaterial.id);
+                    }
+                }
+
+                // Agregar o actualizar materiales seleccionados
+                for (const material of selectedMaterials) {
+                    const existingMaterial = existingMaterials.find((m: ItemMaterial) => m.materialId === material.materialId);
+                    if (existingMaterial) {
+                        // Actualizar si el estado de isMainMaterial cambió
+                        if (existingMaterial.isMainMaterial !== material.isMainMaterial) {
+                            await ItemMaterialService.getInstance().updateItemMaterial(existingMaterial.id, {
+                                isMainMaterial: material.isMainMaterial
+                            });
+                        }
+                    } else {
+                        // Agregar nuevo material
+                        await ItemMaterialService.getInstance().addMaterialToItem({
+                            itemId: initialData.id,
+                            materialId: material.materialId,
+                            isMainMaterial: material.isMainMaterial
+                        });
+                    }
+                }
+
+                // Actualizar colores
+                const existingColors = await ItemColorService.getInstance().getItemColors(initialData.id);
+
+                // Eliminar colores que ya no están seleccionados
+                for (const existingColor of existingColors) {
+                    if (!selectedColors.find((c: ItemColor) => c.colorId === existingColor.colorId)) {
+                        await ItemColorService.getInstance().removeColorFromItem(existingColor.id);
+                    }
+                }
+
+                // Agregar o actualizar colores seleccionados
+                for (const color of selectedColors) {
+                    const existingColor = existingColors.find((c: ItemColor) => c.colorId === color.colorId);
+                    if (existingColor) {
+                        // Actualizar si el estado de isMainColor cambió
+                        if (existingColor.isMainColor !== color.isMainColor) {
+                            await ItemColorService.getInstance().updateItemColor(existingColor.id, {
+                                isMainColor: color.isMainColor
+                            });
+                        }
+                    } else {
+                        // Agregar nuevo color
+                        await ItemColorService.getInstance().addColorToItem({
+                            itemId: initialData.id,
+                            colorId: color.colorId,
+                            isMainColor: color.isMainColor
+                        });
+                    }
+                }
+
+                toast.success("Item actualizado exitosamente");
+                router.push("/inventory");
+            }
+        } catch (error) {
+            console.error("Error en el envío:", error);
+            toast.error(`Error al ${mode === 'create' ? 'crear' : 'actualizar'} el item`);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Información Básica */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información Básica</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="code"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Código</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 gap-8">
+                    <IdentificationSection />
+                    <GeneralInfoSection />
+                    <AdministrativeSection />
+                    <TechnicalSection />
+                    <AccountingSection />
+                    <MaterialsSection
+                        selectedMaterials={selectedMaterials}
+                        onMaterialsChange={setSelectedMaterials}
+                        mode={mode}
                     />
-
-                    <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Nombre</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                    <ColorsSection
+                        selectedColors={selectedColors}
+                        onColorsChange={setSelectedColors}
+                        mode={mode}
                     />
-
-                    <FormField
-                        control={form.control}
-                        name="stock"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Stock</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Descripción</FormLabel>
-                                <FormControl>
-                                    <Textarea {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Clasificación */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Clasificación</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="categoryId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Categoría</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione una categoría" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {categories.map((category) => (
-                                            <SelectItem
-                                                key={category.id}
-                                                value={category.id.toString()}
-                                            >
-                                                {category.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="statusId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Estado</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione un estado" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {states.map((state) => (
-                                            <SelectItem
-                                                key={state.id}
-                                                value={state.id.toString()}
-                                            >
-                                                {state.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="locationId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Ubicación</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione una ubicación" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {locations.map((location) => (
-                                            <SelectItem
-                                                key={location.id}
-                                                value={location.id.toString()}
-                                            >
-                                                {location.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="colorId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Color</FormLabel>
-                                <Select
-                                    onValueChange={(value) => field.onChange(Number(value))}
-                                    defaultValue={field.value?.toString()}
-                                >
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione un color" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {colors.map((color) => (
-                                            <SelectItem
-                                                key={color.id}
-                                                value={color.id.toString()}
-                                            >
-                                                {color.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Información de Adquisición */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información de Adquisición</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="acquisitionDate"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Fecha de Adquisición</FormLabel>
-                                <FormControl>
-                                    <Input type="date" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="acquisitionValue"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Valor de Adquisición</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="currentValue"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Valor Actual</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Información de Depreciación */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información de Depreciación</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="usefulLife"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Vida Útil (años)</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="depreciationRate"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Tasa de Depreciación (%)</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="annualDepreciation"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Depreciación Anual</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="accumulatedDepreciation"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Depreciación Acumulada</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        type="number"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number(e.target.value))}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Información del Producto */}
-                    <div className="col-span-2">
-                        <h3 className="text-lg font-semibold mb-4">Información del Producto</h3>
-                    </div>
-
-                    <FormField
-                        control={form.control}
-                        name="serialNumber"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Número de Serie</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="modelCharacteristics"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Características del Modelo</FormLabel>
-                                <FormControl>
-                                    <Textarea {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="brandBreedOther"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Marca/Raza/Otro</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="observations"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Observaciones</FormLabel>
-                                <FormControl>
-                                    <Textarea {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    {mode === 'create' && (
+                        <ImageSection
+                            onImageChange={handleImageChange}
+                            selectedFiles={selectedFiles}
+                            descriptions={descriptions}
+                            setDescriptions={setDescriptions}
+                            photoDates={photoDates}
+                            setPhotoDates={setPhotoDates}
+                        />
+                    )}
                 </div>
 
                 <div className="flex justify-end space-x-4">
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={() => form.reset()}
-                        disabled={isLoading}
+                        onClick={() => router.push("/inventory")}
                     >
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Guardando..." : "Guardar"}
+                    <Button
+                        type="button"
+                        onClick={handleSubmit}
+                    >
+                        {mode === 'create' ? 'Guardar' : 'Actualizar'}
                     </Button>
                 </div>
-            </form>
+            </div>
         </Form>
     );
-} 
+}; 

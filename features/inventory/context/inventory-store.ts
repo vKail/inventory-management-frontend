@@ -1,265 +1,209 @@
-import { create } from "zustand";
-import { toast } from "sonner";
-import { inventoryService } from "../services/inventory.service";
-import { InventoryItem, PaginatedResponse, FilterOption, LocationOption } from "../data/interfaces/inventory.interface";
-import { RegisterFormValues } from "../data/schemas/register-schema";
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { InventoryItem, PaginatedInventoryResponse } from '../data/interfaces/inventory.interface';
+import { InventoryService } from '../services/inventory.service';
+import { IHttpResponse } from '@/core/data/interfaces/HttpHandler';
 
-type ViewMode = "table" | "list" | "grid";
-
-interface Filters {
-  search?: string;
-  category?: string;
-  location?: string;
-  status?: string;
+interface InventoryFilters {
+    search?: string;
+    categoryId?: string;
+    statusId?: string;
+    itemTypeId?: string;
+    view?: 'table' | 'grid' | 'list';
 }
 
 interface InventoryState {
-  items: InventoryItem[];
-  filteredItems: InventoryItem[];
-  selectedItem: InventoryItem | null;
-  loading: boolean;
-  error: string | null;
-  viewMode: ViewMode;
-  filters: Filters;
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  itemsPerPage: number;
-
-  // Methods
-  getInventoryItems: (page?: number) => Promise<void>;
-  getInventoryItemById: (id: number) => Promise<InventoryItem | undefined>;
-  getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
-  setSelectedItem: (item: InventoryItem | null) => void;
-  setViewMode: (mode: ViewMode) => void;
-  setFilters: (filters: Filters) => void;
-  applyFilters: () => void;
-  clearFilters: () => void;
-  setPage: (page: number) => void;
-  createInventoryItem: (item: RegisterFormValues) => Promise<{ success: boolean; id?: number }>;
-  updateInventoryItem: (id: number, item: RegisterFormValues) => Promise<{ success: boolean }>;
-  deleteInventoryItem: (id: number) => Promise<void>;
-  uploadItemImage: (id: number, file: File) => Promise<void>;
-  refreshTable: () => Promise<void>;
-  getCategories: () => Promise<FilterOption[]>;
-  getLocations: () => Promise<LocationOption[]>;
-  getStates: () => Promise<FilterOption[]>;
-  getColors: () => Promise<FilterOption[]>;
+    items: InventoryItem[];
+    selectedItem: InventoryItem | null;
+    loading: boolean;
+    error: string | null;
+    totalPages: number;
+    currentPage: number;
+    isEmpty: boolean;
+    filters: InventoryFilters;
+    getInventoryItems: (page?: number, limit?: number) => Promise<void>;
+    getInventoryItem: (id: string) => Promise<InventoryItem | undefined>;
+    getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
+    createInventoryItem: (data: FormData) => Promise<IHttpResponse<InventoryItem>>;
+    updateInventoryItem: (id: string, data: Record<string, any>) => Promise<void>;
+    deleteInventoryItem: (id: string) => Promise<void>;
+    setSelectedItem: (item: InventoryItem | null) => void;
+    setFilters: (filters: Partial<InventoryFilters>) => void;
+    setPage: (page: number) => void;
+    refreshTable: () => Promise<void>;
 }
 
-export const useInventoryStore = create<InventoryState>((set, get) => ({
-  items: [],
-  filteredItems: [],
-  selectedItem: null,
-  loading: false,
-  error: null,
-  viewMode: "table",
-  filters: {},
-  currentPage: 1,
-  totalPages: 1,
-  totalItems: 0,
-  itemsPerPage: 10,
+const STORE_NAME = 'inventory-storage';
+const inventoryService = InventoryService.getInstance();
 
-  getInventoryItems: async (page = 1) => {
-    try {
-      set({ loading: true, error: null });
-      const response = await inventoryService.getInventoryItems(page);
-      set({
-        items: response.records,
-        filteredItems: response.records,
-        currentPage: response.page,
-        totalPages: response.pages,
-        totalItems: response.total,
-        itemsPerPage: response.limit,
-        loading: false
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al obtener los items";
-      set({ error: message, loading: false });
-      toast.error(message);
-    }
-  },
+export const useInventoryStore = create<InventoryState>()(
+    persist(
+        (set, get) => ({
+            items: [],
+            selectedItem: null,
+            loading: false,
+            error: null,
+            totalPages: 1,
+            currentPage: 1,
+            isEmpty: true,
+            filters: {},
 
-  getInventoryItemById: async (id: number) => {
-    try {
-      set({ loading: true, error: null });
-      const item = await inventoryService.getInventoryItemById(id);
-      set({ selectedItem: item, loading: false });
-      return item;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al obtener el item";
-      set({ error: message, loading: false, selectedItem: null });
-      toast.error(message);
-      throw error;
-    }
-  },
+            setPage: (page: number) => {
+                set({ currentPage: page });
+                get().refreshTable();
+            },
 
-  getInventoryItemByCode: async (code: string) => {
-    try {
-      set({ loading: true, error: null });
-      const item = await inventoryService.getInventoryItemByCode(code);
-      set({ loading: false });
-      return item || null;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al obtener el item";
-      set({ error: message, loading: false });
-      toast.error(message);
-      return null;
-    }
-  },
+            setFilters: (newFilters) => {
+                set((state) => ({
+                    filters: { ...state.filters, ...newFilters },
+                    currentPage: 1
+                }));
+                get().refreshTable();
+            },
 
-  setSelectedItem: (item) => set({ selectedItem: item }),
+            refreshTable: async () => {
+                const { currentPage, filters } = get();
+                await get().getInventoryItems(currentPage, 10);
+            },
 
-  setViewMode: (mode) => set({ viewMode: mode }),
+            getInventoryItems: async (page = 1, limit = 10) => {
+                try {
+                    set({ loading: true, error: null });
+                    const { filters } = get();
 
-  setFilters: (filters) => set({ filters }),
+                    // Construir query params
+                    const queryParams = new URLSearchParams();
+                    if (filters.search) queryParams.append('name', filters.search);
+                    if (filters.categoryId && filters.categoryId !== 'all') queryParams.append('categoryId', filters.categoryId);
+                    if (filters.statusId && filters.statusId !== 'all') queryParams.append('statusId', filters.statusId);
+                    if (filters.itemTypeId && filters.itemTypeId !== 'all') queryParams.append('itemTypeId', filters.itemTypeId);
 
-  applyFilters: () => {
-    const { items, filters } = get();
-    let filtered = [...items];
+                    const response = await inventoryService.getInventoryItems(page, limit, queryParams.toString());
 
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      filtered = filtered.filter(item =>
-        item.name?.toLowerCase().includes(searchTerm) ||
-        item.code?.toLowerCase().includes(searchTerm)
-      );
-    }
+                    if (response.pages > 0 && page > response.pages) {
+                        await get().getInventoryItems(1, limit);
+                        return;
+                    }
 
-    if (filters.category) {
-      filtered = filtered.filter(item =>
-        item.category?.name.toLowerCase() === filters.category?.toLowerCase()
-      );
-    }
+                    set({
+                        items: response.records,
+                        currentPage: response.page,
+                        totalPages: response.pages,
+                        isEmpty: response.records.length === 0,
+                        loading: false,
+                        error: response.records.length === 0 ? 'No hay items en el inventario. ¿Deseas crear el primer item?' : null
+                    });
+                } catch (error) {
+                    console.error('Error fetching items:', error);
+                    set({
+                        error: 'Error al cargar los items',
+                        loading: false,
+                        isEmpty: true,
+                        items: [],
+                        currentPage: 1,
+                        totalPages: 1
+                    });
+                }
+            },
 
-    if (filters.location) {
-      filtered = filtered.filter(item =>
-        item.location?.name.toLowerCase() === filters.location?.toLowerCase()
-      );
-    }
+            getInventoryItem: async (id: string) => {
+                try {
+                    set({ loading: true, error: null });
+                    const item = await inventoryService.getInventoryItemById(id);
+                    if (item) {
+                        set({ selectedItem: item, loading: false });
+                        return item;
+                    } else {
+                        set({ error: 'Item no encontrado', loading: false });
+                        return undefined;
+                    }
+                } catch (error) {
+                    set({ error: 'Error al cargar el item', loading: false });
+                    console.error('Error fetching item:', error);
+                    return undefined;
+                }
+            },
 
-    if (filters.status) {
-      filtered = filtered.filter(item =>
-        item.status?.name.toLowerCase() === filters.status?.toLowerCase()
-      );
-    }
+            getInventoryItemByCode: async (code: string) => {
+                try {
+                    set({ loading: true, error: null });
+                    const response = await inventoryService.getInventoryItemByCode(code);
+                    set({ loading: false });
+                    return response;
+                } catch (error) {
+                    set({ loading: false, error: 'Error al buscar el item' });
+                    console.error('Error fetching item by code:', error);
+                    return null;
+                }
+            },
 
-    set({ filteredItems: filtered });
-  },
+            createInventoryItem: async (data: FormData) => {
+                try {
+                    set({ loading: true, error: null });
+                    const response = await inventoryService.createInventoryItem(data);
+                    // Después de crear, volvemos a la primera página
+                    await get().getInventoryItems(1, 10);
+                    set({ loading: false, isEmpty: false });
+                    return response;
+                } catch (error) {
+                    set({ error: 'Error al crear el item', loading: false });
+                    console.error('Error creating item:', error);
+                    throw error;
+                }
+            },
 
-  clearFilters: () => {
-    set((state) => ({
-      filters: {},
-      filteredItems: state.items
-    }));
-  },
+            updateInventoryItem: async (id: string, data: Record<string, any>) => {
+                try {
+                    set({ loading: true, error: null });
 
-  setPage: (page) => {
-    const store = get();
-    if (page !== store.currentPage) {
-      store.getInventoryItems(page);
-    }
-  },
+                    // Separar las imágenes del resto de los datos
+                    const { images, ...itemData } = data;
 
-  createInventoryItem: async (item: RegisterFormValues) => {
-    try {
-      set({ loading: true, error: null });
-      const { imageUrl, ...formData } = item;
-      const result = await inventoryService.createInventoryItem(formData);
-      await get().refreshTable();
-      set({ loading: false });
-      return { success: true, id: result.id };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al crear el item";
-      set({ error: message, loading: false });
-      toast.error(message);
-      return { success: false };
-    }
-  },
+                    // Actualizar el item primero
+                    await inventoryService.updateInventoryItem(id, itemData);
 
-  updateInventoryItem: async (id: number, item: RegisterFormValues) => {
-    try {
-      set({ loading: true, error: null });
-      const { imageUrl, ...formData } = item;
-      await inventoryService.updateInventoryItem(id, formData);
-      await get().refreshTable();
-      set({ loading: false });
-      return { success: true };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al actualizar el item";
-      set({ error: message, loading: false });
-      toast.error(message);
-      return { success: false };
-    }
-  },
+                    // Si hay imágenes nuevas, subirlas en una petición separada
+                    if (images && images.length > 0) {
+                        await inventoryService.addMultipleImagesToId(parseInt(id), images);
+                    }
 
-  deleteInventoryItem: async (id: number) => {
-    try {
-      set({ loading: true, error: null });
-      await inventoryService.deleteInventoryItem(id);
-      await get().refreshTable();
-      set({ loading: false });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al eliminar el item";
-      set({ error: message, loading: false });
-      toast.error(message);
-      throw error;
-    }
-  },
+                    // Mantenemos la página actual después de actualizar
+                    await get().refreshTable();
+                } catch (error) {
+                    set({ error: 'Error al actualizar el item', loading: false });
+                    console.error('Error updating item:', error);
+                    throw error;
+                }
+            },
 
-  uploadItemImage: async (id: number, file: File) => {
-    try {
-      set({ loading: true, error: null });
-      const formData = new FormData();
-      formData.append("image", file);
-      await inventoryService.uploadItemImage(id, formData);
-      set({ loading: false });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al subir la imagen";
-      set({ error: message, loading: false });
-      toast.error(message);
-      throw error;
-    }
-  },
+            deleteInventoryItem: async (id: string) => {
+                try {
+                    set({ loading: true, error: null });
+                    await inventoryService.deleteInventoryItem(id);
 
-  refreshTable: async () => {
-    const { currentPage } = get();
-    await get().getInventoryItems(currentPage);
-  },
+                    // Verificamos si necesitamos ajustar la página actual
+                    const { currentPage, items } = get();
+                    if (items.length === 1 && currentPage > 1) {
+                        // Si es el último item de la página actual y no es la primera página
+                        await get().getInventoryItems(currentPage - 1, 10);
+                    } else {
+                        // Refrescamos la página actual
+                        await get().refreshTable();
+                    }
+                } catch (error) {
+                    set({ error: 'Error al eliminar el item', loading: false });
+                    console.error('Error deleting item:', error);
+                    throw error;
+                }
+            },
 
-  getCategories: async () => {
-    try {
-      return await inventoryService.getCategories();
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      return [];
-    }
-  },
-
-  getLocations: async () => {
-    try {
-      return await inventoryService.getLocations();
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-      return [];
-    }
-  },
-
-  getStates: async () => {
-    try {
-      return await inventoryService.getStates();
-    } catch (error) {
-      console.error('Error fetching states:', error);
-      return [];
-    }
-  },
-
-  getColors: async () => {
-    try {
-      return await inventoryService.getColors();
-    } catch (error) {
-      console.error('Error fetching colors:', error);
-      return [];
-    }
-  },
-}));
+            setSelectedItem: (item: InventoryItem | null) => {
+                set({ selectedItem: item });
+            }
+        }),
+        {
+            name: STORE_NAME,
+            storage: createJSONStorage(() => sessionStorage),
+        }
+    )
+); 
