@@ -14,6 +14,9 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ColorPagination } from './color-pagination'
 
+
+// This component displays a table of colors with options to edit and delete each color.
+
 interface ColorTableProps {
     colors: IColorResponse[]
     onDelete: (id: number) => void
@@ -23,6 +26,8 @@ interface ColorTableProps {
     onPageChange: (page: number) => void
 }
 
+// This component renders a table of colors with pagination and actions for each color.
+// It includes a loading state and handles empty states when no colors are available.
 export default function ColorTable({
     colors,
     onDelete,
@@ -33,6 +38,9 @@ export default function ColorTable({
 }: ColorTableProps) {
     const router = useRouter()
 
+
+    // This function handles the deletion of a color by calling the onDelete prop with the color's id.
+    
     return (
         <div className="space-y-4">
             <div className="rounded-md border min-h-[500px]">

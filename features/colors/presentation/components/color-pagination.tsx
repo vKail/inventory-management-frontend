@@ -3,13 +3,17 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+
+// This component provides a pagination control for navigating through pages of colors.
+
 interface ColorPaginationProps {
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
 }
 
-// Función para calcular qué páginas mostrar
+// This function generates an array of page numbers for pagination.
+// It handles the logic for displaying ellipses ("...") when there are many pages.
 function getPageNumbers(current: number, total: number): (number | string)[] {
     const delta = 2;
     const pages: (number | string)[] = [];
@@ -42,6 +46,9 @@ function getPageNumbers(current: number, total: number): (number | string)[] {
     return pages;
 }
 
+
+// This component renders the pagination control with buttons for navigating between pages.
+// It includes previous and next buttons, as well as individual page buttons.
 export function ColorPagination({
     currentPage,
     totalPages,
@@ -49,9 +56,9 @@ export function ColorPagination({
 }: ColorPaginationProps) {
     const pageNumbers = getPageNumbers(currentPage, totalPages);
 
+    // This function handles the click event for page buttons, calling the onPageChange prop with the selected page.
     return (
         <div className="flex items-center justify-center space-x-2">
-            {/* Botón página anterior */}
             <Button
                 variant="ghost"
                 size="icon"
@@ -63,7 +70,6 @@ export function ColorPagination({
                 <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            {/* Botones de página */}
             {pageNumbers.map((page, idx) =>
                 typeof page === "number" ? (
                     <Button
@@ -82,7 +88,6 @@ export function ColorPagination({
                 )
             )}
 
-            {/* Botón página siguiente */}
             <Button
                 variant="ghost"
                 size="icon"

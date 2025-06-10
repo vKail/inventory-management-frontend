@@ -23,6 +23,8 @@ import { ColorFormValues, colorSchema } from "../../data/schemas/color.schema";
 import { useColorForm } from "../../hooks/use-color-form";
 import { useColorStore } from "../../context/color-store";
 
+
+// This component provides a form for creating or editing colors.
 export default function ColorForm() {
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +32,15 @@ export default function ColorForm() {
     const colorId = params?.id as number | undefined;
     const { getColorById } = useColorStore();
 
+    // Initialize the form with the color schema and default values.
+    // The form will handle validation and submission using react-hook-form and zod.
     const form = useForm<ColorFormValues>({
         resolver: zodResolver(colorSchema),
         defaultValues: { name: "", hexCode: "#000000", description: "" },
     });
 
-    // Cargar datos del color si estamos en modo edición (hay un ID)
+
+    // Load the color data if colorId is provided.
     useEffect(() => {
         const loadColor = async () => {
             if (colorId) {
@@ -43,7 +48,6 @@ export default function ColorForm() {
                 try {
                     const color = await getColorById(colorId);
                     if (color) {
-                        // Actualizar el formulario con los datos del color
                         form.reset({
                             name: color.name,
                             hexCode: color.hexCode,
@@ -66,15 +70,21 @@ export default function ColorForm() {
 
     const handleSubmit = form.handleSubmit(onSubmit);
 
+    // Handle the cancel action by resetting the form and closing the color picker.
+    // This will clear any input values and close the color picker if it is open.
     const handleCancel = () => {
         form.reset();
         setIsColorPickerOpen(false);
     };
 
+    // If the form is loading, display a loading message.
     if (isLoading) {
         return <div className="flex justify-center items-center min-h-[300px]">Cargando...</div>;
     }
 
+
+    // Render the color form with fields for name, hex code, and description.
+    // The form includes a color picker for selecting the hex code visually.
     return (
         <Card className="w-full max-w-4xl">
             <CardHeader>

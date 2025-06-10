@@ -12,9 +12,15 @@ import {
 } from '@/components/ui/breadcrumb'
 import { PaletteIcon } from 'lucide-react'
 
+
+// This component provides a view for creating or editing colors.
+// It includes a breadcrumb navigation and a form for entering color details.
 export default function FormColorView() {
     const router = useRouter()
 
+
+    // This function handles the submission of the color form.
+    // It redirects to the colors page after the form is submitted.
     return (
         <div className="flex w-full flex-col items-center px-6">
             <div className="w-full max-w-[1200px]">
