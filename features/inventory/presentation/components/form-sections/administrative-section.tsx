@@ -1,101 +1,67 @@
-"use client";
-
+import { useFormContext } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
+import { useLocationStore } from "@/features/locations/context/location-store";
+import { useUserStore } from "@/features/users/context/user-store";
+import { useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UseFormReturn } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useConditionStore } from "@/features/conditions/context/condition-store";
+import { Combobox } from "@/components/ui/combobox";
 
-interface AdministrativeSectionProps {
-    form: UseFormReturn<any>;
-}
+export const AdministrativeSection = () => {
+    const form = useFormContext<InventoryFormData>();
+    const { locations, getLocations } = useLocationStore();
+    const { users, getUsers } = useUserStore();
+    const { conditions, getConditions } = useConditionStore();
 
-export const AdministrativeSection = ({ form }: AdministrativeSectionProps) => {
-    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    useEffect(() => {
+        getLocations();
+        getConditions();
+        getUsers();
+    }, []);
 
-    const handleDateChange = (field: any, date: Date | undefined) => {
-        if (date) {
-            field.onChange(date.toISOString());
-            setIsCalendarOpen(false); // Close the calendar after selection
-        } else {
-            field.onChange(null);
-        }
-    };
+    const locationOptions = locations.map(location => ({
+        value: location.id ?? 0,
+        label: location.name ?? ''
+    }));
+
+    const userOptions = users.map(user => ({
+        value: user.id,
+        label: `${user.person.dni} - ${user.person.firstName} ${user.person.lastName}`
+    }));
+
+    const conditionOptions = conditions.map(condition => ({
+        value: condition.id,
+        label: condition.name
+    }));
 
     return (
         <Card>
-            <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-4 p-6 border-r">
-                    <h3 className="text-lg font-semibold mb-2">Información Administrativa</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Detalles administrativos y de adquisición del producto.
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="md:col-span-1 p-6 border-r">
+                    <h3 className="text-2xl font-semibold leading-none tracking-tight">Información Administrativa</h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        Datos administrativos y de ubicación del bien.
                     </p>
                 </div>
-                <div className="col-span-8 p-6">
+                <div className="md:col-span-3 p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                             control={form.control}
-                            name="normativeType"
+                            name="locationId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tipo Normativo</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione tipo normativo" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="PROPERTY">Propiedad</SelectItem>
-                                            <SelectItem value="ADMINISTRATIVE_CONTROL">Control Administrativo</SelectItem>
-                                            <SelectItem value="INVENTORY">Inventario</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="origin"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Origen</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione origen" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="PURCHASE">Compra</SelectItem>
-                                            <SelectItem value="DONATION">Donación</SelectItem>
-                                            <SelectItem value="MANUFACTURING">Fabricación</SelectItem>
-                                            <SelectItem value="TRANSFER">Transferencia</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="entryOrigin"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Origen de Entrada</FormLabel>
+                                    <FormLabel>Ubicación</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Ej: Compra directa" />
+                                        <Combobox
+                                            options={locationOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar ubicación"
+                                            searchPlaceholder="Buscar ubicación..."
+                                            emptyMessage="No se encontraron ubicaciones"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -104,12 +70,19 @@ export const AdministrativeSection = ({ form }: AdministrativeSectionProps) => {
 
                         <FormField
                             control={form.control}
-                            name="entryType"
+                            name="custodianId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tipo de Entrada</FormLabel>
+                                    <FormLabel>Custodio</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Ej: Nuevo" />
+                                        <Combobox
+                                            options={userOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar custodio"
+                                            searchPlaceholder="Buscar custodio..."
+                                            emptyMessage="No se encontraron custodios"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -118,41 +91,20 @@ export const AdministrativeSection = ({ form }: AdministrativeSectionProps) => {
 
                         <FormField
                             control={form.control}
-                            name="acquisitionDate"
+                            name="conditionId"
                             render={({ field }) => (
-                                <FormItem className="flex flex-col">
-                                    <FormLabel>Fecha de Adquisición</FormLabel>
-                                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                                        <PopoverTrigger asChild>
-                                            <FormControl>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-full pl-3 text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    {field.value ? (
-                                                        format(new Date(field.value), "PPP", { locale: es })
-                                                    ) : (
-                                                        <span>Seleccione una fecha</span>
-                                                    )}
-                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                selected={field.value ? new Date(field.value) : undefined}
-                                                onSelect={(date) => handleDateChange(field, date)}
-                                                disabled={(date) =>
-                                                    date > new Date() || date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
+                                <FormItem>
+                                    <FormLabel>Condición</FormLabel>
+                                    <FormControl>
+                                        <Combobox
+                                            options={conditionOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar condición"
+                                            searchPlaceholder="Buscar condición..."
+                                            emptyMessage="No se encontraron condiciones"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -160,14 +112,23 @@ export const AdministrativeSection = ({ form }: AdministrativeSectionProps) => {
 
                         <FormField
                             control={form.control}
-                            name="commitmentNumber"
+                            name="availableForLoan"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Número de Compromiso</FormLabel>
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-base">
+                                            Disponible para Préstamo
+                                        </FormLabel>
+                                        <p className="text-sm text-muted-foreground">
+                                            Indica si el bien puede ser prestado
+                                        </p>
+                                    </div>
                                     <FormControl>
-                                        <Input {...field} placeholder="Ej: COMP-2024-001" />
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
                                     </FormControl>
-                                    <FormMessage />
                                 </FormItem>
                             )}
                         />

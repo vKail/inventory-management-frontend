@@ -1,50 +1,60 @@
-"use client";
-
+import { useFormContext } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UseFormReturn } from "react-hook-form";
+import { InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
 import { useItemTypeStore } from "@/features/item-types/context/item-types-store";
-import { useStateStore } from "@/features/states/context/state-store";
-import { useConditionStore } from "@/features/conditions/context/condition-store";
-import LoaderComponent from "@/shared/components/ui/Loader";
 import { useCategoryStore } from "@/features/categories/context/category-store";
+import { useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { useStateStore } from "@/features/states/context/state-store";
+import { Combobox } from "@/components/ui/combobox";
 
-interface GeneralInfoSectionProps {
-    form: UseFormReturn<any>;
-}
+export const GeneralInfoSection = () => {
+    const form = useFormContext<InventoryFormData>();
+    const { itemTypes, getItemTypes } = useItemTypeStore();
+    const { categories, getCategories } = useCategoryStore();
+    const { states, getStates } = useStateStore();
 
-export const GeneralInfoSection = ({ form }: GeneralInfoSectionProps) => {
-    const { categories, loading: loadingCategories } = useCategoryStore();
-    const { itemTypes, loading: loadingTypes } = useItemTypeStore();
-    const { states, loading: loadingStates } = useStateStore();
-    const { conditions, loading: loadingConditions } = useConditionStore();
+    useEffect(() => {
+        getItemTypes();
+        getCategories();
+        getStates();
+    }, []);
 
-    if (loadingTypes || loadingStates || loadingConditions) {
-        return <LoaderComponent rows={3} columns={2} />;
-    }
+    const itemTypeOptions = itemTypes.map(type => ({
+        value: type.id,
+        label: type.name
+    }));
+
+    const categoryOptions = categories.map(category => ({
+        value: category.id,
+        label: category.name
+    }));
+
+    const stateOptions = states.map(state => ({
+        value: state.id,
+        label: state.name
+    }));
 
     return (
         <Card>
-            <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-4 p-6 border-r">
-                    <h3 className="text-lg font-semibold mb-2">Información General</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Detalles generales y clasificación del producto.
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="md:col-span-1 p-6 border-r">
+                    <h3 className="text-2xl font-semibold leading-none tracking-tight">Información General</h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        Datos generales y clasificación del bien.
                     </p>
                 </div>
-                <div className="col-span-8 p-6">
+                <div className="md:col-span-3 p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nombre del Producto</FormLabel>
+                                    <FormLabel>Nombre</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Ej: Laptop Dell XPS 13" />
+                                        <Input placeholder="Nombre del bien" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -58,11 +68,7 @@ export const GeneralInfoSection = ({ form }: GeneralInfoSectionProps) => {
                                 <FormItem>
                                     <FormLabel>Descripción</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            {...field}
-                                            placeholder="Describe el producto..."
-                                            className="resize-none"
-                                        />
+                                        <Input placeholder="Descripción detallada" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -78,9 +84,9 @@ export const GeneralInfoSection = ({ form }: GeneralInfoSectionProps) => {
                                     <FormControl>
                                         <Input
                                             type="number"
-                                            min={0}
+                                            placeholder="Cantidad disponible"
                                             {...field}
-                                            onChange={(e) => field.onChange(Number(e.target.value))}
+                                            onChange={(e) => field.onChange(parseInt(e.target.value))}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -94,20 +100,16 @@ export const GeneralInfoSection = ({ form }: GeneralInfoSectionProps) => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Tipo de Item</FormLabel>
-                                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione tipo de item" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {itemTypes.map((type) => (
-                                                <SelectItem key={type.id} value={type.id.toString()}>
-                                                    {type.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={itemTypeOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar tipo de item"
+                                            searchPlaceholder="Buscar tipo de item..."
+                                            emptyMessage="No se encontraron tipos de item"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -119,23 +121,16 @@ export const GeneralInfoSection = ({ form }: GeneralInfoSectionProps) => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Categoría</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => field.onChange(Number(value))}
-                                        defaultValue={field.value?.toString()}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecciona una categoría" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {categories.map((category) => (
-                                                <SelectItem key={category.id} value={category.id.toString()}>
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={categoryOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar categoría"
+                                            searchPlaceholder="Buscar categoría..."
+                                            emptyMessage="No se encontraron categorías"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -147,45 +142,16 @@ export const GeneralInfoSection = ({ form }: GeneralInfoSectionProps) => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Estado</FormLabel>
-                                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione estado" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {states.map((state) => (
-                                                <SelectItem key={state.id} value={state.id.toString()}>
-                                                    {state.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="conditionId"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Condición</FormLabel>
-                                    <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value?.toString()}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione condición" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {conditions.map((condition) => (
-                                                <SelectItem key={condition.id} value={condition.id.toString()}>
-                                                    {condition.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <Combobox
+                                            options={stateOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Seleccionar estado"
+                                            searchPlaceholder="Buscar estado..."
+                                            emptyMessage="No se encontraron estados"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}

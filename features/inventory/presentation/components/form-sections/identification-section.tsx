@@ -1,73 +1,39 @@
-"use client";
-
+import { useFormContext } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Scan } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
+import { Barcode } from "lucide-react";
 
-interface IdentificationSectionProps {
-    form: UseFormReturn<any>;
-    onScanClick: () => void;
-}
+export const IdentificationSection = () => {
+    const form = useFormContext<InventoryFormData>();
 
-export const IdentificationSection = ({ form, onScanClick }: IdentificationSectionProps) => {
     return (
         <Card>
-            <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-4 p-6 border-r">
-                    <h3 className="text-lg font-semibold mb-2">Identificación y Códigos</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Información básica para identificar y rastrear el producto en el inventario.
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="md:col-span-1 p-6 border-r">
+                    <h3 className="text-2xl font-semibold leading-none tracking-tight">Identificación y Códigos</h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        Datos básicos para identificar el bien en el sistema.
                     </p>
                 </div>
-                <div className="col-span-8 p-6">
+                <div className="md:col-span-3 p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="relative">
-                            <FormField
-                                control={form.control}
-                                name="code"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Código de Barras</FormLabel>
-                                        <div className="flex gap-2">
-                                            <FormControl>
-                                                <Input
-                                                    {...field}
-                                                    placeholder="Escanee o ingrese el código"
-                                                    className="font-mono"
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') {
-                                                            e.preventDefault();
-                                                        }
-                                                    }}
-                                                />
-                                            </FormControl>
-                                            <Button
-                                                type="button"
-                                                size="icon"
-                                                variant="outline"
-                                                onClick={onScanClick}
-                                            >
-                                                <Scan className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
                         <FormField
                             control={form.control}
-                            name="identifier"
+                            name="code"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Identificador</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder="Ej: LAP-001" />
-                                    </FormControl>
+                                    <FormLabel>Código del Bien</FormLabel>
+                                    <div className="flex gap-2">
+                                        <FormControl>
+                                            <Input placeholder="Código único del bien" {...field} />
+                                        </FormControl>
+                                        <Button type="button" variant="secondary" size="icon">
+                                            <Barcode className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -80,7 +46,56 @@ export const IdentificationSection = ({ form, onScanClick }: IdentificationSecti
                                 <FormItem>
                                     <FormLabel>Código Anterior</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Código anterior si existe" />
+                                        <Input placeholder="Código anterior del bien" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="identifier"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Identificador</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Identificador único" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="commitmentNumber"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Nro de Acta/Matriz</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Número de acta o matriz" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
+                            name="normativeType"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Tipo Normativo</FormLabel>
+                                    <FormControl>
+                                        <select
+                                            {...field}
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <option value="">Seleccione tipo</option>
+                                            <option value="PROPERTY">Propiedad</option>
+                                            <option value="CONSUMABLE">Consumible</option>
+                                        </select>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

@@ -1,26 +1,22 @@
-"use client";
-
+import { useFormContext } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
 import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { UseFormReturn } from "react-hook-form";
 
-interface AccountingSectionProps {
-    form: UseFormReturn<any>;
-}
+export const AccountingSection = () => {
+    const form = useFormContext<InventoryFormData>();
 
-export const AccountingSection = ({ form }: AccountingSectionProps) => {
     return (
         <Card>
-            <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-4 p-6 border-r">
-                    <h3 className="text-lg font-semibold mb-2">Información Contable</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Detalles contables y observaciones del item.
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="md:col-span-1 p-6 border-r">
+                    <h3 className="text-2xl font-semibold leading-none tracking-tight">Información Contable</h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                        Datos contables y financieros del bien.
                     </p>
                 </div>
-                <div className="col-span-8 p-6">
+                <div className="md:col-span-3 p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                             control={form.control}
@@ -31,9 +27,9 @@ export const AccountingSection = ({ form }: AccountingSectionProps) => {
                                     <FormControl>
                                         <Input
                                             type="number"
+                                            placeholder="Ingrese la línea de item"
                                             {...field}
-                                            onChange={(e) => field.onChange(Number(e.target.value))}
-                                            placeholder="Ej: 1"
+                                            onChange={e => field.onChange(Number(e.target.value))}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -48,7 +44,7 @@ export const AccountingSection = ({ form }: AccountingSectionProps) => {
                                 <FormItem>
                                     <FormLabel>Cuenta Contable</FormLabel>
                                     <FormControl>
-                                        <Input {...field} placeholder="Ej: 1.2.3.4.5" />
+                                        <Input placeholder="Cuenta contable" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -59,14 +55,10 @@ export const AccountingSection = ({ form }: AccountingSectionProps) => {
                             control={form.control}
                             name="observations"
                             render={({ field }) => (
-                                <FormItem className="col-span-2">
+                                <FormItem>
                                     <FormLabel>Observaciones</FormLabel>
                                     <FormControl>
-                                        <Textarea
-                                            {...field}
-                                            placeholder="Observaciones adicionales..."
-                                            className="resize-none"
-                                        />
+                                        <Input placeholder="Observaciones adicionales" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
