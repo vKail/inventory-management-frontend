@@ -1,10 +1,5 @@
-'use client'
+import { InventoryView } from "@/features/inventory/presentation/views/inventory-view";
 
-export default function Inventory () {
-  return (
-    <div className="flex flex-col items-center justify-center h-screen w-full">
-      <h1>Inventory</h1>
-      <p>Welcome to the inventory page!</p>
-    </div>
-  )
-}
+export default function InventoryPage() {
+  return <InventoryView />;
+} 
