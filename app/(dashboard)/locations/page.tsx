@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { MapPin } from 'lucide-react';
 import { LocationTable } from '@/features/locations/presentation/components/location-table';
 import { LocationPagination } from '@/features/locations/presentation/components/location-pagination';
@@ -13,7 +14,7 @@ import {
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 
-export default function LocationsPage() {
+function LocationsContent() {
     const {
         filters,
         currentPage,
@@ -63,5 +64,13 @@ export default function LocationsPage() {
                 />
             </div>
         </div>
+    );
+}
+
+export default function LocationsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <LocationsContent />
+        </Suspense>
     );
 } 
