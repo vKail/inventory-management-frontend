@@ -223,10 +223,10 @@ export const useLoanStore = create<LoanState>((set, get) => {
       const updated = loans.map((loan) =>
         loan.id === id
           ? {
-              ...loan,
-              status: LoanStatus.RETURNED,
-              returnDate: new Date(),
-            }
+            ...loan,
+            status: LoanStatus.RETURNED,
+            returnDate: new Date(),
+          }
           : loan
       );
 
