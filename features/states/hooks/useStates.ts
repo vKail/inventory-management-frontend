@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { stateService } from '../services/state.service';
-import { CreateStateDTO, State, UpdateStateDTO, PaginatedStates } from '../interfaces/state.interface';
-import { toast } from 'react-hot-toast';
+import { CreateStateDTO, UpdateStateDTO, PaginatedResponse } from '../data/interfaces/state.interface';
+import { toast } from 'sonner';
+import { IState } from '../data/interfaces/state.interface';
 
-const initialPaginatedState: PaginatedStates = {
+const initialPaginatedState: PaginatedResponse<IState> = {
+    success: true,
+    message: {
+        content: []
+    },
     records: [],
     total: 0,
     limit: 10,
@@ -22,12 +27,9 @@ export const useStates = (page = 1, limit = 10) => {
         queryFn: () => stateService.getStates(page, limit),
         initialData: initialPaginatedState,
         retry: 1,
-        onError: (error: Error) => {
-            toast.error(`Error al cargar los estados: ${error.message}`);
-        }
     });
 
-    const { mutate: createState, isLoading: isCreating } = useMutation({
+    const { mutate: createState, isPending: isCreating } = useMutation({
         mutationFn: (newState: CreateStateDTO) => stateService.createState(newState),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['states'] });
@@ -38,7 +40,7 @@ export const useStates = (page = 1, limit = 10) => {
         },
     });
 
-    const { mutate: updateState, isLoading: isUpdating } = useMutation({
+    const { mutate: updateState, isPending: isUpdating } = useMutation({
         mutationFn: ({ id, state }: { id: number; state: UpdateStateDTO }) =>
             stateService.updateState(id, state),
         onSuccess: () => {
@@ -50,7 +52,7 @@ export const useStates = (page = 1, limit = 10) => {
         },
     });
 
-    const { mutate: deleteState, isLoading: isDeleting } = useMutation({
+    const { mutate: deleteState, isPending: isDeleting } = useMutation({
         mutationFn: (id: number) => stateService.deleteState(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['states'] });

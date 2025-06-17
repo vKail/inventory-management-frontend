@@ -8,8 +8,9 @@ import UserForm from '../components/user-form';
 import { toast } from 'sonner';
 
 export default function UserFormView() {
-    const { id } = useParams();
+    const params = useParams();
     const router = useRouter();
+    const id = params?.id as string;
     const isEdit = id !== undefined && id !== 'new';
 
     const {
@@ -23,10 +24,15 @@ export default function UserFormView() {
 
     useEffect(() => {
         const loadData = async () => {
-            if (isEdit && typeof id === 'string') {
-                const userData = await getUserById(id);
-                if (userData) {
-                    setInitialData(userData);
+            if (isEdit && id) {
+                try {
+                    const userData = await getUserById(id);
+                    if (userData) {
+                        setInitialData(userData);
+                    }
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                    toast.error('Error al cargar los datos del usuario');
                 }
             }
         };
@@ -53,7 +59,7 @@ export default function UserFormView() {
                 }
             };
 
-            if (isEdit && typeof id === 'string') {
+            if (isEdit && id) {
                 await updateUser(id, userData);
                 toast.success('Usuario actualizado exitosamente');
             } else {

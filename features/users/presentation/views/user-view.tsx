@@ -22,7 +22,6 @@ export default function UserView() {
   const itemsPerPage = 10;
   const { totalPages, handleFilterChange } = useUserFilters(currentPage, itemsPerPage);
 
-  // Leer página de la URL al cargar el componente
   useEffect(() => {
     const page = searchParams.get('page');
     if (page) {
@@ -32,8 +31,6 @@ export default function UserView() {
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-
-    // Actualizar URL con la nueva página
     const params = new URLSearchParams(searchParams);
     params.set('page', page.toString());
     router.push(`?${params.toString()}`);

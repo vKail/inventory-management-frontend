@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { useColorStore } from "../context/color-store";
 import { IColor, IColorResponse, IColorUpdate } from "../data/interfaces/color.interface";
+import { ColorFormValues } from "../data/schemas/color.schema";
 
 export const useColorForm = (currentColor?: Partial<IColorResponse>) => {
     const { addColor, updateColor } = useColorStore();
@@ -12,17 +13,12 @@ export const useColorForm = (currentColor?: Partial<IColorResponse>) => {
 
     const router = useRouter();
 
-    const onSubmit = async (color: IColor) => {
+    const onSubmit = async (formData: ColorFormValues) => {
         if (currentColor?.id) {
-            console.log("Submitting color:", color, currentColor.id);
-
-            await updateColor(currentColor.id, color);
+            await updateColor(currentColor.id, formData as IColor);
         } else {
-
-            console.log("Adding new color:", color);
-            await addColor(color);
+            await addColor(formData as IColor);
         }
-
         router.push("/colors");
     };
 

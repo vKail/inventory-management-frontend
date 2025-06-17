@@ -8,10 +8,10 @@ import { useState, useEffect } from 'react';
 import { Wrench } from 'lucide-react';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from '@/components/ui/breadcrumb';
 interface LocationViewProps {
-    locationId?: number;
+    id?: string;
 }
 
-export function LocationView({ locationId }: LocationViewProps) {
+export function LocationView({ id }: LocationViewProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const { addLocation, updateLocation, getLocationById } = useLocationStore();
@@ -20,21 +20,21 @@ export function LocationView({ locationId }: LocationViewProps) {
     // Cargar datos iniciales si es una edición
     useEffect(() => {
         const loadLocation = async () => {
-            if (locationId) {
-                const location = await getLocationById(locationId);
+            if (id) {
+                const location = await getLocationById(Number(id));
                 if (location) {
                     setInitialData(location);
                 }
             }
         };
         loadLocation();
-    }, [locationId, getLocationById]);
+    }, [id, getLocationById]);
 
     const handleSubmit = async (data: LocationFormValues) => {
         setIsLoading(true);
         try {
-            if (locationId) {
-                await updateLocation(locationId, data);
+            if (id) {
+                await updateLocation(Number(id), data);
             } else {
                 await addLocation(data);
             }
@@ -63,7 +63,7 @@ export function LocationView({ locationId }: LocationViewProps) {
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage>{locationId ? "Editar Ubicación" : "Nueva Ubicación"}</BreadcrumbPage>
+                            <BreadcrumbPage>{id ? "Editar Ubicación" : "Nueva Ubicación"}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>

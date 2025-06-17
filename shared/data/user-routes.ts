@@ -9,7 +9,6 @@ export const userRoutes = {
   '/(dashboard)/conditions/:path': [UserRole.ADMIN, UserRole.MANAGER],
   '/(dashboard)/items-types/:path': [UserRole.ADMIN, UserRole.MANAGER],
   '/(dashboard)/locations/:path': [UserRole.ADMIN, UserRole.MANAGER],
-  '/(dashboard)/warehouses/:path': [UserRole.ADMIN, UserRole.MANAGER],
   '/(dashboard)/materials/:path': [UserRole.ADMIN, UserRole.MANAGER],
   '/(dashboard)/states/:path': [UserRole.ADMIN, UserRole.MANAGER],
 };

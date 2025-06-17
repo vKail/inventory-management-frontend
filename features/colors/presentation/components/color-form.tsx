@@ -43,7 +43,7 @@ export default function ColorForm() {
                 try {
                     const color = await getColorById(colorId);
                     if (color) {
-                        // Actualizar el formulario con los datos del color
+                        // Actualizar el formulario con los datos del color 
                         form.reset({
                             name: color.name,
                             hexCode: color.hexCode,
