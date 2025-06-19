@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react'; // Added React import
+import { Suspense } from 'react';
+import { LoanView } from "@/features/loans/presentation/views/loan-view";
 
 export default function LoansPage() {
   return (
-    <div>
-      Loans Page
-    </div>
+    <Suspense fallback={<div>Cargando...</div>}>
+      <LoanView />
+    </Suspense>
   );
 }

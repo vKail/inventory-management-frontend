@@ -1,12 +1,23 @@
-import { IUser, PaginatedResponse, ApiResponse } from '@/features/users/data/interfaces/user.interface';
-import { API_URL } from '@/config/constants';
+import { IUser, PaginatedResponse, ApiResponse, PersonApiResponse } from '@/features/users/data/interfaces/user.interface';
+import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
+import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
-export class UserService {
+interface UserServiceProps {
+  getUsers: (page?: number, limit?: number, filters?: { userName?: string; dni?: string; status?: string }) => Promise<PaginatedResponse>;
+  getUserById: (id: string) => Promise<IUser>;
+  createUser: (user: Partial<IUser>) => Promise<IUser>;
+  updateUser: (id: string, user: Partial<IUser>) => Promise<IUser>;
+  deleteUser: (id: string) => Promise<void>;
+  getPersonByDni: (dni: string) => Promise<PersonApiResponse["data"] | null>;
+}
+
+export class UserService implements UserServiceProps {
   private static instance: UserService;
-  private baseUrl: string;
+  private httpClient: HttpHandler;
+  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}users`;
 
   private constructor() {
-    this.baseUrl = `${API_URL}users`;
+    this.httpClient = AxiosClient.getInstance();
   }
 
   public static getInstance(): UserService {
@@ -16,100 +27,115 @@ export class UserService {
     return UserService.instance;
   }
 
-  async getUsers(page: number = 1, limit: number = 10, filters?: { userName?: string; dni?: string; status?: string }): Promise<PaginatedResponse> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+  async getUsers(page = 1, limit = 10, filters?: { userName?: string; dni?: string; status?: string }): Promise<PaginatedResponse> {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
 
-    if (filters?.userName) {
-      params.append('userName', filters.userName);
-    }
+      if (filters?.userName) {
+        params.append('userName', filters.userName);
+      }
 
-    if (filters?.dni) {
-      params.append('dni', filters.dni);
-    }
+      if (filters?.dni) {
+        params.append('dni', filters.dni);
+      }
 
-    if (filters?.status) {
-      params.append('status', filters.status);
-    }
+      if (filters?.status) {
+        params.append('status', filters.status);
+      }
 
-    const response = await fetch(`${this.baseUrl}?${params.toString()}`);
-    if (!response.ok) {
-      throw new Error('Error fetching users');
+      const response = await this.httpClient.get<PaginatedResponse>(`${UserService.url}?${params.toString()}`);
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
     }
-    const apiResponse: ApiResponse<PaginatedResponse> = await response.json();
-    return apiResponse.data;
   }
 
   async getUserById(id: string): Promise<IUser> {
-    const response = await fetch(`${this.baseUrl}/${id}`);
-    if (!response.ok) {
-      throw new Error('Error fetching user');
+    try {
+      const response = await this.httpClient.get<IUser>(`${UserService.url}/${id}`);
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
     }
-    const apiResponse: ApiResponse<IUser> = await response.json();
-    return apiResponse.data;
   }
 
   async createUser(user: Partial<IUser>): Promise<IUser> {
-    const userData = {
-      userName: user.userName,
-      password: user.password,
-      career: user.career,
-      userType: user.userType,
-      status: user.status || 'ACTIVE',
-      person: user.person
-    };
+    try {
+      const userData = {
+        userName: user.userName,
+        password: user.password,
+        career: user.career,
+        userType: user.userType,
+        status: user.status || 'ACTIVE',
+        person: user.person
+      };
 
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-    if (!response.ok) {
-      throw new Error('Error creating user');
+      const response = await this.httpClient.post<IUser>(UserService.url, userData);
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
     }
-    const apiResponse: ApiResponse<IUser> = await response.json();
-    return apiResponse.data;
   }
 
   async updateUser(id: string, user: Partial<IUser>): Promise<IUser> {
-    const userData = {
-      userName: user.userName,
-      password: user.password,
-      career: user.career,
-      userType: user.userType,
-      status: user.status || 'ACTIVE',
-      person: user.person
-    };
+    try {
+      const userData = {
+        userName: user.userName,
+        password: user.password,
+        career: user.career,
+        userType: user.userType,
+        status: user.status || 'ACTIVE',
+        person: user.person
+      };
 
-    const response = await fetch(`${this.baseUrl}/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-    if (!response.ok) {
-      throw new Error('Error updating user');
+      const response = await this.httpClient.patch<IUser>(`${UserService.url}/${id}`, userData);
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
     }
-    const apiResponse: ApiResponse<IUser> = await response.json();
-    return apiResponse.data;
   }
 
   async deleteUser(id: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/change-status/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: 'INACTIVE' }),
-    });
-    if (!response.ok) {
-      throw new Error('Error deleting user');
+    try {
+      const response = await this.httpClient.patch<void>(`${UserService.url}/change-status/${id}`, { status: 'INACTIVE' });
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
     }
-    await response.json();
+  }
+
+  async getPersonByDni(dni: string): Promise<PersonApiResponse["data"] | null> {
+    try {
+      const response = await this.httpClient.get<PersonApiResponse["data"]>(`${process.env.NEXT_PUBLIC_API_URL}people/find-or-create/${dni}`);
+      if (!response.success) {
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching person by DNI:', error);
+      return null;
+    }
   }
 }
