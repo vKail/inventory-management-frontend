@@ -57,6 +57,7 @@ export function LoanTableView({
                             names[loan.id] = 'Usuario no encontrado';
                         }
                     } catch (error) {
+                        console.error('Error fetching person:', error);
                         names[loan.id] = 'Error al cargar';
                     }
                 }
