@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loan } from "../../data/interfaces/loan.interface";
 import { formatDate } from "../utils/date-formatter";
 import { LoanReturnFormValues, loanReturnSchema } from "../../data/schemas/loan-return.schema";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUserStore } from "@/features/users/context/user-store";
 import { useInventoryStore } from "@/features/inventory/context/inventory-store";
+import { UserService } from "@/features/users/services/user.service";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -30,16 +30,28 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit, conditions }:
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
     const { getUserById } = useUserStore();
     const { getInventoryItem } = useInventoryStore();
+    const userService = UserService.getInstance();
 
     useEffect(() => {
         const fetchUserDetails = async () => {
             if (loan.requestorId) {
-                const user = await getUserById(loan.requestorId.toString());
-                setUserDetails(user);
+                try {
+                    const person = await userService.getPersonByDni(loan.requestorId.toString());
+                    if (person) {
+                        setUserDetails(person);
+                    } else {
+                        // Fallback to user store if person not found
+                        const user = await getUserById(loan.requestorId.toString());
+                        setUserDetails(user);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user details:", error);
+                    setUserDetails(null);
+                }
             }
         };
         fetchUserDetails();
-    }, [loan.requestorId, getUserById]);
+    }, [loan.requestorId, getUserById, userService]);
 
     useEffect(() => {
         const fetchItemDetails = async () => {
@@ -140,12 +152,12 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit, conditions }:
                             <div>
                                 <p className="text-muted-foreground">Solicitante</p>
                                 <p className="font-medium">
-                                    {userDetails?.person ?
-                                        `${userDetails.person.firstName} ${userDetails.person.lastName}` :
+                                    {userDetails ?
+                                        `${userDetails.firstName} ${userDetails.lastName}` :
                                         'Cargando...'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    {userDetails?.userType || 'Cargando...'}
+                                    {userDetails?.type || 'Cargando...'}
                                 </p>
                             </div>
                             <div>

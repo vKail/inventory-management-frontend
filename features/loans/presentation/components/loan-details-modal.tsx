@@ -10,6 +10,7 @@ import { formatDate } from "../utils/date-formatter";
 import { Card } from "@/components/ui/card";
 import { useUserStore } from "@/features/users/context/user-store";
 import { useInventoryStore } from "@/features/inventory/context/inventory-store";
+import { UserService } from "@/features/users/services/user.service";
 
 interface LoanDetailsModalProps {
     isOpen: boolean;
@@ -27,6 +28,7 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
     const [itemDetails, setItemDetails] = useState<Record<number, any>>({});
     const { getUserById } = useUserStore();
     const { getInventoryItem } = useInventoryStore();
+    const userService = UserService.getInstance();
 
     useEffect(() => {
         if (isOpen && loanId) {
@@ -35,23 +37,40 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
     }, [isOpen, loanId]);
 
     useEffect(() => {
-        if (loan?.requestorId) {
-            const fetchUserDetails = async () => {
-                const user = await getUserById(loan.requestorId.toString());
-                setUserDetails(user);
-            };
-            fetchUserDetails();
-        }
-    }, [loan?.requestorId, getUserById]);
+        const fetchUserDetails = async () => {
+            if (loan?.requestorId) {
+                try {
+                    const person = await userService.getPersonByDni(loan.requestorId.toString());
+                    if (person) {
+                        setUserDetails(person);
+                    } else {
+                        // Fallback to user store if person not found
+                        const user = await getUserById(loan.requestorId.toString());
+                        setUserDetails(user);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user details:", error);
+                    setUserDetails(null);
+                }
+            }
+        };
+        fetchUserDetails();
+    }, [loan?.requestorId, getUserById, userService]);
 
     useEffect(() => {
-        if (loan?.approverId) {
-            const fetchApproverDetails = async () => {
-                const approver = await getUserById(loan.approverId.toString());
-                setApproverDetails(approver);
-            };
-            fetchApproverDetails();
-        }
+        const fetchApproverDetails = async () => {
+            if (loan?.approverId) {
+                try {
+                    // Approver uses userId, so we use getUserById directly
+                    const approver = await getUserById(loan.approverId.toString());
+                    setApproverDetails(approver);
+                } catch (error) {
+                    console.error("Error fetching approver details:", error);
+                    setApproverDetails(null);
+                }
+            }
+        };
+        fetchApproverDetails();
     }, [loan?.approverId, getUserById]);
 
     useEffect(() => {
@@ -151,12 +170,12 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                             <div>
                                 <p className="text-muted-foreground">Solicitante</p>
                                 <p className="font-medium">
-                                    {userDetails?.person ?
-                                        `${userDetails.person.firstName} ${userDetails.person.lastName}` :
+                                    {userDetails ?
+                                        `${userDetails.firstName} ${userDetails.lastName}` :
                                         'Cargando...'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    {userDetails?.userType || 'Cargando...'}
+                                    {userDetails?.type || 'Cargando...'}
                                 </p>
                             </div>
                             <div>

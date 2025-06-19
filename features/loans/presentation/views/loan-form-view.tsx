@@ -37,6 +37,8 @@ import { toast } from "sonner";
 import { LoanScanModal } from "../components/loan-scan-modal";
 import { z } from "zod";
 import { Label } from "@/components/ui/label";
+import { useUserStore } from "@/features/users/context/user-store";
+import { UserService } from "@/features/users/services/user.service";
 
 interface RequestorInfo {
     firstName: string;
@@ -75,6 +77,7 @@ export function LoanFormView() {
     const { createLoan } = useLoanStore();
     const { getInventoryItemByCode } = useInventoryStore();
     const { getConditionById } = useConditionStore();
+    const userService = UserService.getInstance();
     const [isValidated, setIsValidated] = useState(false);
     const [isScanModalOpen, setIsScanModalOpen] = useState(false);
     const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
@@ -155,10 +158,25 @@ export function LoanFormView() {
         }
 
         try {
-            // Aquí deberías llamar a tu servicio para validar la cédula
-            // Por ahora solo simulamos una validación exitosa
-            setIsValidated(true);
-            form.clearErrors("requestorId");
+            const person = await userService.getPersonByDni(requestorId);
+            if (person) {
+                setRequestorInfo({
+                    firstName: person.firstName,
+                    lastName: person.lastName,
+                    email: person.email,
+                    phone: person.phone,
+                    role: person.type
+                });
+                setIsValidated(true);
+                form.clearErrors("requestorId");
+                toast.success("Persona encontrada exitosamente");
+            } else {
+                form.setError("requestorId", {
+                    type: "manual",
+                    message: "No se encontró una persona con esta cédula"
+                });
+                setIsValidated(false);
+            }
         } catch (error) {
             form.setError("requestorId", {
                 type: "manual",
