@@ -1,32 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Loan, LoanCreate, LoanReturn } from "../data/interfaces/loan.interface";
+import { Loan, LoanCreate, LoanReturn, LoanFilters, LoanState } from "@/features/loans/data/interfaces/loan.interface";
 import { loanService } from "../services/loan.service";
-
-export interface LoanFilters {
-    search?: string;
-    status?: string;
-    view?: 'table' | 'grid' | 'list';
-}
-
-interface LoanState {
-    loans: Loan[];
-    loading: boolean;
-    error: string | null;
-    totalPages: number;
-    currentPage: number;
-    selectedLoan: Loan | null;
-    filters: LoanFilters;
-    getLoans: (page?: number, limit?: number) => Promise<void>;
-    getLoanById: (id: number) => Promise<void>;
-    getLoanHistoryByDni: (dni: string) => Promise<Loan[]>;
-    createLoan: (loan: LoanCreate) => Promise<void>;
-    returnLoan: (loanId: number, loanReturn: LoanReturn) => Promise<void>;
-    setSelectedLoan: (loan: Loan | null) => void;
-    setPage: (page: number) => void;
-    setFilters: (filters: Partial<LoanFilters>) => void;
-    refreshTable: () => Promise<void>;
-}
 
 const STORE_NAME = 'loan-storage';
 

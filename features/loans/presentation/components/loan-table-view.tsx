@@ -1,4 +1,4 @@
-import { Loan } from "../../data/interfaces/loan.interface";
+import { Loan } from "@/features/loans/data/interfaces/loan.interface";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -9,8 +9,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "../utils/date-formatter";
-import { LoanStatus } from "../../data/interfaces/loan.interface";
+import { formatDate } from "../../data/utils/date-formatter";
 import { useState, useEffect } from "react";
 import { LoanDetailsModal } from "./loan-details-modal";
 import { LoanPagination } from "./loan-pagination";
@@ -34,7 +33,6 @@ const LOAN_STATUSES = {
 
 export function LoanTableView({
     loans,
-    onViewDetails,
     onReturn,
     currentPage,
     totalPages,
@@ -50,7 +48,7 @@ export function LoanTableView({
             for (const loan of loans) {
                 if (loan.requestorId) {
                     try {
-                        const person = await userService.getPersonByDni(loan.requestorId.toString());
+                        const person = await userService.getPersonById(loan.requestorId.toString());
                         if (person) {
                             names[loan.id] = `${person.firstName} ${person.lastName}`;
                         } else {

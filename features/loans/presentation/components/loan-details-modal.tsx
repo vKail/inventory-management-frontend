@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loan, LoanStatus } from "../../data/interfaces/loan.interface";
+import { Loan, LoanStatus } from "@/features/loans/data/interfaces/loan.interface";
 import { loanService } from "../../services/loan.service";
-import { formatDate } from "../utils/date-formatter";
+import { formatDate } from "../../data/utils/date-formatter";
 import { Card } from "@/components/ui/card";
 import { useUserStore } from "@/features/users/context/user-store";
 import { useInventoryStore } from "@/features/inventory/context/inventory-store";
 import { UserService } from "@/features/users/services/user.service";
+import { useConditionStore } from "@/features/conditions/context/condition-store";
 
 interface LoanDetailsModalProps {
     isOpen: boolean;
@@ -26,9 +27,11 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
     const [userDetails, setUserDetails] = useState<any>(null);
     const [approverDetails, setApproverDetails] = useState<any>(null);
     const [itemDetails, setItemDetails] = useState<Record<number, any>>({});
+    const [conditionNames, setConditionNames] = useState<Record<string, string>>({});
     const { getUserById } = useUserStore();
     const { getInventoryItem } = useInventoryStore();
     const userService = UserService.getInstance();
+    const { getConditionById } = useConditionStore();
 
     useEffect(() => {
         if (isOpen && loanId) {
@@ -40,7 +43,9 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
         const fetchUserDetails = async () => {
             if (loan?.requestorId) {
                 try {
-                    const person = await userService.getPersonByDni(loan.requestorId.toString());
+                    const person = await userService.getPersonById(loan.requestorId.toString());
+
+                    console.log(person);
                     if (person) {
                         setUserDetails(person);
                     } else {
@@ -88,6 +93,40 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
             fetchItemDetails();
         }
     }, [loan?.loanDetails, getInventoryItem]);
+
+    useEffect(() => {
+        const fetchConditionNames = async () => {
+            if (loan?.loanDetails) {
+                const conditionIds = new Set<string>();
+
+                // Collect all condition IDs from loan details
+                loan.loanDetails.forEach(detail => {
+                    if (detail.exitConditionId) {
+                        conditionIds.add(detail.exitConditionId.toString());
+                    }
+                    if (detail.returnConditionId) {
+                        conditionIds.add(detail.returnConditionId.toString());
+                    }
+                });
+
+                // Fetch condition names for all unique IDs
+                const names: Record<string, string> = {};
+                for (const conditionId of Array.from(conditionIds)) {
+                    try {
+                        const condition = await getConditionById(conditionId);
+                        if (condition) {
+                            names[conditionId] = condition.name;
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching condition ${conditionId}:`, error);
+                        names[conditionId] = 'Condición no encontrada';
+                    }
+                }
+                setConditionNames(names);
+            }
+        };
+        fetchConditionNames();
+    }, [loan?.loanDetails, getConditionById]);
 
     const loadLoanDetails = async () => {
         try {
@@ -215,18 +254,49 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                                     <div className="space-y-3">
                                         {loan.loanDetails.map((detail, index) => {
                                             const item = itemDetails[detail.itemId];
+                                            const exitCondition = conditionNames[detail.exitConditionId?.toString() || ''];
+                                            const returnCondition = detail.returnConditionId ?
+                                                conditionNames[detail.returnConditionId?.toString() || ''] :
+                                                null;
                                             return (
                                                 <div key={index} className="bg-muted/50 p-3 rounded-md">
-                                                    <div>
-                                                        <h4 className="font-medium text-sm">{item?.name || 'Cargando...'}</h4>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Código: {item?.code || 'N/A'} | Identificador: {item?.identifier || 'N/A'}
-                                                        </p>
-                                                        {detail.exitObservations && (
-                                                            <p className="text-sm text-muted-foreground mt-2">
-                                                                Observaciones: {detail.exitObservations}
+                                                    <div className="space-y-2">
+                                                        <div>
+                                                            <h4 className="font-medium text-sm">{item?.name || 'Cargando...'}</h4>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Código: {item?.code || 'N/A'} | Identificador: {item?.identifier || 'N/A'}
                                                             </p>
-                                                        )}
+                                                            <p className="text-xs text-muted-foreground">
+                                                                <span className="font-medium">Cantidad prestada:</span> {detail.quantity || 'N/A'}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 gap-2">
+                                                            <div>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    <span className="font-medium">Condición de salida:</span> {exitCondition || detail.exitConditionId}
+                                                                </p>
+                                                                {detail.exitObservations && (
+                                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                                        <span className="font-medium">Observaciones de salida:</span> {detail.exitObservations}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Return Information - Only show if loan is returned */}
+                                                            {loan.status === LoanStatus.RETURNED && returnCondition && (
+                                                                <div className="pt-2 border-t border-border">
+                                                                    <p className="text-xs text-green-700">
+                                                                        <span className="font-medium">Condición de retorno:</span> {returnCondition}
+                                                                    </p>
+                                                                    {detail.returnObservations && (
+                                                                        <p className="text-xs text-green-700 mt-1">
+                                                                            <span className="font-medium">Observaciones de retorno:</span> {detail.returnObservations}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -263,6 +333,16 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                                 </div>
                             </div>
                         </Card>
+
+                        {/* Notas del Préstamo */}
+                        {loan.notes && (
+                            <Card className="p-4">
+                                <div className="space-y-2">
+                                    <h3 className="font-medium text-sm">Notas del Préstamo</h3>
+                                    <p className="text-sm text-muted-foreground">{loan.notes}</p>
+                                </div>
+                            </Card>
+                        )}
 
                         <div className="flex justify-end gap-2 pt-2">
                             <Button variant="outline" size="sm" onClick={handleCopy}>

@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Breadcrumb, BreadcrumbLink, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { LoanHeader } from "../components/loan-header";
 import { Pagination } from "@/components/ui/pagination";
-import { Loan } from "../../data/interfaces/loan.interface";
+import { Loan } from "@/features/loans/data/interfaces/loan.interface";
 import { LoanSkeleton } from "../components/loan-skeleton";
 
 type ViewType = 'table' | 'list' | 'grid';
@@ -140,7 +140,6 @@ export function LoanView() {
                                     onClose={() => setSelectedLoan(null)}
                                     loan={selectedLoan}
                                     onSubmit={handleReturnSubmit}
-                                    conditions={mockConditions}
                                 />
                             )}
                         </div>
