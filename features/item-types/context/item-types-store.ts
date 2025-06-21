@@ -47,9 +47,9 @@ export const useItemTypeStore = create<ItemTypeStore>()(
           const searchTerm = get().searchTerm;
           const filtered = searchTerm
             ? response.records.filter((item) =>
-                item.name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
-                item.description.toLowerCase().startsWith(searchTerm.toLowerCase())
-              )
+              item.name.toLowerCase().startsWith(searchTerm.toLowerCase()) ||
+              item.description.toLowerCase().startsWith(searchTerm.toLowerCase())
+            )
             : response.records;
 
           set({
@@ -78,7 +78,7 @@ export const useItemTypeStore = create<ItemTypeStore>()(
       addItemType: async (itemType: Partial<ItemType>) => {
         try {
           set({ loading: true, error: null });
-          await itemTypeService.createItemType(itemType as Omit<ItemType, 'id' | 'active'>);
+          await itemTypeService.createItemType(itemType as Omit<ItemType, 'id'>);
           await get().getItemTypes();
           set({ loading: false });
         } catch (error) {

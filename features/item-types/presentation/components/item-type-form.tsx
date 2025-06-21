@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import {
   Card,
   CardContent,
@@ -44,7 +43,6 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
       code: '',
       name: '',
       description: '',
-      active: true,
     },
   })
 
@@ -58,7 +56,6 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
               code: itemType.code,
               name: itemType.name,
               description: itemType.description,
-              active: itemType.active,
             })
           }
         } catch (err) {
@@ -73,13 +70,11 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
   const onSubmit = async (data: ItemTypeFormValues) => {
     setLoading(true)
     try {
-      const { active, ...dataToSend } = data
-
       if (id) {
-        await updateItemType(id, dataToSend)
+        await updateItemType(id, data)
         toast.success('Tipo de item actualizado exitosamente')
       } else {
-        await addItemType(dataToSend)
+        await addItemType(data)
         toast.success('Tipo de item creado exitosamente')
       }
       router.push('/item-types')
@@ -96,23 +91,23 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
       {/* Breadcrumbs, título y descripción */}
       {/* Breadcrumbs, título y descripción */}
       <div className="w-full">
-                <Breadcrumb className="mb-6">
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <span className="text-muted-foreground font-medium">Configuración</span>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <Boxes className="inline mr-1 h-4 w-4 text-primary align-middle" />
-                            <BreadcrumbLink href="/item-types">Tipos de Item</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>{id ? "Editar Tipo de Item" : "Nuevo Tipo de Item"}</BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            </div>
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <span className="text-muted-foreground font-medium">Configuración</span>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <Boxes className="inline mr-1 h-4 w-4 text-primary align-middle" />
+              <BreadcrumbLink href="/item-types">Tipos de Item</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{id ? "Editar Tipo de Item" : "Nuevo Tipo de Item"}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-1/3">
           <h3 className="text-lg font-semibold mb-1">Detalles del tipo de item</h3>
@@ -138,10 +133,13 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                     name="code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Código</FormLabel>
+                        <FormLabel>Código *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Código del tipo de item" {...field} />
+                          <Input placeholder="Código del tipo de item" maxLength={50} {...field} />
                         </FormControl>
+                        <div className="text-xs text-muted-foreground text-right">
+                          {field.value?.length || 0}/50 caracteres
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -152,10 +150,13 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nombre</FormLabel>
+                        <FormLabel>Nombre *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nombre del tipo de item" {...field} />
+                          <Input placeholder="Nombre del tipo de item" maxLength={100} {...field} />
                         </FormControl>
+                        <div className="text-xs text-muted-foreground text-right">
+                          {field.value?.length || 0}/100 caracteres
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -166,37 +167,18 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Descripción</FormLabel>
+                        <FormLabel>Descripción *</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Descripción del tipo de item"
+                            maxLength={500}
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="active"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center justify-between space-x-2">
-                          <div className="space-y-0.5">
-                            <FormLabel>Estado Activo</FormLabel>
-                            <p className="text-sm text-muted-foreground">
-                              Determina si el tipo de item está activo en el sistema
-                            </p>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
+                        <div className="text-xs text-muted-foreground text-right">
+                          {field.value?.length || 0}/500 caracteres
                         </div>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />

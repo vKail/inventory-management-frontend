@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ILocation, PaginatedLocations } from '../data/interfaces/location.interface';
+import { LocationFormValues } from '../data/schemas/location.schema';
 import { LocationService } from '../services/location.service';
 
 interface LocationStore {
@@ -14,8 +15,8 @@ interface LocationStore {
     error: string | null;
     getLocations: (page?: number, limit?: number, filters?: { name?: string; description?: string; type?: string; floor?: string; reference?: string }) => Promise<PaginatedLocations>;
     getLocationById: (locationId: number) => Promise<ILocation | undefined>;
-    addLocation: (location: Omit<ILocation, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-    updateLocation: (locationId: number, location: Partial<ILocation>) => Promise<void>;
+    addLocation: (location: LocationFormValues) => Promise<void>;
+    updateLocation: (locationId: number, location: LocationFormValues) => Promise<void>;
     deleteLocation: (locationId: number) => Promise<void>;
     loading: boolean;
 }
@@ -68,10 +69,18 @@ export const useLocationStore = create<LocationStore>()(
                 }
             },
 
-            addLocation: async (location: Omit<ILocation, 'id' | 'createdAt' | 'updatedAt'>) => {
+            addLocation: async (location: LocationFormValues) => {
                 set(state => ({ isLoading: { ...state.isLoading, create: true }, error: null }));
                 try {
-                    await LocationService.getInstance().createLocation(location);
+                    // Convert form data to full location data
+                    const fullLocation: Omit<ILocation, 'id' | 'createdAt' | 'updatedAt'> = {
+                        ...location,
+                        floor: location.floor || '', // Ensure floor is always a string
+                        notes: location.notes || '', // Ensure notes is always a string
+                        qrCode: '', // Default empty values for backend-only fields
+                        coordinates: ''
+                    };
+                    await LocationService.getInstance().createLocation(fullLocation);
                     await get().getLocations();
                     set(state => ({ isLoading: { ...state.isLoading, create: false } }));
                 } catch (error) {
@@ -84,10 +93,18 @@ export const useLocationStore = create<LocationStore>()(
                 }
             },
 
-            updateLocation: async (id: number, location: Partial<ILocation>) => {
+            updateLocation: async (id: number, location: LocationFormValues) => {
                 set(state => ({ isLoading: { ...state.isLoading, update: true }, error: null }));
                 try {
-                    await LocationService.getInstance().updateLocation(id, location);
+                    // Convert form data to partial location data
+                    const partialLocation: Partial<ILocation> = {
+                        ...location,
+                        floor: location.floor || '', // Ensure floor is always a string
+                        notes: location.notes || '', // Ensure notes is always a string
+                        qrCode: '', // Default empty values for backend-only fields
+                        coordinates: ''
+                    };
+                    await LocationService.getInstance().updateLocation(id, partialLocation);
                     await get().getLocations();
                     set(state => ({ isLoading: { ...state.isLoading, update: false } }));
                 } catch (error) {

@@ -3,7 +3,6 @@ export interface ItemType {
   code: string
   name: string
   description: string
-  active: boolean
 }
 
 export interface ApiResponse<T> {

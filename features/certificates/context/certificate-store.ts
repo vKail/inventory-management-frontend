@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { ICertificate } from '../data/interfaces/certificate.interface';
 import { CertificateService } from '../services/certificate.service';
 import { toast } from 'sonner';

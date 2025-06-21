@@ -16,6 +16,20 @@ export interface ILocation {
   updatedAt?: Date;
 }
 
+// Interface for form data (without backend-only fields)
+export interface ILocationFormData {
+  name: string;
+  description: string;
+  parentLocationId: number | null;
+  type: 'WAREHOUSE' | 'BUILDING' | 'FLOOR' | 'OFFICE' | 'SHELF' | 'LABORATORY';
+  floor: string;
+  reference: string;
+  capacity: number;
+  capacityUnit: 'UNITS' | 'METERS' | 'SQUARE_METERS';
+  occupancy: number;
+  notes: string;
+}
+
 export interface PaginatedLocations {
   records: ILocation[];
   total: number;

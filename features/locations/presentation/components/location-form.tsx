@@ -28,13 +28,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { locationSchema, LocationFormValues } from '../../schemas/location.schema'
-import { ILocation, LocationTypeLabels, CapacityUnitLabels } from '../../data/interfaces/location.interface'
+import { locationSchema, LocationFormValues } from '@/features/locations/data/schemas/location.schema';
+import { ILocation, ILocationFormData, LocationTypeLabels, CapacityUnitLabels } from '../../data/interfaces/location.interface'
 import { useEffect } from "react"
 import { useLocationStore } from "../../context/location-store"
 
 interface LocationFormProps {
-  initialData?: ILocation
+  initialData?: ILocation | null
   onSubmit: (data: LocationFormValues) => Promise<void>
   isLoading: boolean
 }
@@ -55,8 +55,6 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
       capacity: 0,
       capacityUnit: "UNITS",
       occupancy: 0,
-      qrCode: "",
-      coordinates: "",
       notes: "",
     },
   })
@@ -71,18 +69,16 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
   useEffect(() => {
     if (initialData) {
       form.reset({
-        name: initialData.name,
-        description: initialData.description,
-        parentLocationId: initialData.parentLocationId,
-        type: initialData.type,
-        floor: initialData.floor,
-        reference: initialData.reference,
-        capacity: initialData.capacity,
-        capacityUnit: initialData.capacityUnit,
-        occupancy: initialData.occupancy,
-        qrCode: initialData.qrCode,
-        coordinates: initialData.coordinates,
-        notes: initialData.notes,
+        name: initialData.name || "",
+        description: initialData.description || "",
+        parentLocationId: initialData.parentLocationId || null,
+        type: initialData.type || "BUILDING",
+        floor: initialData.floor || "",
+        reference: initialData.reference || "",
+        capacity: initialData.capacity || 0,
+        capacityUnit: initialData.capacityUnit || "UNITS",
+        occupancy: initialData.occupancy || 0,
+        notes: initialData.notes || "",
       })
     }
   }, [initialData, form])
@@ -121,10 +117,13 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre</FormLabel>
+                      <FormLabel>Nombre *</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} maxLength={100} />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/100 caracteres
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -135,10 +134,13 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descripción</FormLabel>
+                      <FormLabel>Descripción *</FormLabel>
                       <FormControl>
-                        <Textarea {...field} />
+                        <Textarea {...field} maxLength={500} />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/500 caracteres
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -201,7 +203,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo</FormLabel>
+                      <FormLabel>Tipo *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -224,15 +226,21 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                 <FormField
                   control={form.control}
                   name="floor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Piso (Opcional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const { value, ...fieldProps } = field;
+                    return (
+                      <FormItem>
+                        <FormLabel>Piso (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input {...fieldProps} value={value || ""} maxLength={50} />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground text-right">
+                          {(value?.length || 0)}/50 caracteres
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
@@ -240,10 +248,13 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="reference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Referencia</FormLabel>
+                      <FormLabel>Referencia *</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} maxLength={150} />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/150 caracteres
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -255,12 +266,16 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     name="capacity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Capacidad</FormLabel>
+                        <FormLabel>Capacidad *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            value={field.value || 0}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value === "" ? 0 : Number(value));
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -273,7 +288,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     name="capacityUnit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Unidad</FormLabel>
+                        <FormLabel>Unidad *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -299,12 +314,16 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="occupancy"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ocupación</FormLabel>
+                      <FormLabel>Ocupación *</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
+                          value={field.value || 0}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === "" ? 0 : Number(value));
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -317,10 +336,13 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notas</FormLabel>
+                      <FormLabel>Notas *</FormLabel>
                       <FormControl>
-                        <Textarea {...field} />
+                        <Textarea {...field} maxLength={1000} />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/1000 caracteres
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}

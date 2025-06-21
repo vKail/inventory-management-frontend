@@ -17,7 +17,10 @@ export interface IMaterial {
 export const MaterialTypes = {
   CONSUMABLE: 'CONSUMABLE',
   TOOL: 'TOOL',
-  EQUIPMENT: 'EQUIPMENT'
+  EQUIPMENT: 'EQUIPMENT',
+  METAL: 'METAL',
+  OTHER: 'OTHER',
+  DELICATE: 'DELICATE'
 } as const;
 
 export type MaterialType = typeof MaterialTypes[keyof typeof MaterialTypes];

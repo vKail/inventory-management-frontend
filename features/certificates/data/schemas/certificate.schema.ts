@@ -8,6 +8,7 @@ export const certificateSchema = z.object({
         .min(1, 'El número es requerido'),
     date: z.string()
         .min(1, 'La fecha es requerida')
+        .max(10, 'La fecha debe tener el formato YYYY-MM-DD')
         .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener el formato YYYY-MM-DD'),
     type: CertificateType,
     status: CertificateStatus,
