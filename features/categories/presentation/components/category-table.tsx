@@ -5,13 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlusCircle, Pencil, Trash2, Tags } from 'lucide-react';
 import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
-import {
   Card,
   CardContent,
   CardHeader,
@@ -39,7 +32,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useCategoryStore } from '@/features/categories/context/category-store';
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import LoaderComponent from '@/shared/components/ui/Loader';
 
 interface CategoryTableProps {
@@ -173,7 +165,6 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
                 <TableHead>Categoría Padre</TableHead>
                 <TableHead>Vida Útil</TableHead>
                 <TableHead>% Depreciación</TableHead>
-                <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -186,11 +177,6 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
                   <TableCell>{category.parentCategory?.name || 'Ninguna'}</TableCell>
                   <TableCell>{category.standardUsefulLife} años</TableCell>
                   <TableCell>{category.depreciationPercentage}%</TableCell>
-                  <TableCell>
-                    <Badge variant={category.active ? "default" : "outline"}>
-                      {category.active ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button

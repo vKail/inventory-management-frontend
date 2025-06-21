@@ -5,8 +5,8 @@ import { ApiResponse, ItemType, PaginatedItemTypes } from '../data/interfaces/it
 interface ItemTypeServiceProps {
   getItemTypes: (page?: number, limit?: number) => Promise<PaginatedItemTypes>;
   getItemTypeById: (id: string) => Promise<ItemType | undefined>;
-  createItemType: (itemType: Omit<ItemType, 'id' | 'active'>) => Promise<ItemType | undefined>;
-  updateItemType: (id: string, itemType: Partial<Omit<ItemType, 'id' | 'active'>>) => Promise<ItemType | undefined>;
+  createItemType: (itemType: Omit<ItemType, 'id'>) => Promise<ItemType | undefined>;
+  updateItemType: (id: string, itemType: Partial<Omit<ItemType, 'id'>>) => Promise<ItemType | undefined>;
   deleteItemType: (id: string) => Promise<void>;
 }
 
@@ -54,7 +54,7 @@ export class ItemTypeService implements ItemTypeServiceProps {
     }
   }
 
-  public async createItemType(itemType: Omit<ItemType, 'id' | 'active'>): Promise<ItemType | undefined> {
+  public async createItemType(itemType: Omit<ItemType, 'id'>): Promise<ItemType | undefined> {
     try {
       const response = await this.httpClient.post<ItemType>(
         ItemTypeService.url,
@@ -70,7 +70,7 @@ export class ItemTypeService implements ItemTypeServiceProps {
     }
   }
 
-  public async updateItemType(id: string, itemType: Partial<Omit<ItemType, 'id' | 'active'>>): Promise<ItemType | undefined> {
+  public async updateItemType(id: string, itemType: Partial<Omit<ItemType, 'id'>>): Promise<ItemType | undefined> {
     try {
       const response = await this.httpClient.patch<ItemType>(
         `${ItemTypeService.url}/${id}`,
@@ -88,9 +88,9 @@ export class ItemTypeService implements ItemTypeServiceProps {
 
   public async deleteItemType(id: string): Promise<void> {
     try {
-      const response = await this.httpClient.delete<ApiResponse<void>>(`${ItemTypeService.url}/${id}`);
-      if (!response.data.success) {
-        throw new Error(response.data.message.content.join(', '));
+      const response = await this.httpClient.delete<void>(`${ItemTypeService.url}/${id}`);
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
       }
     } catch (error) {
       console.error('Error deleting item type:', error);

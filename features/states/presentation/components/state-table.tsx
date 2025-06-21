@@ -130,7 +130,6 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Descripción</TableHead>
-              <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -139,11 +138,6 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
               <TableRow key={state.id}>
                 <TableCell>{state.name}</TableCell>
                 <TableCell>{state.description}</TableCell>
-                <TableCell>
-                  <Badge variant={state.active ? "default" : "outline"}>
-                    {state.active ? "Activo" : "Inactivo"}
-                  </Badge>
-                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button

@@ -109,10 +109,13 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                   name="code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Código</FormLabel>
+                      <FormLabel>Código *</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} maxLength={50} />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/50 caracteres
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -123,10 +126,13 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre</FormLabel>
+                      <FormLabel>Nombre *</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} maxLength={100} />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/100 caracteres
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -137,10 +143,13 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descripción</FormLabel>
+                      <FormLabel>Descripción *</FormLabel>
                       <FormControl>
-                        <Textarea {...field} />
+                        <Textarea {...field} maxLength={500} />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/500 caracteres
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -151,7 +160,7 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                   name="parentCategoryId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Categoría Padre</FormLabel>
+                      <FormLabel>Categoría Padre (Opcional)</FormLabel>
                       <Select
                         onValueChange={(value) =>
                           field.onChange(value === "none" ? null : Number(value))
@@ -160,7 +169,7 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccione una categoría padre" />
+                            <SelectValue placeholder="Seleccione una categoría padre (opcional)" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

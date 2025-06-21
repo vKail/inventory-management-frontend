@@ -416,7 +416,7 @@ export function LoanFormView() {
                                                 </Button>
                                             </div>
                                             {isValidated && (
-                                                <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <Label className="text-sm font-medium">Nombres</Label>
                                                         <p className="text-sm text-muted-foreground mt-1">
@@ -445,7 +445,7 @@ export function LoanFormView() {
                                                             {requestorInfo.phone || 'No disponible'}
                                                         </p>
                                                     </div>
-                                                </div>
+                                            </div>
                                             )}
                                             {isValidated && (
                                                 <div>
@@ -455,7 +455,7 @@ export function LoanFormView() {
                                                             requestorInfo.type === 'DOCENTES' ? 'Docente' :
                                                                 requestorInfo.type || 'No disponible'}
                                                     </p>
-                                                </div>
+                                            </div>
                                             )}
                                         </div>
                                     </div>
@@ -713,26 +713,26 @@ export function LoanFormView() {
 
                                         {/* Checkbox moved inside the card */}
                                         <div className="pt-4 border-t">
-                                            <FormField
-                                                control={form.control}
-                                                name="blockBlackListed"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                                        <FormControl>
-                                                            <Checkbox
-                                                                checked={field.value}
-                                                                onCheckedChange={field.onChange}
-                                                            />
-                                                        </FormControl>
-                                                        <div className="space-y-1 leading-none">
-                                                            <FormLabel>
-                                                                Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
-                                                            </FormLabel>
-                                                        </div>
-                                                    </FormItem>
-                                                )}
+                            <FormField
+                                control={form.control}
+                                name="blockBlackListed"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
                                             />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel>
+                                                Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
+                                            </FormLabel>
                                         </div>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -741,16 +741,16 @@ export function LoanFormView() {
 
                     {/* Footer */}
                     <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4 mt-8 mb-8">
-                        <Button variant="outline" onClick={() => router.back()}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={handleSubmit}
-                            disabled={form.formState.isSubmitting}
-                        >
-                            {form.formState.isSubmitting ? "Creando..." : "Solicitar Préstamo"}
-                        </Button>
+                            <Button variant="outline" onClick={() => router.back()}>
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={form.formState.isSubmitting}
+                            >
+                                {form.formState.isSubmitting ? "Creando..." : "Solicitar Préstamo"}
+                            </Button>
                     </div>
                 </form>
             </Form>

@@ -380,14 +380,18 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                 name="observations"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Observaciones</FormLabel>
+                                        <FormLabel>Observaciones *</FormLabel>
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Ingrese las observaciones del certificado"
                                                 className="resize-none"
+                                                maxLength={500}
                                                 {...field}
                                             />
                                         </FormControl>
+                                        <div className="text-xs text-muted-foreground text-right">
+                                            {field.value?.length || 0}/500 caracteres
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
