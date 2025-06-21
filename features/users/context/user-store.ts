@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { IUser, PaginatedResponse } from '../data/interfaces/user.interface';
+import { IUser, PaginatedResponse, PersonApiResponse } from '../data/interfaces/user.interface';
 import { UserService } from '../services/user.service';
 
 interface UserStore {
@@ -12,6 +12,7 @@ interface UserStore {
     addUser: (user: Partial<IUser>) => Promise<void>;
     updateUser: (userId: string, user: Partial<IUser>) => Promise<void>;
     deleteUser: (userId: string) => Promise<void>;
+    getPersonById: (id: string) => Promise<PersonApiResponse["data"] | null>;
 }
 
 const STORE_NAME = 'user-storage';
@@ -101,6 +102,18 @@ export const useUserStore = create<UserStore>()(
                     throw error;
                 }
             },
+
+            getPersonById: async (id: string) => {
+                try {
+                    return await UserService.getInstance().getPersonById(id);
+                } catch (error) {
+                    set({
+                        error: 'Error al cargar la persona',
+                        loading: false
+                    });
+                    throw error;
+                }
+            }
         }),
         {
             name: STORE_NAME,

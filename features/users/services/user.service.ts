@@ -9,6 +9,7 @@ interface UserServiceProps {
   updateUser: (id: string, user: Partial<IUser>) => Promise<IUser>;
   deleteUser: (id: string) => Promise<void>;
   getPersonByDni: (dni: string) => Promise<PersonApiResponse["data"] | null>;
+  getPersonById: (id: string) => Promise<PersonApiResponse["data"] | null>;
 }
 
 export class UserService implements UserServiceProps {
@@ -135,6 +136,19 @@ export class UserService implements UserServiceProps {
       return response.data;
     } catch (error) {
       console.error('Error fetching person by DNI:', error);
+      return null;
+    }
+  }
+
+  async getPersonById(id: string): Promise<PersonApiResponse["data"] | null> {
+    try {
+      const response = await this.httpClient.get<PersonApiResponse["data"]>(`${process.env.NEXT_PUBLIC_API_URL}people/${Number(id)}`);
+      if (!response.success) {
+        return null;
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching person by ID:', error);
       return null;
     }
   }
