@@ -1,7 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LoanStatus } from "../../data/interfaces/loan.interface";
-import { LoanFilters } from "../../context/loan-store";
+import { LoanStatus, LoanFilters } from "@/features/loans/data/interfaces/loan.interface";
 
 interface LoanFilterProps {
     onFilterChange: (filters: Partial<LoanFilters>) => void;

@@ -1,14 +1,6 @@
 import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
-import { Loan, LoanCreate, LoanReturn, ApiResponse, PaginatedResponse } from "../data/interfaces/loan.interface";
-
-interface LoanServiceProps {
-    getAll: (queryString: string) => Promise<ApiResponse<PaginatedResponse<Loan>>>;
-    getById: (id: number) => Promise<Loan | undefined>;
-    getHistoryByDni: (dni: string) => Promise<Loan[]>;
-    create: (loan: LoanCreate) => Promise<IHttpResponse<Loan>>;
-    return: (loanReturn: LoanReturn) => Promise<IHttpResponse<Loan>>;
-}
+import { Loan, LoanCreate, LoanReturn, ApiResponse, PaginatedResponse, LoanServiceProps } from "@/features/loans/data/interfaces/loan.interface";
 
 export class LoanService implements LoanServiceProps {
     private static instance: LoanService;

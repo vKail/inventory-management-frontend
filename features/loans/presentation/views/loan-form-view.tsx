@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, addHours, addWeeks } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarIcon, Handshake, Plus } from "lucide-react";
 import { useLoanStore } from "../../context/loan-store";
@@ -31,36 +31,27 @@ import { useInventoryStore } from "@/features/inventory/context/inventory-store"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useFieldArray } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { LoanCreate as LoanCreateType, LoanDetail as LoanDetailType } from "../../data/interfaces/loan.interface";
+import { LoanCreate as LoanCreateType, LoanDetailCreate as LoanDetailType } from "@/features/loans/data/interfaces/loan.interface";
 import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";
 import { toast } from "sonner";
 import { LoanScanModal } from "../components/loan-scan-modal";
 import { z } from "zod";
 import { Label } from "@/components/ui/label";
-import { useUserStore } from "@/features/users/context/user-store";
 import { UserService } from "@/features/users/services/user.service";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RequestorInfo {
     firstName: string;
     lastName: string;
     email: string;
     phone: string;
-    role: string;
+    type: string;
 }
 
 interface LoanDetail {
     itemId: number;
     exitConditionId: number;
     exitObservations?: string;
-}
-
-interface LoanCreate {
-    requestorId: string;
-    scheduledReturnDate: string;
-    reason: string;
-    notes: string;
-    blockBlackListed: boolean;
-    loanDetails: LoanDetail[];
 }
 
 interface ScannedItem {
@@ -70,13 +61,14 @@ interface ScannedItem {
     image: string | null;
     exitObservations: string;
     conditionId?: string;
+    exitConditionId?: string;
 }
 
 export function LoanFormView() {
     const router = useRouter();
     const { createLoan } = useLoanStore();
     const { getInventoryItemByCode } = useInventoryStore();
-    const { getConditionById } = useConditionStore();
+    const { getConditionById, getConditions, conditions } = useConditionStore();
     const userService = UserService.getInstance();
     const [isValidated, setIsValidated] = useState(false);
     const [isScanModalOpen, setIsScanModalOpen] = useState(false);
@@ -88,7 +80,7 @@ export function LoanFormView() {
         lastName: "",
         email: "",
         phone: "",
-        role: "",
+        type: "",
     });
 
     const formSchema = z.object({
@@ -96,34 +88,38 @@ export function LoanFormView() {
         scheduledReturnDate: z.string().min(1, "La fecha de devolución es requerida").refine(
             (date) => {
                 const selectedDate = new Date(date);
-                return selectedDate > new Date();
+                const now = new Date();
+                const twoHoursFromNow = addHours(now, 2);
+                const fourWeeksFromNow = addWeeks(now, 4);
+                return selectedDate >= twoHoursFromNow && selectedDate <= fourWeeksFromNow;
             },
             {
-                message: "La fecha de devolución debe ser posterior a la fecha actual"
+                message: "La fecha de devolución debe ser mínimo 2 horas y máximo 4 semanas desde ahora"
             }
         ),
-        reason: z.string().min(1, "El motivo es requerido"),
-        notes: z.string().optional(),
+        reason: z.string().min(1, "El motivo es requerido").max(250, "El motivo no puede exceder 250 caracteres"),
+        notes: z.string().max(250, "Las notas no pueden exceder 250 caracteres").optional(),
         requestorInfo: z.object({
             firstName: z.string().optional(),
             lastName: z.string().optional(),
             email: z.string().email("Correo electrónico inválido").optional().or(z.literal("")),
             phone: z.string().optional(),
-            role: z.string().optional()
+            type: z.string().optional()
         }),
         blockBlackListed: z.boolean(),
         loanDetails: z.array(z.object({
             itemId: z.number(),
             exitConditionId: z.number(),
-            exitObservations: z.string().optional()
-        }))
+            exitObservations: z.string().max(250, "Las observaciones no pueden exceder 250 caracteres").optional(),
+            quantity: z.number().optional()
+        })).min(1, "Debe agregar al menos un item")
     });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             requestorId: "",
-            scheduledReturnDate: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+            scheduledReturnDate: format(addHours(new Date(), 2), "yyyy-MM-dd'T'HH:mm"),
             reason: "",
             notes: "",
             requestorInfo: {
@@ -131,7 +127,7 @@ export function LoanFormView() {
                 lastName: "",
                 email: "",
                 phone: "",
-                role: ""
+                type: ""
             },
             blockBlackListed: false,
             loanDetails: []
@@ -146,6 +142,19 @@ export function LoanFormView() {
     useEffect(() => {
         form.setValue("requestorInfo", requestorInfo);
     }, [requestorInfo, form]);
+
+    useEffect(() => {
+        // Load all conditions when component mounts
+        const loadConditions = async () => {
+            try {
+                await getConditions(1, 100); // Load first 100 conditions
+                console.log("Conditions loaded:", conditions);
+            } catch (error) {
+                console.error("Error loading conditions:", error);
+            }
+        };
+        loadConditions();
+    }, [getConditions]);
 
     const handleValidate = async () => {
         const requestorId = form.getValues("requestorId");
@@ -165,7 +174,7 @@ export function LoanFormView() {
                     lastName: person.lastName,
                     email: person.email,
                     phone: person.phone,
-                    role: person.type
+                    type: person.type
                 });
                 setIsValidated(true);
                 form.clearErrors("requestorId");
@@ -201,19 +210,37 @@ export function LoanFormView() {
             return;
         }
 
+        // Obtener el nombre de la condición
+        let conditionName = "No especificada";
+        if (item.conditionId) {
+            const condition = await getConditionById(item.conditionId.toString());
+            if (condition) {
+                conditionName = condition.name;
+                setConditionNames(prev => ({
+                    ...prev,
+                    [item.conditionId!.toString()]: condition.name
+                }));
+            }
+        }
+
         const newItem: ScannedItem = {
             code: item.code,
             name: item.name,
             characteristics: item.modelCharacteristics || "",
             image: item.images?.[0]?.filePath || null,
             exitObservations: "",
-            conditionId: item.conditionId?.toString()
+            conditionId: item.conditionId?.toString(),
+            exitConditionId: item.conditionId?.toString()
         };
+
+        console.log("New scanned item:", newItem);
+        console.log("Available conditions:", conditions);
 
         setScannedItems(prev => [...prev, newItem]);
 
+        console.log(newItem)
         // Agregar el detalle al formulario
-        const loanDetail: LoanDetailType = {
+        const loanDetail = {
             itemId: Number(item.id),
             exitConditionId: Number(item.conditionId) || 0,
             exitObservations: ""
@@ -234,6 +261,27 @@ export function LoanFormView() {
         ));
     };
 
+    const handleExitConditionChange = (itemCode: string, conditionId: string | number) => {
+        const conditionIdStr = conditionId.toString();
+        console.log("Changing exit condition for item:", itemCode, "to:", conditionIdStr);
+
+        setScannedItems(prev =>
+            prev.map(item =>
+                item.code === itemCode ? { ...item, exitConditionId: conditionIdStr } : item
+            )
+        );
+
+        // Update form values
+        const currentDetails = form.getValues("loanDetails");
+        const updatedDetails = currentDetails.map(detail => {
+            if (detail.itemId === Number(itemCode)) {
+                return { ...detail, exitConditionId: Number(conditionId) };
+            }
+            return detail;
+        });
+        form.setValue("loanDetails", updatedDetails);
+    };
+
     const handleRemoveItem = (code: string) => {
         setScannedItems(prev => prev.filter(item => item.code !== code));
         form.setValue("loanDetails", form.getValues("loanDetails").filter(detail => detail.itemId !== Number(code)));
@@ -248,16 +296,15 @@ export function LoanFormView() {
             const validationResult = formSchema.safeParse(formData);
 
             if (!validationResult.success) {
-                // Mostrar errores de validación
+                // Mostrar errores de validación en el formulario
                 const errors = validationResult.error.errors;
                 errors.forEach(error => {
-                    toast.error(error.message);
+                    const fieldPath = error.path.join('.');
+                    form.setError(fieldPath as any, {
+                        type: "manual",
+                        message: error.message
+                    });
                 });
-                return;
-            }
-
-            if (scannedItems.length === 0) {
-                toast.error("Debe agregar al menos un item");
                 return;
             }
 
@@ -297,7 +344,7 @@ export function LoanFormView() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto mb-10">
             <div className="flex justify-between items-center mb-6">
                 <Breadcrumb>
                     <BreadcrumbList>
@@ -368,86 +415,48 @@ export function LoanFormView() {
                                                     Validar
                                                 </Button>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="requestorInfo.firstName"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Nombres</FormLabel>
-                                                            <FormControl>
-                                                                <Input {...field} disabled={!isValidated} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="requestorInfo.lastName"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Apellidos</FormLabel>
-                                                            <FormControl>
-                                                                <Input {...field} disabled={!isValidated} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="requestorInfo.email"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Correo Electrónico</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="email" {...field} disabled={!isValidated} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="requestorInfo.phone"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Número de Teléfono</FormLabel>
-                                                            <FormControl>
-                                                                <Input type="tel" {...field} disabled={!isValidated} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="requestorInfo.role"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>Rol</FormLabel>
-                                                            <FormControl>
-                                                                <select
-                                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
-                                                                    {...field}
-                                                                    disabled={!isValidated}
-                                                                >
-                                                                    <option value="">Seleccionar rol</option>
-                                                                    <option value="estudiante">Estudiante</option>
-                                                                    <option value="docente">Docente</option>
-                                                                    <option value="administrativo">Administrativo</option>
-                                                                </select>
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
+                                            {isValidated && (
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <Label className="text-sm font-medium">Nombres</Label>
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            {requestorInfo.firstName || 'No disponible'}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-sm font-medium">Apellidos</Label>
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            {requestorInfo.lastName || 'No disponible'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {isValidated && (
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <Label className="text-sm font-medium">Correo Electrónico</Label>
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            {requestorInfo.email || 'No disponible'}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <Label className="text-sm font-medium">Número de Teléfono</Label>
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            {requestorInfo.phone || 'No disponible'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {isValidated && (
+                                                <div>
+                                                    <Label className="text-sm font-medium">Rol</Label>
+                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                        {requestorInfo.type === 'ESTUDIANTES' ? 'Estudiante' :
+                                                            requestorInfo.type === 'DOCENTES' ? 'Docente' :
+                                                                requestorInfo.type || 'No disponible'}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -479,8 +488,15 @@ export function LoanFormView() {
                                                     <FormItem>
                                                         <FormLabel>Motivo del Préstamo</FormLabel>
                                                         <FormControl>
-                                                            <Textarea {...field} />
+                                                            <Textarea
+                                                                {...field}
+                                                                maxLength={250}
+                                                                placeholder="Ingrese el motivo del préstamo (máximo 250 caracteres)"
+                                                            />
                                                         </FormControl>
+                                                        <div className="text-xs text-muted-foreground text-right">
+                                                            {field.value?.length || 0}/250
+                                                        </div>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -524,9 +540,12 @@ export function LoanFormView() {
                                                                                 field.onChange(format(selectedDate, "yyyy-MM-dd'T'HH:mm"));
                                                                             }
                                                                         }}
-                                                                        disabled={(date) =>
-                                                                            date < new Date()
-                                                                        }
+                                                                        disabled={(date) => {
+                                                                            const now = new Date();
+                                                                            const twoHoursFromNow = addHours(now, 2);
+                                                                            const fourWeeksFromNow = addWeeks(now, 4);
+                                                                            return date < twoHoursFromNow || date > fourWeeksFromNow;
+                                                                        }}
                                                                         initialFocus
                                                                     />
                                                                     <div className="p-3 border-t">
@@ -558,8 +577,15 @@ export function LoanFormView() {
                                                     <FormItem>
                                                         <FormLabel>Notas Adicionales</FormLabel>
                                                         <FormControl>
-                                                            <Textarea {...field} />
+                                                            <Textarea
+                                                                {...field}
+                                                                maxLength={250}
+                                                                placeholder="Ingrese notas adicionales (máximo 250 caracteres)"
+                                                            />
                                                         </FormControl>
+                                                        <div className="text-xs text-muted-foreground text-right">
+                                                            {field.value?.length || 0}/250
+                                                        </div>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -616,9 +642,6 @@ export function LoanFormView() {
                                                                     <div>
                                                                         <h3 className="font-medium">{item.name}</h3>
                                                                         <p className="text-sm text-muted-foreground">{item.characteristics}</p>
-                                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                                            <span className="font-medium">Condición de salida:</span> {item.conditionId ? conditionNames[item.conditionId] || "No especificada" : "No especificada"}
-                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                                 <Button
@@ -630,14 +653,42 @@ export function LoanFormView() {
                                                                 </Button>
                                                             </div>
                                                             <div className="mt-4">
+                                                                <Label htmlFor={`exit-condition-${item.code}`}>Condición de salida</Label>
+                                                                <p className="text-xs text-muted-foreground mb-2">
+                                                                    La condición por defecto es la condición actual del item. Si la condición cambia, por favor actualícela.
+                                                                </p>
+                                                                <Select
+                                                                    value={String(item.exitConditionId || item.conditionId || "")}
+                                                                    onValueChange={(value) => {
+                                                                        console.log("Select onChange called with value:", value, "type:", typeof value);
+                                                                        handleExitConditionChange(item.code, value);
+                                                                    }}
+                                                                >
+                                                                    <SelectTrigger className="mt-1">
+                                                                        <SelectValue placeholder="Seleccionar condición de salida" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {conditions.map(condition => (
+                                                                            <SelectItem key={condition.id} value={String(condition.id)}>
+                                                                                {condition.name}
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="mt-4">
                                                                 <Label htmlFor={`observations-${item.code}`}>Observaciones de salida</Label>
                                                                 <Textarea
                                                                     id={`observations-${item.code}`}
                                                                     value={item.exitObservations}
                                                                     onChange={(e) => handleObservationsChange(item.code, e.target.value)}
-                                                                    placeholder="Ingrese observaciones sobre el estado del item al momento del préstamo"
+                                                                    placeholder="Ingrese observaciones sobre el estado del item al momento del préstamo (máximo 250 caracteres)"
+                                                                    maxLength={250}
                                                                     className="mt-1"
                                                                 />
+                                                                <div className="text-xs text-muted-foreground text-right mt-1">
+                                                                    {item.exitObservations.length}/250
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -648,6 +699,40 @@ export function LoanFormView() {
                                                 No hay items agregados. Haga clic en "Comenzar a agregar Items" para comenzar.
                                             </div>
                                         )}
+
+                                        {/* FormMessage for loanDetails validation */}
+                                        <FormField
+                                            control={form.control}
+                                            name="loanDetails"
+                                            render={() => (
+                                                <FormItem>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        {/* Checkbox moved inside the card */}
+                                        <div className="pt-4 border-t">
+                                            <FormField
+                                                control={form.control}
+                                                name="blockBlackListed"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                        <FormControl>
+                                                            <Checkbox
+                                                                checked={field.value}
+                                                                onCheckedChange={field.onChange}
+                                                            />
+                                                        </FormControl>
+                                                        <div className="space-y-1 leading-none">
+                                                            <FormLabel>
+                                                                Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
+                                                            </FormLabel>
+                                                        </div>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -655,40 +740,17 @@ export function LoanFormView() {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
-                        <div className="flex items-center gap-2">
-                            <FormField
-                                control={form.control}
-                                name="blockBlackListed"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>
-                                                Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
-                                            </FormLabel>
-                                        </div>
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                            <Button variant="outline" onClick={() => router.back()}>
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={form.formState.isSubmitting}
-                            >
-                                {form.formState.isSubmitting ? "Creando..." : "Solicitar Préstamo"}
-                            </Button>
-                        </div>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4 mt-8 mb-8">
+                        <Button variant="outline" onClick={() => router.back()}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={form.formState.isSubmitting}
+                        >
+                            {form.formState.isSubmitting ? "Creando..." : "Solicitar Préstamo"}
+                        </Button>
                     </div>
                 </form>
             </Form>
@@ -700,4 +762,4 @@ export function LoanFormView() {
             />
         </div>
     );
-} 
+}

@@ -1,7 +1,6 @@
-import { Loan } from "../../data/interfaces/loan.interface";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "../utils/date-formatter";
-import { LoanStatus } from "../../data/interfaces/loan.interface";
+import { formatDate } from "../../data/utils/date-formatter";
+import { Loan, LoanStatus } from "@/features/loans/data/interfaces/loan.interface";
 import { useState } from "react";
 import { LoanDetailsModal } from "./loan-details-modal";
 

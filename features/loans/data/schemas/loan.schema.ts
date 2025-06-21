@@ -3,7 +3,8 @@ import { z } from "zod";
 export const loanDetailSchema = z.object({
     itemCode: z.string().min(1, "El código del bien es requerido"),
     exitConditionId: z.number().min(1, "La condición de salida es requerida"),
-    exitObservations: z.string()
+    exitObservations: z.string(),
+    quantity: z.number().min(1, "La cantidad debe ser mayor a 0"),
 });
 
 export const requestorInfoSchema = z.object({
@@ -22,7 +23,8 @@ export const loanCreateSchema = z.object({
     loanDetails: z.array(z.object({
         itemCode: z.string().min(1, "El código del item es requerido"),
         exitConditionId: z.number().min(1, "La condición de salida es requerida"),
-        exitObservations: z.string().optional()
+        exitObservations: z.string().optional(),
+        quantity: z.number().min(1, "La cantidad debe ser mayor a 0"),
     })).min(1, "Debe agregar al menos un item"),
     blockBlackListed: z.boolean(),
     requestorInfo: z.object({
