@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Pencil, Trash2, Package } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Package, X } from 'lucide-react';
 import {
     Card,
     CardContent,
@@ -10,6 +10,13 @@ import {
     CardFooter,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem
+} from '@/components/ui/select';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,15 +36,50 @@ import { Badge } from "@/components/ui/badge";
 import { MaterialPaginator } from './material-paginator';
 import LoaderComponent from '@/shared/components/ui/Loader';
 
+// Definimos los tipos de material disponibles
+const MaterialTypes = {
+    CONSUMABLE: "Consumible",
+    TOOL: "Herramienta",
+    EQUIPMENT: "Equipo",
+    METAL: "Metal",
+    OTHER: "Otro",
+    DELICATE: "Delicado",
+    PLASTIC: "Plástico",
+} as const;
+
+// Mapeo de tipos del backend a tipos del frontend
+const normalizeMaterialType = (type: string): string => {
+    const normalized = type.toUpperCase().trim();
+
+    // Mapeo de variaciones del backend
+    const typeMapping: { [key: string]: string } = {
+        'METAL': 'METAL',
+        'OTRO': 'OTHER',
+        'PLÁSTICO': 'PLASTIC',
+        'PLASTICO': 'PLASTIC',
+        'CONSUMABLE': 'CONSUMABLE',
+        'TOOL': 'TOOL',
+        'EQUIPMENT': 'EQUIPMENT',
+        'DELICATE': 'DELICATE',
+    };
+
+    return typeMapping[normalized] || 'OTHER';
+};
+
 export default function MaterialTable() {
     const router = useRouter();
     const {
-        materials,
+        filteredMaterials,
+        searchTerm,
+        typeFilter,
         loading,
         getMaterials,
         deleteMaterial,
         currentPage,
-        totalPages
+        totalPages,
+        setSearchTerm,
+        setTypeFilter,
+        clearFilters,
     } = useMaterialStore();
 
     const [materialToDelete, setMaterialToDelete] = useState<number | null>(null);
@@ -70,32 +112,78 @@ export default function MaterialTable() {
     };
 
     const getMaterialTypeBadge = (type: string) => {
+        const normalizedType = normalizeMaterialType(type);
+
         const variants: { [key: string]: string } = {
             'CONSUMABLE': 'default',
             'TOOL': 'secondary',
-            'EQUIPMENT': 'destructive'
+            'EQUIPMENT': 'destructive',
+            'METAL': 'outline',
+            'OTHER': 'default',
+            'DELICATE': 'secondary',
+            'PLASTIC': 'secondary'
         };
+
         const labels: { [key: string]: string } = {
             'CONSUMABLE': 'Consumible',
             'TOOL': 'Herramienta',
-            'EQUIPMENT': 'Equipo'
+            'EQUIPMENT': 'Equipo',
+            'METAL': 'Metal',
+            'OTHER': 'Otro',
+            'DELICATE': 'Delicado',
+            'PLASTIC': 'Plástico'
         };
-        return <Badge variant={variants[type] as "default" | "destructive" | "outline" | "secondary"}>{labels[type]}</Badge>;
+
+        return <Badge variant={variants[normalizedType] as "default" | "destructive" | "outline" | "secondary"}>{labels[normalizedType] || type}</Badge>;
     };
 
-    const handlePageChange = (page: number) => {
-        getMaterials(page, itemsPerPage);
+    const handlePageChange = async (page: number) => {
+        try {
+            await getMaterials(page, itemsPerPage);
+        } catch (error) {
+            console.error('Error changing page:', error);
+            toast.error('Error al cambiar de página');
+        }
     };
 
     return (
         <Card className="w-full max-w-[1200px] mx-auto">
             <CardHeader className="px-4 md:px-8 pb-0">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                         <Input
-                            placeholder="Buscar por nombre..."
+                            placeholder="Buscar por nombre o descripción..."
                             className="w-full md:w-64"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                        <Select
+                            value={typeFilter}
+                            onValueChange={setTypeFilter}
+                        >
+                            <SelectTrigger className="w-full md:w-48">
+                                <SelectValue placeholder="Todos los tipos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los tipos</SelectItem>
+                                {Object.entries(MaterialTypes).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>
+                                        {value}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {(searchTerm || typeFilter !== 'all') && (
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10"
+                                onClick={clearFilters}
+                                title="Limpiar todos los filtros"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        )}
                     </div>
 
                     <Button
@@ -106,7 +194,7 @@ export default function MaterialTable() {
                         Nuevo Material
                     </Button>
                 </div>
-                <hr className="border-t border-muted mt-4" />
+                <hr className="border-t border-muted mt-3" />
             </CardHeader>
 
             <CardContent className="px-4 md:px-8 pb-6 overflow-x-auto">
@@ -127,7 +215,7 @@ export default function MaterialTable() {
                                         <LoaderComponent rows={5} columns={4} />
                                     </TableCell>
                                 </TableRow>
-                            ) : materials.length === 0 ? (
+                            ) : filteredMaterials.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="py-20 text-center text-muted-foreground">
                                         <div className="flex flex-col items-center gap-2">
@@ -137,11 +225,11 @@ export default function MaterialTable() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                materials.map((material) => (
+                                filteredMaterials.map((material) => (
                                     <TableRow key={material.id}>
                                         <TableCell>{material.name}</TableCell>
                                         <TableCell>{material.description}</TableCell>
-                                        <TableCell>{material.materialType}</TableCell>
+                                        <TableCell>{getMaterialTypeBadge(material.materialType)}</TableCell>
                                         <TableCell className="text-right">
                                             <Button
                                                 variant="ghost"
@@ -190,11 +278,13 @@ export default function MaterialTable() {
             </CardContent>
 
             <CardFooter className="flex items-center justify-center py-4">
-                <MaterialPaginator
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                />
+                {!loading && filteredMaterials.length > 0 && (
+                    <MaterialPaginator
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                )}
             </CardFooter>
         </Card>
     );

@@ -62,6 +62,7 @@ interface ScannedItem {
     exitObservations: string;
     conditionId?: string;
     exitConditionId?: string;
+    quantity: number;
 }
 
 export function LoanFormView() {
@@ -111,7 +112,7 @@ export function LoanFormView() {
             itemId: z.number(),
             exitConditionId: z.number(),
             exitObservations: z.string().max(250, "Las observaciones no pueden exceder 250 caracteres").optional(),
-            quantity: z.number().optional()
+            quantity: z.number().min(1, "La cantidad debe ser mayor a 0")
         })).min(1, "Debe agregar al menos un item")
     });
 
@@ -230,7 +231,8 @@ export function LoanFormView() {
             image: item.images?.[0]?.filePath || null,
             exitObservations: "",
             conditionId: item.conditionId?.toString(),
-            exitConditionId: item.conditionId?.toString()
+            exitConditionId: item.conditionId?.toString(),
+            quantity: 1
         };
 
         console.log("New scanned item:", newItem);
@@ -243,7 +245,8 @@ export function LoanFormView() {
         const loanDetail = {
             itemId: Number(item.id),
             exitConditionId: Number(item.conditionId) || 0,
-            exitObservations: ""
+            exitObservations: "",
+            quantity: 1
         };
 
         form.setValue("loanDetails", [...form.getValues("loanDetails"), loanDetail]);
@@ -276,6 +279,26 @@ export function LoanFormView() {
         const updatedDetails = currentDetails.map(detail => {
             if (detail.itemId === Number(itemCode)) {
                 return { ...detail, exitConditionId: Number(conditionId) };
+            }
+            return detail;
+        });
+        form.setValue("loanDetails", updatedDetails);
+    };
+
+    const handleQuantityChange = (itemCode: string, quantity: number) => {
+        console.log("Changing quantity for item:", itemCode, "to:", quantity);
+
+        setScannedItems(prev =>
+            prev.map(item =>
+                item.code === itemCode ? { ...item, quantity } : item
+            )
+        );
+
+        // Update form values
+        const currentDetails = form.getValues("loanDetails");
+        const updatedDetails = currentDetails.map(detail => {
+            if (detail.itemId === Number(itemCode)) {
+                return { ...detail, quantity };
             }
             return detail;
         });
@@ -316,7 +339,8 @@ export function LoanFormView() {
                 return {
                     itemId: Number(inventoryItem?.id) || 0,
                     exitConditionId: Number(inventoryItem?.conditionId) || 0,
-                    exitObservations: item.exitObservations
+                    exitObservations: item.exitObservations,
+                    quantity: item.quantity
                 };
             }));
 
@@ -393,7 +417,7 @@ export function LoanFormView() {
                                 <div className="p-6 pt-0">
                                     <div className="grid grid-cols-1 gap-6">
                                         <div className="space-y-4">
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 items-end">
                                                 <FormField
                                                     control={form.control}
                                                     name="requestorId"
@@ -410,13 +434,12 @@ export function LoanFormView() {
                                                 <Button
                                                     type="button"
                                                     onClick={handleValidate}
-                                                    className="mt-8"
                                                 >
                                                     Validar
                                                 </Button>
                                             </div>
                                             {isValidated && (
-                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-2 gap-4">
                                                     <div>
                                                         <Label className="text-sm font-medium">Nombres</Label>
                                                         <p className="text-sm text-muted-foreground mt-1">
@@ -445,7 +468,7 @@ export function LoanFormView() {
                                                             {requestorInfo.phone || 'No disponible'}
                                                         </p>
                                                     </div>
-                                            </div>
+                                                </div>
                                             )}
                                             {isValidated && (
                                                 <div>
@@ -455,7 +478,7 @@ export function LoanFormView() {
                                                             requestorInfo.type === 'DOCENTES' ? 'Docente' :
                                                                 requestorInfo.type || 'No disponible'}
                                                     </p>
-                                            </div>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -652,29 +675,42 @@ export function LoanFormView() {
                                                                     Eliminar
                                                                 </Button>
                                                             </div>
-                                                            <div className="mt-4">
-                                                                <Label htmlFor={`exit-condition-${item.code}`}>Condición de salida</Label>
-                                                                <p className="text-xs text-muted-foreground mb-2">
-                                                                    La condición por defecto es la condición actual del item. Si la condición cambia, por favor actualícela.
-                                                                </p>
-                                                                <Select
-                                                                    value={String(item.exitConditionId || item.conditionId || "")}
-                                                                    onValueChange={(value) => {
-                                                                        console.log("Select onChange called with value:", value, "type:", typeof value);
-                                                                        handleExitConditionChange(item.code, value);
-                                                                    }}
-                                                                >
-                                                                    <SelectTrigger className="mt-1">
-                                                                        <SelectValue placeholder="Seleccionar condición de salida" />
-                                                                    </SelectTrigger>
-                                                                    <SelectContent>
-                                                                        {conditions.map(condition => (
-                                                                            <SelectItem key={condition.id} value={String(condition.id)}>
-                                                                                {condition.name}
-                                                                            </SelectItem>
-                                                                        ))}
-                                                                    </SelectContent>
-                                                                </Select>
+                                                            <div className="mt-4 flex flex-row gap-4 items-end">
+                                                                <div className="flex-1">
+                                                                    <Label htmlFor={`exit-condition-${item.code}`}>Condición de salida</Label>
+                                                                    <p className="text-xs text-muted-foreground mb-2">
+                                                                        La condición por defecto es la condición actual del item. Si la condición cambia, por favor actualícela.
+                                                                    </p>
+                                                                    <Select
+                                                                        value={String(item.exitConditionId || item.conditionId || "")}
+                                                                        onValueChange={(value) => {
+                                                                            console.log("Select onChange called with value:", value, "type:", typeof value);
+                                                                            handleExitConditionChange(item.code, value);
+                                                                        }}
+                                                                    >
+                                                                        <SelectTrigger className="mt-1">
+                                                                            <SelectValue placeholder="Seleccionar condición de salida" />
+                                                                        </SelectTrigger>
+                                                                        <SelectContent>
+                                                                            {conditions.map(condition => (
+                                                                                <SelectItem key={condition.id} value={String(condition.id)}>
+                                                                                    {condition.name}
+                                                                                </SelectItem>
+                                                                            ))}
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                </div>
+                                                                <div className="w-32">
+                                                                    <Label htmlFor={`quantity-${item.code}`}>Cantidad</Label>
+                                                                    <Input
+                                                                        id={`quantity-${item.code}`}
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={item.quantity}
+                                                                        onChange={(e) => handleQuantityChange(item.code, parseInt(e.target.value) || 1)}
+                                                                        className="mt-1"
+                                                                    />
+                                                                </div>
                                                             </div>
                                                             <div className="mt-4">
                                                                 <Label htmlFor={`observations-${item.code}`}>Observaciones de salida</Label>
@@ -713,26 +749,26 @@ export function LoanFormView() {
 
                                         {/* Checkbox moved inside the card */}
                                         <div className="pt-4 border-t">
-                            <FormField
-                                control={form.control}
-                                name="blockBlackListed"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={field.onChange}
+                                            <FormField
+                                                control={form.control}
+                                                name="blockBlackListed"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                        <FormControl>
+                                                            <Checkbox
+                                                                checked={field.value}
+                                                                onCheckedChange={field.onChange}
+                                                            />
+                                                        </FormControl>
+                                                        <div className="space-y-1 leading-none">
+                                                            <FormLabel>
+                                                                Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
+                                                            </FormLabel>
+                                                        </div>
+                                                    </FormItem>
+                                                )}
                                             />
-                                        </FormControl>
-                                        <div className="space-y-1 leading-none">
-                                            <FormLabel>
-                                                Acepto la responsabilidad por cualquier daño o pérdida del bien solicitado
-                                            </FormLabel>
                                         </div>
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -741,16 +777,16 @@ export function LoanFormView() {
 
                     {/* Footer */}
                     <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4 mt-8 mb-8">
-                            <Button variant="outline" onClick={() => router.back()}>
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={form.formState.isSubmitting}
-                            >
-                                {form.formState.isSubmitting ? "Creando..." : "Solicitar Préstamo"}
-                            </Button>
+                        <Button variant="outline" onClick={() => router.back()}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={form.formState.isSubmitting}
+                        >
+                            {form.formState.isSubmitting ? "Creando..." : "Solicitar Préstamo"}
+                        </Button>
                     </div>
                 </form>
             </Form>

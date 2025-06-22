@@ -30,9 +30,7 @@ function LocationsContent() {
                     </BreadcrumbList>
                 </Breadcrumb>
 
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold">Ubicaciones</h1>
-                </div>
+                <h1 className="text-2xl font-bold">Ubicaciones</h1>
             </div>
 
             <LocationTable />
