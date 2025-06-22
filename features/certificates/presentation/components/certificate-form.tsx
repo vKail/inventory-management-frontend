@@ -63,24 +63,9 @@ interface CertificateFormProps {
 export function CertificateForm({ initialData, onSubmit, isLoading, id }: CertificateFormProps) {
     const router = useRouter();
     const { getCertificateById } = useCertificateStore();
-    const { getUsers } = useUserStore();
-    const [users, setUsers] = useState<any[]>([]);
+    const { getUsers, users } = useUserStore();
     const [openDelivery, setOpenDelivery] = useState(false);
     const [openReception, setOpenReception] = useState(false);
-
-    useEffect(() => {
-        const loadUsers = async () => {
-            try {
-                const response = await getUsers(1, 100);
-                if (response && response.records) {
-                    setUsers(response.records);
-                }
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
-        };
-        loadUsers();
-    }, [getUsers]);
 
     const form = useForm<CertificateFormValues>({
         resolver: zodResolver(certificateSchema),
@@ -110,6 +95,17 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
             });
         }
     }, [initialData, form]);
+
+    useEffect(() => {
+        const loadUsers = async () => {
+            try {
+                await getUsers(1, 100);
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        };
+        loadUsers();
+    }, [getUsers]);
 
     const handleSubmit = async (data: CertificateFormValues) => {
         const formattedData = {
