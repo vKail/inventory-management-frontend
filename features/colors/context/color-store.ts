@@ -5,6 +5,8 @@ import { ColorService } from "../services/color.service";
 
 interface ColorStore {
     colors: IColorResponse[];
+    filteredColors: IColorResponse[];
+    searchTerm: string;
     loading: boolean;
     error: string | null;
     currentPage: number;
@@ -15,6 +17,8 @@ interface ColorStore {
     updateColor: (colorId: number, color: IColor) => Promise<void>;
     deleteColor: (colorId: number) => Promise<void>;
     refreshTable: () => Promise<void>;
+    setSearchTerm: (term: string) => void;
+    clearFilters: () => void;
 }
 
 const STORE_NAME = 'color';
@@ -23,10 +27,32 @@ export const useColorStore = create<ColorStore>()(
     persist(
         (set, get) => ({
             colors: [],
+            filteredColors: [],
+            searchTerm: '',
             loading: false,
             error: null,
             currentPage: 1,
             totalPages: 1,
+
+            setSearchTerm: (term: string) => {
+                const { colors } = get();
+                const filtered = colors.filter((color) => {
+                    const matchesSearch = color.name.toLowerCase().includes(term.toLowerCase()) ||
+                        color.hexCode.toLowerCase().includes(term.toLowerCase()) ||
+                        color.description.toLowerCase().includes(term.toLowerCase());
+
+                    return matchesSearch;
+                });
+                set({ searchTerm: term, filteredColors: filtered });
+            },
+
+            clearFilters: () => {
+                const { colors } = get();
+                set({
+                    searchTerm: '',
+                    filteredColors: colors
+                });
+            },
 
             refreshTable: async () => {
                 const { currentPage } = get();
@@ -37,21 +63,41 @@ export const useColorStore = create<ColorStore>()(
                 set({ loading: true });
                 try {
                     const data = await ColorService.getInstance().getColors(page, limit);
+
+                    if (data.pages > 0 && page > data.pages) {
+                        await get().getColors(1, limit);
+                        return;
+                    }
+
+                    const { searchTerm } = get();
+                    const allColors = data.records;
+
+                    const filtered = allColors.filter((color) => {
+                        const matchesSearch = searchTerm === '' ||
+                            color.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            color.hexCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            color.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+                        return matchesSearch;
+                    });
+
                     set({
-                        colors: data.records,
+                        colors: allColors,
+                        filteredColors: filtered,
                         currentPage: data.page,
                         totalPages: data.pages,
+                        loading: false,
                         error: null
                     });
                 } catch (err: any) {
                     set({
                         error: "Error al cargar los colores",
                         colors: [],
+                        filteredColors: [],
                         currentPage: 1,
-                        totalPages: 1
+                        totalPages: 1,
+                        loading: false
                     });
-                } finally {
-                    set({ loading: false });
                 }
             },
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUserStore } from '@/features/users/context/user-store';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,11 +28,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
 import { UserRole, UserStatus } from '../../data/schemas/user.schema';
 import LoaderComponent from '@/shared/components/ui/Loader';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { UserPagination } from './user-pagination';
 
 const getUserTypeLabel = (type: string) => {
   switch (type) {
@@ -73,17 +82,51 @@ const getStatusLabel = (status: string) => {
 
 export function UserTable() {
   const router = useRouter();
-  const { users, loading, deleteUser } = useUserStore();
-  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const {
+    filteredUsers,
+    searchTerm,
+    statusFilter,
+    setSearchTerm,
+    setStatusFilter,
+    clearFilters,
+    loading,
+    getUsers,
+    deleteUser,
+    currentPage,
+    totalPages
+  } = useUserStore();
 
-  const handleDelete = async () => {
-    if (userToDelete === null) return;
+  const itemsPerPage = 10;
 
+  useEffect(() => {
+    loadUsers();
+  }, [currentPage]);
+
+  const loadUsers = async () => {
     try {
-      await deleteUser(userToDelete);
+      await getUsers(currentPage, itemsPerPage);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      toast.error('Error al cargar los usuarios');
+    }
+  };
+
+  const handlePageChange = async (page: number) => {
+    try {
+      await getUsers(page, itemsPerPage);
+    } catch (error) {
+      console.error('Error changing page:', error);
+      toast.error('Error al cambiar de página');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteUser(id);
       toast.success('Usuario eliminado exitosamente');
-      setUserToDelete(null);
-    } catch {
+      loadUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
       toast.error('Error al eliminar el usuario');
     }
   };
@@ -92,16 +135,43 @@ export function UserTable() {
     router.push(`/users/edit/${id}`);
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Lista de Usuarios</h2>
-            <p className="text-sm text-muted-foreground">
-              Gestiona los usuarios del sistema
-            </p>
+  return (
+    <Card className="w-full max-w-[1200px]">
+      <CardHeader className="px-4 md:px-8 pb-0">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+            <Input
+              placeholder="Buscar usuarios..."
+              className="w-full md:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Select
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value={UserStatus.ACTIVE}>Activo</SelectItem>
+                <SelectItem value={UserStatus.INACTIVE}>Inactivo</SelectItem>
+              </SelectContent>
+            </Select>
+            {(searchTerm || statusFilter !== 'all') && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={clearFilters}
+                className="h-10 w-10"
+                title="Limpiar filtros"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
+
           <Button
             onClick={() => router.push('/users/new')}
             className="bg-red-600 hover:bg-red-700"
@@ -109,112 +179,109 @@ export function UserTable() {
             <PlusCircle className="mr-2 h-4 w-4" />
             Nuevo Usuario
           </Button>
-        </CardHeader>
-        <CardContent>
-          <LoaderComponent rows={5} columns={6} />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No hay usuarios para mostrar</p>
-      </div>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Lista de Usuarios</h2>
-          <p className="text-sm text-muted-foreground">
-            Gestiona los usuarios del sistema
-          </p>
         </div>
-        <Button
-          onClick={() => router.push('/users/new')}
-          className="bg-red-600 hover:bg-red-700"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Nuevo Usuario
-        </Button>
+        <hr className="border-t border-muted mt-4" />
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Nombre Completo</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.userName}</TableCell>
-                <TableCell>
-                  {`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim() || 'N/A'}
-                </TableCell>
-                <TableCell>{user.person?.email || 'N/A'}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">
-                    {getUserTypeLabel(user.userType)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(user.status)}>
-                    {getStatusLabel(user.status)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(user.id)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setUserToDelete(user.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
-                            <span className="font-semibold"> {user.userName}</span> y todos sus datos asociados.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setUserToDelete(null)}>
-                            Cancelar
-                          </AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDelete}>
-                            Eliminar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
+
+      <CardContent className="px-4 md:px-8">
+        <div className="min-h-[400px] flex flex-col justify-between">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Nombre Completo</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6}>
+                    <LoaderComponent rows={5} columns={6} />
+                  </TableCell>
+                </TableRow>
+              ) : filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-20 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <Users className="h-10 w-10 opacity-30" />
+                      <span>No hay usuarios para mostrar</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.userName}</TableCell>
+                    <TableCell>
+                      {`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim() || 'N/A'}
+                    </TableCell>
+                    <TableCell>{user.person?.email || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {getUserTypeLabel(user.userType)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(user.status)}>
+                        {getStatusLabel(user.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(user.id)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
+                              <span className="font-semibold"> {user.userName}</span> y todos sus datos asociados.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(user.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Eliminar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          {!loading && filteredUsers.length > 0 && (
+            <div className="mt-4">
+              <UserPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

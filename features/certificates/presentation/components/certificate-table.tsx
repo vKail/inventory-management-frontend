@@ -5,7 +5,7 @@ import { useCertificateStore } from '@/features/certificates/context/certificate
 import { useUserStore } from '@/features/users/context/user-store';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, FileText } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -14,6 +14,19 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem
+} from '@/components/ui/select';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -28,8 +41,15 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Skeleton } from "@/components/ui/skeleton";
+import LoaderComponent from '@/shared/components/ui/Loader';
 import { CertificatePagination } from './certificate-pagination';
+
+// Definimos los tipos de certificado disponibles
+const CertificateTypes = {
+    ENTRY: "Entrada",
+    EXIT: "Salida",
+    TRANSFER: "Transferencia",
+} as const;
 
 interface CertificateTableProps {
     currentPage: number;
@@ -43,13 +63,19 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     const [users, setUsers] = useState<any[]>([]);
     const [certificateToDelete, setCertificateToDelete] = useState<string | null>(null);
     const {
-        certificates,
+        filteredCertificates,
+        searchTerm,
+        typeFilter,
+        dateFilter,
         loading,
         error,
         totalPages,
         getCertificates,
         deleteCertificate,
-        refreshTable,
+        setSearchTerm,
+        setTypeFilter,
+        setDateFilter,
+        clearFilters,
     } = useCertificateStore();
 
     useEffect(() => {
@@ -67,8 +93,26 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     }, [getUsers]);
 
     useEffect(() => {
-        getCertificates(currentPage, itemsPerPage);
+        const loadData = async () => {
+            try {
+                await getCertificates(currentPage, itemsPerPage);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                toast.error('Error al cargar los datos');
+            }
+        };
+        loadData();
     }, [getCertificates, currentPage, itemsPerPage]);
+
+    const handlePageChange = async (page: number) => {
+        try {
+            await getCertificates(page, itemsPerPage);
+            onPageChange(page);
+        } catch (error) {
+            console.error('Error changing page:', error);
+            toast.error('Error al cambiar de página');
+        }
+    };
 
     const handleDelete = async () => {
         if (certificateToDelete === null) return;
@@ -77,7 +121,6 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
             await deleteCertificate(certificateToDelete);
             toast.success('Certificado eliminado exitosamente');
             setCertificateToDelete(null);
-            refreshTable();
         } catch (error) {
             console.error('Error al eliminar el certificado:', error);
             toast.error('Error al eliminar el certificado');
@@ -137,129 +180,179 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     }
 
     return (
-        <div className="space-y-6 min-h-[50vh]">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Certificados</h1>
-                <Button onClick={() => router.push('/certificates/new')}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nuevo Certificado
-                </Button>
-            </div>
-
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Número</TableHead>
-                            <TableHead>Fecha</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead>Estado</TableHead>
-                            <TableHead>Responsable Entrega</TableHead>
-                            <TableHead>Responsable Recepción</TableHead>
-                            <TableHead>Contabilizado</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
-                            Array.from({ length: 5 }).map((_, index) => (
-                                <TableRow key={index}>
-                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Skeleton className="h-8 w-8" />
-                                            <Skeleton className="h-8 w-8" />
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        ) : certificates.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={8} className="text-center">
-                                    No hay certificados registrados
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            certificates.map((certificate) => (
-                                <TableRow key={certificate.id}>
-                                    <TableCell>{certificate.number}</TableCell>
-                                    <TableCell>
-                                        {format(new Date(certificate.date), 'PPP', { locale: es })}
-                                    </TableCell>
-                                    <TableCell>{getTypeLabel(certificate.type)}</TableCell>
-                                    <TableCell>
-                                        <span
-                                            className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                                certificate.status
-                                            )}`}
-                                        >
-                                            {getStatusLabel(certificate.status)}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>{getResponsibleName(certificate.deliveryResponsibleId)}</TableCell>
-                                    <TableCell>{getResponsibleName(certificate.receptionResponsibleId)}</TableCell>
-                                    <TableCell>
-                                        {certificate.accounted ? 'Sí' : 'No'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleEdit(certificate.id)}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => setCertificateToDelete(certificate.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Esta acción no se puede deshacer. Se eliminará permanentemente el certificado
-                                                            <span className="font-semibold"> #{certificate.number}</span>.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel onClick={() => setCertificateToDelete(null)}>
-                                                            Cancelar
-                                                        </AlertDialogCancel>
-                                                        <AlertDialogAction onClick={handleDelete}>
-                                                            Eliminar
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+        <Card className="w-full max-w-[1200px]">
+            <CardHeader className="px-4 md:px-8 pb-0">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                        <Input
+                            placeholder="Buscar por número..."
+                            className="w-full md:w-48"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <Select
+                            value={typeFilter}
+                            onValueChange={setTypeFilter}
+                        >
+                            <SelectTrigger className="w-full md:w-48">
+                                <SelectValue placeholder="Todos los tipos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los tipos</SelectItem>
+                                {Object.entries(CertificateTypes).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>
+                                        {value}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            type="date"
+                            placeholder="Fecha"
+                            className="w-full md:w-40"
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                        />
+                        {(searchTerm || typeFilter !== 'all' || dateFilter) && (
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-10 w-10"
+                                onClick={clearFilters}
+                                title="Limpiar todos los filtros"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         )}
-                    </TableBody>
-                </Table>
-            </div>
+                    </div>
 
-            {totalPages > 0 && (
-                <CertificatePagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={onPageChange}
-                />
-            )}
-        </div>
+                    <Button
+                        onClick={() => router.push('/certificates/new')}
+                        className="bg-red-600 hover:bg-red-700"
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nuevo Certificado
+                    </Button>
+                </div>
+                <hr className="border-t border-muted mt-3" />
+            </CardHeader>
+
+            <CardContent className="px-4 md:px-8 pb-6">
+                <div className="min-h-[400px] flex flex-col justify-between">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Número</TableHead>
+                                <TableHead>Fecha</TableHead>
+                                <TableHead>Tipo</TableHead>
+                                <TableHead>Estado</TableHead>
+                                <TableHead>Responsable Entrega</TableHead>
+                                <TableHead>Responsable Recepción</TableHead>
+                                <TableHead>Contabilizado</TableHead>
+                                <TableHead className="text-right">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={8}>
+                                        <LoaderComponent rows={5} columns={8} />
+                                    </TableCell>
+                                </TableRow>
+                            ) : filteredCertificates.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="text-center h-24">
+                                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                            <FileText className="h-10 w-10 opacity-30 mb-2" />
+                                            <p className="mb-2">No hay certificados para mostrar</p>
+                                            <Button
+                                                onClick={() => router.push('/certificates/new')}
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Crear primer certificado
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredCertificates.map((certificate) => (
+                                    <TableRow key={certificate.id}>
+                                        <TableCell>{certificate.number}</TableCell>
+                                        <TableCell>
+                                            {format(new Date(certificate.date), 'PPP', { locale: es })}
+                                        </TableCell>
+                                        <TableCell>{getTypeLabel(certificate.type)}</TableCell>
+                                        <TableCell>
+                                            <span
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                                    certificate.status
+                                                )}`}
+                                            >
+                                                {getStatusLabel(certificate.status)}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>{getResponsibleName(certificate.deliveryResponsibleId)}</TableCell>
+                                        <TableCell>{getResponsibleName(certificate.receptionResponsibleId)}</TableCell>
+                                        <TableCell>
+                                            {certificate.accounted ? 'Sí' : 'No'}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleEdit(certificate.id)}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => setCertificateToDelete(certificate.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-red-600" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Esta acción no se puede deshacer. Se eliminará permanentemente el certificado
+                                                                <span className="font-semibold"> #{certificate.number}</span>.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel onClick={() => setCertificateToDelete(null)}>
+                                                                Cancelar
+                                                            </AlertDialogCancel>
+                                                            <AlertDialogAction onClick={handleDelete}>
+                                                                Eliminar
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                    {!loading && filteredCertificates.length > 0 && (
+                        <div className="mt-4">
+                            <CertificatePagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
     );
 } 

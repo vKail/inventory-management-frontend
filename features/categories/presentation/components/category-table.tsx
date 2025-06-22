@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Pencil, Trash2, Tags } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Tags, X } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -33,6 +33,7 @@ import { useEffect, useState } from 'react';
 import { useCategoryStore } from '@/features/categories/context/category-store';
 import { toast } from "sonner";
 import LoaderComponent from '@/shared/components/ui/Loader';
+import { CategoryPagination } from './category-pagination';
 
 interface CategoryTableProps {
   currentPage: number;
@@ -42,10 +43,16 @@ interface CategoryTableProps {
 export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps) {
   const router = useRouter();
   const {
-    categories,
+    filteredCategories,
+    searchTerm,
+    parentCategoryFilter,
+    setSearchTerm,
+    setParentCategoryFilter,
+    clearFilters,
     loading,
     getCategories,
-    deleteCategory
+    deleteCategory,
+    totalPages
   } = useCategoryStore();
 
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
@@ -62,6 +69,15 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
 
     loadCategories();
   }, [getCategories, currentPage, itemsPerPage]);
+
+  const handlePageChange = async (page: number) => {
+    try {
+      await getCategories(page, itemsPerPage);
+    } catch (error) {
+      console.error('Error changing page:', error);
+      toast.error('Error al cambiar de página');
+    }
+  };
 
   const handleDelete = async () => {
     if (categoryToDelete === null) return;
@@ -80,49 +96,6 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
     router.push(`/categories/edit/${id}`);
   };
 
-  if (loading) {
-    return (
-      <Card className="w-full max-w-[1200px]">
-        <CardHeader className="px-4 md:px-8 pb-0">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
-              <Input
-                placeholder="Buscar por nombre o código..."
-                className="w-full md:w-64"
-                disabled
-              />
-              <Select disabled>
-                <SelectTrigger className="w-full md:w-56">
-                  <SelectValue placeholder="Todas las categorías padre" />
-                </SelectTrigger>
-              </Select>
-            </div>
-
-            <Button
-              onClick={() => router.push('/categories/new')}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Nueva Categoría
-            </Button>
-          </div>
-          <hr className="border-t border-muted mt-4" />
-        </CardHeader>
-        <CardContent className="px-4 md:px-8 pb-6">
-          <LoaderComponent rows={5} columns={8} />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (categories.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No hay categorías para mostrar</p>
-      </div>
-    );
-  }
-
   return (
     <Card className="w-full max-w-[1200px]">
       <CardHeader className="px-4 md:px-8 pb-0">
@@ -131,8 +104,13 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
             <Input
               placeholder="Buscar por nombre o código..."
               className="w-full md:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Select>
+            <Select
+              value={parentCategoryFilter}
+              onValueChange={setParentCategoryFilter}
+            >
               <SelectTrigger className="w-full md:w-56">
                 <SelectValue placeholder="Todas las categorías padre" />
               </SelectTrigger>
@@ -141,6 +119,17 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
                 <SelectItem value="none">Sin categoría padre</SelectItem>
               </SelectContent>
             </Select>
+            {(searchTerm || parentCategoryFilter !== 'all') && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={clearFilters}
+                className="h-10 w-10"
+                title="Limpiar filtros"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           <Button
@@ -169,16 +158,31 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell>{category.code}</TableCell>
-                  <TableCell>{category.name}</TableCell>
-                  <TableCell>{category.description}</TableCell>
-                  <TableCell>{category.parentCategory?.name || 'Ninguna'}</TableCell>
-                  <TableCell>{category.standardUsefulLife} años</TableCell>
-                  <TableCell>{category.depreciationPercentage}%</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <LoaderComponent rows={5} columns={7} />
+                  </TableCell>
+                </TableRow>
+              ) : filteredCategories.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-20 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <Tags className="h-10 w-10 opacity-30" />
+                      <span>No hay categorías para mostrar</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredCategories.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell>{category.code}</TableCell>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell>{category.description}</TableCell>
+                    <TableCell>{category.parentCategory?.name || 'Ninguna'}</TableCell>
+                    <TableCell>{category.standardUsefulLife} años</TableCell>
+                    <TableCell>{category.depreciationPercentage}%</TableCell>
+                    <TableCell className="text-right space-x-2">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -198,27 +202,38 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
+                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Esto eliminará permanentemente la categoría.
+                              Esta acción no se puede deshacer. Se eliminará permanentemente la categoría
+                              <span className="font-semibold"> {category.name}</span> y todos sus datos asociados.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setCategoryToDelete(null)}>
-                              Cancelar
-                            </AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete}>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDelete}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
                               Eliminar
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
+          {!loading && filteredCategories.length > 0 && (
+            <div className="mt-4">
+              <CategoryPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

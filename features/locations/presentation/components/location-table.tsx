@@ -48,42 +48,25 @@ const LocationTypes = {
 export function LocationTable() {
   const router = useRouter();
   const {
-    locations,
+    filteredLocations,
+    searchTerm,
+    typeFilter,
     isLoading,
     getLocations,
-    deleteLocation
+    deleteLocation,
+    setSearchTerm,
+    setTypeFilter,
+    clearFilters,
+    currentPage,
+    totalPages
   } = useLocationStore();
 
   const [locationToDelete, setLocationToDelete] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 10;
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Prepare filters for the service
-        const serviceFilters: { name?: string; floor?: string; type?: string } = {};
-
-        if (searchTerm) {
-          // If search term contains floor info, extract it
-          if (searchTerm.toLowerCase().includes('piso')) {
-            serviceFilters.floor = searchTerm;
-          } else {
-            serviceFilters.name = searchTerm;
-          }
-        }
-
-        if (selectedType && selectedType !== 'all') {
-          serviceFilters.type = selectedType;
-        }
-
-        const response = await getLocations(currentPage, itemsPerPage, serviceFilters);
-        if (response) {
-          setTotalPages(Math.ceil(response.total / itemsPerPage));
-        }
+        await getLocations(currentPage, 10);
       } catch (error) {
         console.error('Error loading data:', error);
         toast.error('Error al cargar los datos');
@@ -91,10 +74,15 @@ export function LocationTable() {
     };
 
     loadData();
-  }, [getLocations, currentPage, itemsPerPage, searchTerm, selectedType]);
+  }, [getLocations, currentPage]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handlePageChange = async (page: number) => {
+    try {
+      await getLocations(page, 10);
+    } catch (error) {
+      console.error('Error changing page:', error);
+      toast.error('Error al cambiar de página');
+    }
   };
 
   const handleDelete = async () => {
@@ -104,11 +92,6 @@ export function LocationTable() {
       await deleteLocation(locationToDelete);
       toast.success('Ubicación eliminada exitosamente');
       setLocationToDelete(null);
-      // Reload the current page data
-      const response = await getLocations(currentPage, itemsPerPage);
-      if (response) {
-        setTotalPages(Math.ceil(response.total / itemsPerPage));
-      }
     } catch (error) {
       console.error('Error deleting location:', error);
       toast.error('Error al eliminar la ubicación');
@@ -124,27 +107,15 @@ export function LocationTable() {
       <CardHeader className="px-4 md:px-8 pb-0">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-            <div className="relative w-full md:w-64">
-              <Input
-                placeholder="Buscar por nombre o piso..."
-                className="w-full pr-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
-                  onClick={() => setSearchTerm('')}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
+            <Input
+              placeholder="Buscar por nombre, descripción, piso o referencia..."
+              className="w-full md:w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <Select
-              value={selectedType}
-              onValueChange={setSelectedType}
+              value={typeFilter}
+              onValueChange={setTypeFilter}
             >
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Todos los tipos" />
@@ -152,12 +123,23 @@ export function LocationTable() {
               <SelectContent>
                 <SelectItem value="all">Todos los tipos</SelectItem>
                 {Object.entries(LocationTypes).map(([key, value]) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem key={key} value={key}>
                     {value}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {(searchTerm || typeFilter !== 'all') && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+                onClick={clearFilters}
+                title="Limpiar todos los filtros"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           <Button
@@ -192,10 +174,11 @@ export function LocationTable() {
                     <LoaderComponent rows={5} columns={7} />
                   </TableCell>
                 </TableRow>
-              ) : locations.length === 0 ? (
+              ) : filteredLocations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center h-24">
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <MapPin className="h-10 w-10 opacity-30 mb-2" />
                       <p className="mb-2">No hay ubicaciones para mostrar</p>
                       <Button
                         onClick={() => router.push('/locations/new')}
@@ -209,10 +192,10 @@ export function LocationTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                locations.map((location) => (
+                filteredLocations.map((location) => (
                   <TableRow key={location.id}>
                     <TableCell>{location.name}</TableCell>
-                    <TableCell>{location.type}</TableCell>
+                    <TableCell>{LocationTypes[location.type as keyof typeof LocationTypes] || location.type}</TableCell>
                     <TableCell>{location.floor}</TableCell>
                     <TableCell>{location.reference}</TableCell>
                     <TableCell>{`${location.capacity} ${location.capacityUnit}`}</TableCell>
@@ -264,7 +247,7 @@ export function LocationTable() {
               )}
             </TableBody>
           </Table>
-          {!isLoading.fetch && locations.length > 0 && (
+          {!isLoading.fetch && filteredLocations.length > 0 && (
             <div className="mt-4">
               <LocationPagination
                 currentPage={currentPage}

@@ -4,7 +4,7 @@ export const locationSchema = z.object({
     name: z.string().min(1, 'El nombre es requerido').max(100, 'El nombre no puede exceder 100 caracteres'),
     description: z.string().min(1, 'La descripción es requerida').max(500, 'La descripción no puede exceder 500 caracteres'),
     parentLocationId: z.number().nullable(),
-    type: z.enum(['WAREHOUSE', 'BUILDING', 'FLOOR', 'OFFICE', 'SHELF', 'LABORATORY'], {
+    type: z.enum(['BUILDING', 'FLOOR', 'OFFICE', 'WAREHOUSE', 'SHELF', 'LABORATORY'], {
         errorMap: () => ({ message: 'Tipo de ubicación inválido' })
     }),
     floor: z.string().max(50, 'El piso no puede exceder 50 caracteres').nullable().optional(),
