@@ -59,8 +59,7 @@ interface CertificateTableProps {
 
 export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: CertificateTableProps) {
     const router = useRouter();
-    const { getUsers } = useUserStore();
-    const [users, setUsers] = useState<any[]>([]);
+    const { getUsers, users } = useUserStore();
     const [certificateToDelete, setCertificateToDelete] = useState<string | null>(null);
     const {
         filteredCertificates,
@@ -81,10 +80,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     useEffect(() => {
         const loadUsers = async () => {
             try {
-                const response = await getUsers(1, 100);
-                if (response && response.records) {
-                    setUsers(response.records);
-                }
+                await getUsers(1, 100);
             } catch (error) {
                 console.error('Error loading users:', error);
             }
@@ -171,7 +167,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     };
 
     const getResponsibleName = (userId: number) => {
-        const user = users.find(u => u.id === userId);
+        const user = users.find(u => u.id === userId.toString());
         return user ? `${user.person.lastName} ${user.person.firstName}` : 'No asignado';
     };
 
