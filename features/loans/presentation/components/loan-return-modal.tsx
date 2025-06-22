@@ -144,10 +144,7 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-2xl w-[90vw] max-h-[85vh] overflow-y-auto">
                 <DialogTitle className="text-lg font-semibold flex items-center justify-between border-b pb-3">
-                    <span>Devolución de Préstamo #{loan.loanCode}</span>
-                    <Button variant="ghost" size="icon" onClick={onClose}>
-                        <X className="h-4 w-4" />
-                    </Button>
+                    <span>Devolución de Préstamo # {loan.loanCode}</span>
                 </DialogTitle>
 
                 <Form {...form}>

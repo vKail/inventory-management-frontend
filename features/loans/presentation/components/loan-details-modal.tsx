@@ -191,9 +191,6 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
             <DialogContent className="sm:max-w-2xl w-[90vw] max-h-[80vh] overflow-y-auto">
                 <DialogTitle className="text-lg font-semibold flex items-center justify-between border-b pb-3">
                     <span>Detalles del Préstamo #{loan?.loanCode}</span>
-                    <Button variant="ghost" size="icon" onClick={onClose}>
-                        <X className="h-4 w-4" />
-                    </Button>
                 </DialogTitle>
 
                 {loading ? (

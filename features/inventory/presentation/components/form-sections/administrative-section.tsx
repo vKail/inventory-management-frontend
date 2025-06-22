@@ -52,7 +52,7 @@ export const AdministrativeSection = () => {
                             name="locationId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Ubicación</FormLabel>
+                                    <FormLabel>Ubicación *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={locationOptions}
@@ -73,7 +73,7 @@ export const AdministrativeSection = () => {
                             name="custodianId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Custodio</FormLabel>
+                                    <FormLabel>Custodio *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={userOptions}
@@ -94,7 +94,7 @@ export const AdministrativeSection = () => {
                             name="conditionId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Condición</FormLabel>
+                                    <FormLabel>Condición *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={conditionOptions}

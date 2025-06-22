@@ -188,9 +188,6 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                         <QrCode className="h-5 w-5" />
                         <span>Escáner de Inventario</span>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={onClose}>
-                        <X className="h-4 w-4" />
-                    </Button>
                 </DialogTitle>
 
                 <div className="flex-1 overflow-hidden flex flex-col">

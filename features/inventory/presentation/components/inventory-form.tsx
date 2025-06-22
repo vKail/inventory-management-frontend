@@ -37,9 +37,32 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
     const [selectedColors, setSelectedColors] = useState<ItemColor[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Function to convert string dates to Date objects
+    const convertDatesToObjects = (data: any) => {
+        if (!data) return data;
+
+        const converted = { ...data };
+
+        // Convert warrantyDate string to Date object
+        if (converted.warrantyDate && typeof converted.warrantyDate === 'string') {
+            console.log('Converting warrantyDate from string:', converted.warrantyDate);
+            converted.warrantyDate = new Date(converted.warrantyDate);
+            console.log('Converted warrantyDate to Date object:', converted.warrantyDate);
+        }
+
+        // Convert expirationDate string to Date object
+        if (converted.expirationDate && typeof converted.expirationDate === 'string') {
+            console.log('Converting expirationDate from string:', converted.expirationDate);
+            converted.expirationDate = new Date(converted.expirationDate);
+            console.log('Converted expirationDate to Date object:', converted.expirationDate);
+        }
+
+        return converted;
+    };
+
     const defaultValues: Partial<InventoryFormData> = {
         code: "",
-        stock: 0,
+        stock: 1,
         name: "",
         description: "",
         itemTypeId: 0,
@@ -61,17 +84,17 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
         modelCharacteristics: "",
         brandBreedOther: "",
         identificationSeries: "",
-        warrantyDate: "",
+        warrantyDate: undefined,
         dimensions: "",
         critical: false,
         dangerous: false,
         requiresSpecialHandling: false,
         perishable: false,
-        expirationDate: "",
+        expirationDate: undefined,
         itemLine: 0,
         accountingAccount: "",
         observations: "",
-        ...initialData,
+        ...convertDatesToObjects(initialData),
     };
 
     const form = useForm<InventoryFormData>({
@@ -119,17 +142,31 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
     const safeToString = (value: any): string => {
         if (value === null || value === undefined) return '';
         if (typeof value === 'boolean') return value.toString();
-        if (value instanceof Date) return value.toISOString();
+        if (value instanceof Date) return value.toISOString().split('T')[0]; // Format as YYYY-MM-DD
         return String(value);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate form before submission
+        const isValid = await form.trigger();
+        if (!isValid) {
+            // Log validation errors to console
+            const errors = form.formState.errors;
+            console.log('Form validation errors:', errors);
+            console.log('Form values:', form.getValues());
+            return; // Form validation errors will be shown in FormMessage components
+        }
+
         setIsSubmitting(true);
 
         try {
             const formData = new FormData();
             const currentValues = form.getValues();
+
+            // Log form values before submission
+            console.log('Submitting form with values:', currentValues);
 
             // En modo edición, comparamos con los valores iniciales
             if (mode === 'edit' && initialData) {
@@ -153,8 +190,16 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                 });
             }
 
+            // Log the FormData being sent
+            console.log('FormData entries:');
+            Array.from(formData.entries()).forEach(([key, value]) => {
+                console.log(`${key}: ${value}`);
+            });
+
             if (mode === 'create') {
                 const response = await createInventoryItem(formData);
+                console.log('Backend response:', response);
+
                 if (response.success) {
                     // Subir las imágenes después de crear el item
                     if (selectedFiles.length > 0) {
@@ -188,17 +233,34 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     toast.success("Item creado exitosamente");
                     router.push("/inventory");
                 } else {
-                    toast.error("Error al crear el item");
+                    // Handle backend validation errors
+                    console.error('Backend error:', response);
+                    let errorMessage = "Error al crear el item. Por favor, verifique los datos e intente nuevamente.";
+
+                    if (response.message?.content && Array.isArray(response.message.content)) {
+                        errorMessage = response.message.content.join(', ');
+                    } else if (response.message?.content && typeof response.message.content === 'string') {
+                        errorMessage = response.message.content;
+                    }
+
+                    form.setError("root", {
+                        type: "manual",
+                        message: errorMessage
+                    });
                 }
             } else {
                 // Modo edición
                 if (!initialData?.id) {
-                    toast.error("No se puede editar el item");
+                    form.setError("root", {
+                        type: "manual",
+                        message: "No se puede editar el item. ID no válido."
+                    });
                     return;
                 }
 
                 // Actualizar el item
-                await updateInventoryItem(initialData.id.toString(), Object.fromEntries(formData.entries()));
+                const updateResponse = await updateInventoryItem(initialData.id.toString(), Object.fromEntries(formData.entries()));
+                console.log('Update response:', updateResponse);
 
                 // Actualizar materiales
                 const existingMaterials = await ItemMaterialService.getInstance().getItemMaterials(initialData.id);
@@ -265,7 +327,11 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
             }
         } catch (error) {
             console.error("Error en el envío:", error);
-            toast.error(`Error al ${mode === 'create' ? 'crear' : 'actualizar'} el item`);
+            // Set form error instead of toast
+            form.setError("root", {
+                type: "manual",
+                message: `Error al ${mode === 'create' ? 'crear' : 'actualizar'} el item. Por favor, intente nuevamente.`
+            });
         } finally {
             setIsSubmitting(false);
         }
@@ -274,6 +340,13 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
     return (
         <Form {...form}>
             <div className="space-y-8">
+                {/* Display root form error if exists */}
+                {form.formState.errors.root && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-sm text-red-600">{form.formState.errors.root.message}</p>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 gap-8">
                     <IdentificationSection />
                     <GeneralInfoSection />
@@ -313,8 +386,9 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     <Button
                         type="button"
                         onClick={handleSubmit}
+                        disabled={isSubmitting}
                     >
-                        {mode === 'create' ? 'Guardar' : 'Actualizar'}
+                        {isSubmitting ? 'Guardando...' : (mode === 'create' ? 'Guardar' : 'Actualizar')}
                     </Button>
                 </div>
             </div>
