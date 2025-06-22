@@ -119,7 +119,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
     };
 
     const getSelectedUser = (userId: number) => {
-        const user = users.find(u => u.id === userId);
+        const user = users.find(u => u.id === userId.toString());
         return user ? `${user.person.dni} - ${user.person.lastName} ${user.person.firstName}` : '';
     };
 
@@ -302,7 +302,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                                         key={user.id}
                                                                         value={`${user.person.dni} ${user.person.lastName} ${user.person.firstName}`}
                                                                         onSelect={() => {
-                                                                            form.setValue("deliveryResponsibleId", user.id);
+                                                                            form.setValue("deliveryResponsibleId", Number(user.id));
                                                                             setOpenDelivery(false);
                                                                         }}
                                                                     >
@@ -353,7 +353,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                                         key={user.id}
                                                                         value={`${user.person.dni} ${user.person.lastName} ${user.person.firstName}`}
                                                                         onSelect={() => {
-                                                                            form.setValue("receptionResponsibleId", user.id);
+                                                                            form.setValue("receptionResponsibleId", Number(user.id));
                                                                             setOpenReception(false);
                                                                         }}
                                                                     >

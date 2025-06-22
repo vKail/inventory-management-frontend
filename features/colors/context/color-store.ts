@@ -39,7 +39,7 @@ export const useColorStore = create<ColorStore>()(
                 const filtered = colors.filter((color) => {
                     const matchesSearch = color.name.toLowerCase().includes(term.toLowerCase()) ||
                         color.hexCode.toLowerCase().includes(term.toLowerCase()) ||
-                        color.description.toLowerCase().includes(term.toLowerCase());
+                        color.description?.toLowerCase().includes(term.toLowerCase());
 
                     return matchesSearch;
                 });
@@ -76,7 +76,7 @@ export const useColorStore = create<ColorStore>()(
                         const matchesSearch = searchTerm === '' ||
                             color.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             color.hexCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            color.description.toLowerCase().includes(searchTerm.toLowerCase());
+                            color.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
                         return matchesSearch;
                     });
