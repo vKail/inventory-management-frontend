@@ -7,7 +7,6 @@ import { ItemType } from '../../data/interfaces/item-type.interface'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { itemTypeService } from '../../services/item-type.service'
@@ -72,7 +71,6 @@ export default function ItemTypesView() {
                   <TableHead>Código</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Descripción</TableHead>
-                  <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -93,11 +91,6 @@ export default function ItemTypesView() {
                       <TableCell>{item.code}</TableCell>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>{item.description}</TableCell>
-                      <TableCell>
-                        <Badge variant={item.active ? 'default' : 'secondary'}>
-                          {item.active ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-right flex justify-end gap-2">
                         <Button
                           variant="ghost"

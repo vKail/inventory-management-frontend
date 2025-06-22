@@ -52,10 +52,13 @@ export const GeneralInfoSection = () => {
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nombre</FormLabel>
+                                    <FormLabel>Nombre *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Nombre del bien" {...field} />
+                                        <Input placeholder="Nombre del bien" maxLength={100} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/100 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -66,10 +69,13 @@ export const GeneralInfoSection = () => {
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Descripción</FormLabel>
+                                    <FormLabel>Descripción *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Descripción detallada" {...field} />
+                                        <Input placeholder="Descripción detallada" maxLength={500} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/500 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -80,13 +86,22 @@ export const GeneralInfoSection = () => {
                             name="stock"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Stock</FormLabel>
+                                    <FormLabel>Stock *</FormLabel>
                                     <FormControl>
                                         <Input
                                             type="number"
                                             placeholder="Cantidad disponible"
+                                            min="1"
+                                            max="999999"
                                             {...field}
-                                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                            onChange={(e) => {
+                                                const value = parseInt(e.target.value);
+                                                if (value > 999999) {
+                                                    field.onChange(999999);
+                                                } else {
+                                                    field.onChange(value);
+                                                }
+                                            }}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -99,7 +114,7 @@ export const GeneralInfoSection = () => {
                             name="itemTypeId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tipo de Item</FormLabel>
+                                    <FormLabel>Tipo de Item *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={itemTypeOptions}
@@ -120,7 +135,7 @@ export const GeneralInfoSection = () => {
                             name="categoryId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Categoría</FormLabel>
+                                    <FormLabel>Categoría *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={categoryOptions}
@@ -141,7 +156,7 @@ export const GeneralInfoSection = () => {
                             name="statusId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Estado</FormLabel>
+                                    <FormLabel>Estado *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={stateOptions}
