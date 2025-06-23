@@ -10,7 +10,6 @@ export const itemTypeSchema = z.object({
     description: z.string()
         .min(1, 'La descripción es requerida')
         .max(500, 'La descripción no puede tener más de 500 caracteres'),
-    active: z.boolean().optional()
 });
 
 export type ItemTypeFormValues = z.infer<typeof itemTypeSchema>; 

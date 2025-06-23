@@ -23,13 +23,22 @@ export const AccountingSection = () => {
                             name="itemLine"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Línea de Item</FormLabel>
+                                    <FormLabel>Línea de Item *</FormLabel>
                                     <FormControl>
                                         <Input
                                             type="number"
                                             placeholder="Ingrese la línea de item"
+                                            min="1"
+                                            max="999999"
                                             {...field}
-                                            onChange={e => field.onChange(Number(e.target.value))}
+                                            onChange={(e) => {
+                                                const value = parseInt(e.target.value);
+                                                if (value > 999999) {
+                                                    field.onChange(999999);
+                                                } else {
+                                                    field.onChange(value);
+                                                }
+                                            }}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -42,10 +51,13 @@ export const AccountingSection = () => {
                             name="accountingAccount"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Cuenta Contable</FormLabel>
+                                    <FormLabel>Cuenta Contable *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Cuenta contable" {...field} />
+                                        <Input placeholder="Cuenta contable" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -58,8 +70,11 @@ export const AccountingSection = () => {
                                 <FormItem>
                                     <FormLabel>Observaciones</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Observaciones adicionales" {...field} />
+                                        <Input placeholder="Observaciones adicionales" maxLength={1000} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/1000 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}

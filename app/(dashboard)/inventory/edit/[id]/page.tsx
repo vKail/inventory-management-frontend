@@ -4,7 +4,16 @@ import { useEffect, useState } from "react";
 import { useInventoryStore } from "@/features/inventory/context/inventory-store";
 import { InventoryForm } from "@/features/inventory/presentation/components/inventory-form";
 import { useParams } from "next/navigation";
-import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";
+import { InventoryItem, InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
+
+// Function to convert InventoryItem to InventoryFormData format
+const convertItemToFormData = (item: InventoryItem): Partial<InventoryFormData> => {
+    return {
+        ...item,
+        warrantyDate: item.warrantyDate ? new Date(item.warrantyDate) : undefined,
+        expirationDate: item.expirationDate ? new Date(item.expirationDate) : undefined,
+    };
+};
 
 export default function EditInventoryPage() {
     const { id } = useParams();
@@ -28,7 +37,7 @@ export default function EditInventoryPage() {
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-2xl font-bold mb-8">Editar Item</h1>
-            <InventoryForm mode="edit" initialData={item} />
+            <InventoryForm mode="edit" initialData={convertItemToFormData(item)} />
         </div>
     );
 } 

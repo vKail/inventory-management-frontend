@@ -44,7 +44,7 @@ export const TechnicalSection = () => {
                             name="certificateId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Certificado</FormLabel>
+                                    <FormLabel>Certificado *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={certificateOptions}
@@ -65,10 +65,13 @@ export const TechnicalSection = () => {
                             name="entryOrigin"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Origen de Entrada</FormLabel>
+                                    <FormLabel>Origen de Entrada *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Origen del bien" {...field} />
+                                        <Input placeholder="Origen del bien" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -79,10 +82,13 @@ export const TechnicalSection = () => {
                             name="entryType"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tipo de Entrada</FormLabel>
+                                    <FormLabel>Tipo de Entrada *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Tipo de entrada" {...field} />
+                                        <Input placeholder="Tipo de entrada" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -93,7 +99,7 @@ export const TechnicalSection = () => {
                             name="acquisitionDate"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Fecha de Adquisición</FormLabel>
+                                    <FormLabel>Fecha de Adquisición *</FormLabel>
                                     <FormControl>
                                         <Input type="date" {...field} />
                                     </FormControl>
@@ -107,10 +113,13 @@ export const TechnicalSection = () => {
                             name="commitmentNumber"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Número de Compromiso</FormLabel>
+                                    <FormLabel>Número de Compromiso *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Número de compromiso" {...field} />
+                                        <Input placeholder="Número de compromiso" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -121,10 +130,13 @@ export const TechnicalSection = () => {
                             name="modelCharacteristics"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Características del Modelo</FormLabel>
+                                    <FormLabel>Características del Modelo *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Características del modelo" {...field} />
+                                        <Input placeholder="Características del modelo" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -135,10 +147,13 @@ export const TechnicalSection = () => {
                             name="brandBreedOther"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Marca/Raza/Otro</FormLabel>
+                                    <FormLabel>Marca/Raza/Otro *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Marca, raza u otro" {...field} />
+                                        <Input placeholder="Marca, raza u otro" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -149,10 +164,13 @@ export const TechnicalSection = () => {
                             name="identificationSeries"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Serie de Identificación</FormLabel>
+                                    <FormLabel>Serie de Identificación *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Serie de identificación" {...field} />
+                                        <Input placeholder="Serie de identificación" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -163,7 +181,7 @@ export const TechnicalSection = () => {
                             name="warrantyDate"
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
-                                    <FormLabel>Fecha de Garantía</FormLabel>
+                                    <FormLabel>Fecha de Garantía *</FormLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <FormControl>
@@ -172,7 +190,7 @@ export const TechnicalSection = () => {
                                                     className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
                                                 >
                                                     {field.value ? (
-                                                        format(new Date(field.value), "PPP", { locale: es })
+                                                        format(field.value, "PPP", { locale: es })
                                                     ) : (
                                                         <span>Seleccionar fecha</span>
                                                     )}
@@ -183,7 +201,7 @@ export const TechnicalSection = () => {
                                         <PopoverContent className="w-auto p-0" align="start">
                                             <Calendar
                                                 mode="single"
-                                                selected={field.value ? new Date(field.value) : undefined}
+                                                selected={field.value}
                                                 onSelect={field.onChange}
                                                 disabled={(date) => date < new Date()}
                                                 initialFocus
@@ -199,10 +217,13 @@ export const TechnicalSection = () => {
                             name="dimensions"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Dimensiones</FormLabel>
+                                    <FormLabel>Dimensiones *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Dimensiones del bien" {...field} />
+                                        <Input placeholder="Dimensiones del bien" maxLength={20} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/20 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -213,7 +234,7 @@ export const TechnicalSection = () => {
                             name="expirationDate"
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
-                                    <FormLabel>Fecha de Expiración</FormLabel>
+                                    <FormLabel>Fecha de Expiración *</FormLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <FormControl>
@@ -222,7 +243,7 @@ export const TechnicalSection = () => {
                                                     className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
                                                 >
                                                     {field.value ? (
-                                                        format(new Date(field.value), "PPP", { locale: es })
+                                                        format(field.value, "PPP", { locale: es })
                                                     ) : (
                                                         <span>Seleccionar fecha</span>
                                                     )}
@@ -233,7 +254,7 @@ export const TechnicalSection = () => {
                                         <PopoverContent className="w-auto p-0" align="start">
                                             <Calendar
                                                 mode="single"
-                                                selected={field.value ? new Date(field.value) : undefined}
+                                                selected={field.value}
                                                 onSelect={field.onChange}
                                                 disabled={(date) => date < new Date()}
                                                 initialFocus

@@ -1,37 +1,96 @@
-import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
-import { LoanListResponse, LoanResponse } from '../data/dtos/loan-res.dto';
-import { CreateLoanDto } from '../data/dtos/create-loan.dto';
+import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
+import { AxiosClient } from '@/core/infrestucture/AxiosClient';
+import { Loan, LoanCreate, LoanReturn, ApiResponse, PaginatedResponse, LoanServiceProps } from "@/features/loans/data/interfaces/loan.interface";
 
-export class LoanService {
-  constructor(private readonly httpClient: HttpHandler) {}
+export class LoanService implements LoanServiceProps {
+    private static instance: LoanService;
+    private httpClient: HttpHandler;
+    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}loans`;
 
-  async getLoans(page: number = 1, limit: number = 10): Promise<LoanListResponse> {
-    const response = await this.httpClient.get<LoanListResponse>(
-      `${process.env.NEXT_PUBLIC_API_URL}loans?page=${page}&limit=${limit}`
-    );
-    return response.data;
-  }
+    private constructor() {
+        this.httpClient = AxiosClient.getInstance();
+    }
 
-  async getLoanById(id: number): Promise<LoanResponse> {
-    const response = await this.httpClient.get<LoanResponse>(
-      `${process.env.NEXT_PUBLIC_API_URL}loans/${id}`
-    );
-    return response.data;
-  }
+    public static getInstance(): LoanService {
+        if (!LoanService.instance) {
+            LoanService.instance = new LoanService();
+        }
+        return LoanService.instance;
+    }
 
-  async createLoan(data: CreateLoanDto): Promise<LoanResponse> {
-    const response = await this.httpClient.post<LoanResponse>(
-      `${process.env.NEXT_PUBLIC_API_URL}loans`,
-      data
-    );
-    return response.data;
-  }
+    public async getAll(queryString: string): Promise<ApiResponse<PaginatedResponse<Loan>>> {
+        try {
+            const url = `${LoanService.url}?${queryString}`;
+            const response = await this.httpClient.get<PaginatedResponse<Loan>>(url);
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
+            return {
+                success: response.success,
+                message: {
+                    content: response.message.content,
+                    displayable: true
+                },
+                data: response.data
+            };
+        } catch (error) {
+            console.error('Error fetching loans:', error);
+            throw error;
+        }
+    }
 
-  async processReturn(data: any): Promise<LoanResponse> {
-    const response = await this.httpClient.post<LoanResponse>(
-      `${process.env.NEXT_PUBLIC_API_URL}loans/return`,
-      data
-    );
-    return response.data;
-  }
+    public async getById(id: number): Promise<Loan | undefined> {
+        try {
+            const response = await this.httpClient.get<Loan>(`${LoanService.url}/${id}`);
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching loan:', error);
+            return undefined;
+        }
+    }
+
+    public async getHistoryByDni(dni: string): Promise<Loan[]> {
+        try {
+            const response = await this.httpClient.get<Loan[]>(`${LoanService.url}/historial/${dni}`);
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching loan history:', error);
+            return [];
+        }
+    }
+
+    public async create(loan: LoanCreate): Promise<IHttpResponse<Loan>> {
+        try {
+            const response = await this.httpClient.post<Loan>(
+                LoanService.url,
+                loan
+            );
+            return response;
+        } catch (error) {
+            console.error('Error creating loan:', error);
+            throw error;
+        }
+    }
+
+    public async return(loanReturn: LoanReturn): Promise<IHttpResponse<Loan>> {
+        try {
+            const response = await this.httpClient.post<Loan>(
+                `${LoanService.url}/return`,
+                loanReturn
+            );
+            return response;
+        } catch (error) {
+            console.error('Error returning loan:', error);
+            throw error;
+        }
+    }
 }
+
+// Exportar la instancia para usar directamente
+export const loanService = LoanService.getInstance(); 

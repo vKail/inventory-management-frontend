@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  images: {
+    domains: ['gitt-api-3tw6.onrender.com']
+  }
 };
 
 export default nextConfig;

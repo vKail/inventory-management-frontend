@@ -100,13 +100,13 @@ export type InventoryFormData = {
     modelCharacteristics: string;
     brandBreedOther: string;
     identificationSeries: string;
-    warrantyDate: string;
+    warrantyDate: Date;
     dimensions: string;
     critical: boolean;
     dangerous: boolean;
     requiresSpecialHandling: boolean;
     perishable: boolean;
-    expirationDate: string;
+    expirationDate: Date;
     itemLine: number;
     accountingAccount: string;
     observations?: string;

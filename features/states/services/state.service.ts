@@ -83,8 +83,9 @@ export class StateService implements StateServiceProps {
   public async deleteState(id: number): Promise<void> {
     try {
       const response = await this.httpClient.delete<ApiResponse<void>>(`${StateService.url}/${id}`);
-      if (!response.data.success) {
-        throw new Error(response.data.message.content.join(', '));
+      if (!response.success) {
+        const errorMessage = response.message?.content?.join(', ') || 'Error al eliminar el estado';
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting state:', error);

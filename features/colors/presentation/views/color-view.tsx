@@ -12,16 +12,14 @@ import {
 
 import {
     Breadcrumb, BreadcrumbList, BreadcrumbItem,
-    BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
+    BreadcrumbPage, BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { PaletteIcon, Plus } from 'lucide-react'
+import { PaletteIcon } from 'lucide-react'
 
 export default function ColorView() {
     const {
-        colors,
+        filteredColors,
         loading,
         getColors,
         deleteColor,
@@ -31,6 +29,7 @@ export default function ColorView() {
 
     const [openDialog, setOpenDialog] = useState(false);
     const [colorIdToDelete, setColorIdToDelete] = useState<number | null>(null);
+    const [colorNameToDelete, setColorNameToDelete] = useState<string>('');
 
     const router = useRouter();
 
@@ -55,12 +54,26 @@ export default function ColorView() {
     };
 
     const handleDelete = async (id: number) => {
+        const colorToDelete = filteredColors.find(color => color.id === id);
+        setColorIdToDelete(id);
+        setColorNameToDelete(colorToDelete?.name || '');
+        setOpenDialog(true);
+    };
+
+    const confirmDelete = async () => {
+        if (colorIdToDelete === null) return;
+
         try {
-            await deleteColor(id);
+            await deleteColor(colorIdToDelete);
             toast.success('Color eliminado exitosamente');
-            await loadColors();
+            // Reload just the current page data
+            await getColors(currentPage, 10);
         } catch (error) {
             toast.error('Error al eliminar el color');
+        } finally {
+            setOpenDialog(false);
+            setColorIdToDelete(null);
+            setColorNameToDelete('');
         }
     };
 
@@ -82,43 +95,42 @@ export default function ColorView() {
                     </Breadcrumb>
                     <h2 className="text-2xl font-bold tracking-tight mt-2">Lista de Colores</h2>
                 </div>
-                <Button onClick={() => router.push('/colors/new')} className="bg-red-600 hover:bg-red-700">
-                    <Plus className="mr-2 h-4 w-4" /> Nuevo Color
-                </Button>
             </div>
 
-            <Card>
-                <CardContent className="p-6">
-                    <ColorTable
-                        colors={colors}
-                        onDelete={handleDelete}
-                        loading={loading}
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={handlePageChange}
-                    />
-                </CardContent>
-            </Card>
+            <ColorTable
+                colors={filteredColors}
+                onDelete={handleDelete}
+                loading={loading}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+            />
 
             <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará permanentemente el color.
+                            {colorNameToDelete ? (
+                                <>
+                                    Esta acción no se puede deshacer. Se eliminará permanentemente el color{' '}
+                                    <span className="font-semibold">"{colorNameToDelete}"</span>.
+                                </>
+                            ) : (
+                                'Esta acción no se puede deshacer. Se eliminará permanentemente el color.'
+                            )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setOpenDialog(false)}>
+                        <AlertDialogCancel onClick={() => {
+                            setOpenDialog(false);
+                            setColorIdToDelete(null);
+                            setColorNameToDelete('');
+                        }}>
                             Cancelar
                         </AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => {
-                                if (colorIdToDelete !== null) {
-                                    handleDelete(colorIdToDelete);
-                                    setOpenDialog(false);
-                                }
-                            }}
+                            onClick={confirmDelete}
                             className="bg-red-600 hover:bg-red-700"
                         >
                             Eliminar

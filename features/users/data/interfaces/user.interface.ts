@@ -45,3 +45,21 @@ export interface ApiResponse<T> {
   };
   data: T;
 }
+
+export interface PersonApiResponse {
+  success: boolean;
+  message: {
+    content: string[];
+    displayable: boolean;
+  };
+  data: {
+    id: number;
+    dni: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    type: string;
+    status: string;
+  };
+}

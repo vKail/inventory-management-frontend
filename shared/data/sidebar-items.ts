@@ -11,7 +11,6 @@ import {
   Tag,
   User,
   Users,
-  Warehouse,
   File
 } from 'lucide-react';
 
@@ -34,7 +33,7 @@ export const sidebarItems = [
             title: 'Nuevo bien',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/inventory/add-product',
+            href: '/inventory/new',
           },
         ],
       },
@@ -53,7 +52,7 @@ export const sidebarItems = [
             title: 'Nuevo préstamo',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/loans/request',
+            href: '/loans/new',
           },
         ],
       },

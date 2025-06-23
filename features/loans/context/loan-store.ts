@@ -1,65 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { LoanStatus } from '../data/schemas/loan.schema';
-
-interface LoanDetail {
-    id: number;
-    loanId: number;
-    itemId: number;
-    exitConditionId: number;
-    returnConditionId: number | null;
-    item?: {
-        id: number;
-        name: string;
-        code: string;
-    };
-}
-
-interface Loan {
-    id: number;
-    requestorId: number;
-    approverId: number | null;
-    reason: string;
-    associatedEvent?: string;
-    externalLocation: string;
-    notes?: string;
-    status: LoanStatus;
-    deliveryDate: string | null;
-    scheduledReturnDate: string;
-    actualReturnDate: string | null;
-    reminderSent: boolean;
-    loanDetails: LoanDetail[];
-}
-
-interface LoanState {
-    loans: Loan[];
-    isLoading: {
-        fetch: boolean;
-        create: boolean;
-        update: boolean;
-    };
-    error: string | null;
-    getLoans: (page?: number, limit?: number) => Promise<void>;
-    getLoanById: (id: number) => Promise<Loan | undefined>;
-    createLoan: (data: any) => Promise<void>;
-    updateLoan: (id: number, data: any) => Promise<void>;
-    copyLoan: (id: number) => Promise<any>;
-}
-
-interface ApiResponse<T> {
-    success: boolean;
-    message: {
-        content: string[];
-        displayable: boolean;
-    };
-    data: {
-        records: T[];
-        total: number;
-        limit: number;
-        page: number;
-        pages: number;
-    };
-}
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { Loan, LoanCreate, LoanReturn, LoanFilters, LoanState } from "@/features/loans/data/interfaces/loan.interface";
+import { loanService } from "../services/loan.service";
 
 const STORE_NAME = 'loan-storage';
 
@@ -67,135 +9,135 @@ export const useLoanStore = create<LoanState>()(
     persist(
         (set, get) => ({
             loans: [],
-            isLoading: {
-                fetch: false,
-                create: false,
-                update: false,
-            },
+            loading: false,
             error: null,
+            totalPages: 0,
+            currentPage: 1,
+            selectedLoan: null,
+            filters: {
+                status: 'DELIVERED'
+            },
+
+            setPage: (page: number) => {
+                set({ currentPage: page });
+                get().refreshTable();
+            },
+
+            setFilters: (newFilters) => {
+                set((state) => ({
+                    filters: { ...state.filters, ...newFilters },
+                    currentPage: 1
+                }));
+                get().refreshTable();
+            },
+
+            refreshTable: async () => {
+                const { currentPage, filters } = get();
+                await get().getLoans(currentPage, 10);
+            },
 
             getLoans: async (page = 1, limit = 10) => {
-                set(state => ({ isLoading: { ...state.isLoading, fetch: true } }));
                 try {
-                    // Aquí deberías hacer la llamada real a tu API
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/loans?page=${page}&limit=${limit}`, {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        },
-                    });
+                    set({ loading: true, error: null });
+                    const { filters } = get();
 
-                    const data: ApiResponse<Loan> = await response.json();
+                    // Construir query params
+                    const queryParams = new URLSearchParams();
+                    if (filters.search) queryParams.append('search', filters.search);
+                    if (filters.status && filters.status !== 'all') queryParams.append('status', filters.status);
+                    queryParams.append('page', page.toString());
+                    queryParams.append('limit', limit.toString());
 
-                    if (!data.success) {
-                        throw new Error(data.message.content[0]);
+                    const response = await loanService.getAll(queryParams.toString());
+
+                    if (response.success) {
+                        const { records, pages, page: currentPage } = response.data;
+                        set({
+                            loans: records,
+                            totalPages: pages,
+                            currentPage,
+                            loading: false
+                        });
+                    } else {
+                        set({ error: response.message.content[0], loading: false });
                     }
-
-                    set({
-                        loans: data.data.records,
-                        isLoading: { fetch: false, create: false, update: false },
-                        error: null
-                    });
                 } catch (error) {
                     console.error('Error fetching loans:', error);
-                    set(state => ({
-                        error: 'Error al cargar los préstamos',
-                        isLoading: { ...state.isLoading, fetch: false }
-                    }));
+                    set({ error: "Error al cargar los préstamos", loading: false });
                 }
             },
 
             getLoanById: async (id: number) => {
                 try {
-                    const loan = get().loans.find(l => l.id === id);
-                    return loan;
+                    set({ loading: true, error: null });
+                    const loan = await loanService.getById(id);
+                    if (loan) {
+                        set({ selectedLoan: loan, loading: false });
+                    } else {
+                        set({ error: "Préstamo no encontrado", loading: false });
+                    }
                 } catch (error) {
-                    console.error('Error fetching loan:', error);
-                    set({ error: 'Error al cargar el préstamo' });
-                    return undefined;
+                    set({ error: "Error al cargar el préstamo", loading: false });
                 }
             },
 
-            createLoan: async (data: any) => {
-                set(state => ({ isLoading: { ...state.isLoading, create: true } }));
+            getLoanHistoryByDni: async (dni: string) => {
                 try {
-                    // Aquí deberías hacer la llamada real a tu API
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/loans`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        },
-                        body: JSON.stringify(data),
-                    });
-
-                    const responseData = await response.json();
-
-                    if (!responseData.success) {
-                        throw new Error(responseData.message.content[0]);
-                    }
-
-                    await get().getLoans(); // Recargar la lista después de crear
+                    set({ loading: true, error: null });
+                    const history = await loanService.getHistoryByDni(dni);
+                    set({ loading: false });
+                    return history;
                 } catch (error) {
-                    console.error('Error creating loan:', error);
-                    set(state => ({
-                        error: 'Error al crear el préstamo',
-                        isLoading: { ...state.isLoading, create: false }
-                    }));
+                    set({ loading: false, error: 'Error al cargar el historial' });
+                    console.error('Error fetching loan history:', error);
+                    return [];
+                }
+            },
+
+            createLoan: async (loan: LoanCreate) => {
+                try {
+                    set({ loading: true, error: null });
+                    const response = await loanService.create(loan);
+                    if (response.success) {
+                        set({ loading: false });
+                    } else {
+                        set({ error: response.message.content[0], loading: false });
+                    }
+                } catch (error) {
+                    set({ error: "Error al crear el préstamo", loading: false });
+                }
+            },
+
+            returnLoan: async (loanId: number, loanReturn: LoanReturn) => {
+                try {
+                    set({ loading: true, error: null });
+                    const response = await loanService.return(loanReturn);
+                    if (!response.success) {
+                        throw new Error(response.message.content.join(", "));
+                    }
+                    await get().refreshTable();
+                    set({ loading: false });
+                } catch (error) {
+                    console.error("Error returning loan:", error);
+                    set({
+                        error: "Error al devolver el préstamo",
+                        loading: false,
+                    });
                     throw error;
                 }
             },
 
-            updateLoan: async (id: number, data: any) => {
-                set(state => ({ isLoading: { ...state.isLoading, update: true } }));
-                try {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/loans/${id}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        },
-                        body: JSON.stringify(data),
-                    });
-
-                    const responseData = await response.json();
-
-                    if (!responseData.success) {
-                        throw new Error(responseData.message.content[0]);
-                    }
-
-                    await get().getLoans(); // Recargar la lista después de actualizar
-                } catch (error) {
-                    console.error('Error updating loan:', error);
-                    set(state => ({
-                        error: 'Error al actualizar el préstamo',
-                        isLoading: { ...state.isLoading, update: false }
-                    }));
-                    throw error;
-                }
+            setSelectedLoan: (loan: Loan | null) => {
+                set({ selectedLoan: loan });
             },
-
-            copyLoan: async (id: number) => {
-                const loan = await get().getLoanById(id);
-                if (!loan) {
-                    throw new Error('Préstamo no encontrado');
-                }
-
-                return {
-                    motivo: loan.reason,
-                    eventoAsociado: loan.associatedEvent || '',
-                    ubicacionExterna: loan.externalLocation,
-                    notas: loan.notes || '',
-                    items: loan.loanDetails.map(detail => ({
-                        id: detail.itemId,
-                        name: detail.item?.name || '',
-                        barcode: detail.item?.code || '',
-                        description: ''
-                    }))
-                };
-            }
         }),
         {
             name: STORE_NAME,
+            storage: createJSONStorage(() => sessionStorage),
+            partialize: (state) => ({
+                currentPage: state.currentPage,
+                filters: state.filters,
+            }),
         }
     )
-); 
+);

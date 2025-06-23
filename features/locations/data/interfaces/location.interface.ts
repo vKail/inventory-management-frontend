@@ -3,7 +3,7 @@ export interface ILocation {
   name: string;
   description: string;
   parentLocationId?: number | null;
-  type: 'WAREHOUSE' | 'BUILDING' | 'FLOOR' | 'OFFICE' | 'SHELF' | 'LABORATORY';
+  type: 'BUILDING' | 'FLOOR' | 'OFFICE' | 'WAREHOUSE' | 'SHELF' | 'LABORATORY';
   floor: string;
   reference: string;
   capacity: number;
@@ -16,6 +16,20 @@ export interface ILocation {
   updatedAt?: Date;
 }
 
+// Interface for form data (without backend-only fields)
+export interface ILocationFormData {
+  name: string;
+  description: string;
+  parentLocationId: number | null;
+  type: 'BUILDING' | 'FLOOR' | 'OFFICE' | 'WAREHOUSE' | 'SHELF' | 'LABORATORY';
+  floor: string;
+  reference: string;
+  capacity: number;
+  capacityUnit: 'UNITS' | 'METERS' | 'SQUARE_METERS';
+  occupancy: number;
+  notes: string;
+}
+
 export interface PaginatedLocations {
   records: ILocation[];
   total: number;
@@ -24,10 +38,10 @@ export interface PaginatedLocations {
 }
 
 export const LocationTypeLabels: Record<ILocation['type'], string> = {
-  WAREHOUSE: 'almacén',
   BUILDING: 'edificio',
   FLOOR: 'piso',
   OFFICE: 'oficina',
+  WAREHOUSE: 'almacén',
   SHELF: 'estante',
   LABORATORY: 'laboratorio'
 };

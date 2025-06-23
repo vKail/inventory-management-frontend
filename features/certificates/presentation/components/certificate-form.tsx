@@ -63,24 +63,9 @@ interface CertificateFormProps {
 export function CertificateForm({ initialData, onSubmit, isLoading, id }: CertificateFormProps) {
     const router = useRouter();
     const { getCertificateById } = useCertificateStore();
-    const { getUsers } = useUserStore();
-    const [users, setUsers] = useState<any[]>([]);
+    const { getUsers, users } = useUserStore();
     const [openDelivery, setOpenDelivery] = useState(false);
     const [openReception, setOpenReception] = useState(false);
-
-    useEffect(() => {
-        const loadUsers = async () => {
-            try {
-                const response = await getUsers(1, 100);
-                if (response && response.records) {
-                    setUsers(response.records);
-                }
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
-        };
-        loadUsers();
-    }, [getUsers]);
 
     const form = useForm<CertificateFormValues>({
         resolver: zodResolver(certificateSchema),
@@ -111,6 +96,17 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
         }
     }, [initialData, form]);
 
+    useEffect(() => {
+        const loadUsers = async () => {
+            try {
+                await getUsers(1, 100);
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        };
+        loadUsers();
+    }, [getUsers]);
+
     const handleSubmit = async (data: CertificateFormValues) => {
         const formattedData = {
             ...data,
@@ -123,7 +119,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
     };
 
     const getSelectedUser = (userId: number) => {
-        const user = users.find(u => u.id === userId);
+        const user = users.find(u => u.id === userId.toString());
         return user ? `${user.person.dni} - ${user.person.lastName} ${user.person.firstName}` : '';
     };
 
@@ -306,7 +302,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                                         key={user.id}
                                                                         value={`${user.person.dni} ${user.person.lastName} ${user.person.firstName}`}
                                                                         onSelect={() => {
-                                                                            form.setValue("deliveryResponsibleId", user.id);
+                                                                            form.setValue("deliveryResponsibleId", Number(user.id));
                                                                             setOpenDelivery(false);
                                                                         }}
                                                                     >
@@ -357,7 +353,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                                         key={user.id}
                                                                         value={`${user.person.dni} ${user.person.lastName} ${user.person.firstName}`}
                                                                         onSelect={() => {
-                                                                            form.setValue("receptionResponsibleId", user.id);
+                                                                            form.setValue("receptionResponsibleId", Number(user.id));
                                                                             setOpenReception(false);
                                                                         }}
                                                                     >
@@ -380,14 +376,18 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                 name="observations"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Observaciones</FormLabel>
+                                        <FormLabel>Observaciones *</FormLabel>
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Ingrese las observaciones del certificado"
                                                 className="resize-none"
+                                                maxLength={500}
                                                 {...field}
                                             />
                                         </FormControl>
+                                        <div className="text-xs text-muted-foreground text-right">
+                                            {field.value?.length || 0}/500 caracteres
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}

@@ -89,10 +89,13 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
                                         name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Nombre</FormLabel>
+                                                <FormLabel>Nombre *</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Nombre del estado" {...field} />
+                                                    <Input placeholder="Nombre del estado" maxLength={100} {...field} />
                                                 </FormControl>
+                                                <div className="text-xs text-muted-foreground text-right">
+                                                    {field.value?.length || 0}/100 caracteres
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -103,13 +106,17 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
                                         name="description"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Descripción</FormLabel>
+                                                <FormLabel>Descripción *</FormLabel>
                                                 <FormControl>
                                                     <Textarea
                                                         placeholder="Descripción del estado"
+                                                        maxLength={500}
                                                         {...field}
                                                     />
                                                 </FormControl>
+                                                <div className="text-xs text-muted-foreground text-right">
+                                                    {field.value?.length || 0}/500 caracteres
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

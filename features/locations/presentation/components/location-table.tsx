@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Pencil, Trash2, MapPin } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, MapPin, X } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -33,6 +33,7 @@ import { useLocationStore } from '@/features/locations/context/location-store';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import LoaderComponent from '@/shared/components/ui/Loader';
+import { LocationPagination } from './location-pagination';
 
 // Definimos los tipos de ubicación disponibles
 const LocationTypes = {
@@ -44,31 +45,28 @@ const LocationTypes = {
   LABORATORY: "Laboratorio",
 } as const;
 
-interface LocationTableProps {
-  currentPage: number;
-  itemsPerPage: number;
-}
-
-export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps) {
+export function LocationTable() {
   const router = useRouter();
   const {
-    locations,
+    filteredLocations,
+    searchTerm,
+    typeFilter,
     isLoading,
     getLocations,
-    deleteLocation
+    deleteLocation,
+    setSearchTerm,
+    setTypeFilter,
+    clearFilters,
+    currentPage,
+    totalPages
   } = useLocationStore();
 
-
   const [locationToDelete, setLocationToDelete] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<string>('all');
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        await Promise.all([
-          getLocations(currentPage, itemsPerPage),
-        ]);
+        await getLocations(currentPage, 10);
       } catch (error) {
         console.error('Error loading data:', error);
         toast.error('Error al cargar los datos');
@@ -76,7 +74,16 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
     };
 
     loadData();
-  }, [getLocations, currentPage, itemsPerPage]);
+  }, [getLocations, currentPage]);
+
+  const handlePageChange = async (page: number) => {
+    try {
+      await getLocations(page, 10);
+    } catch (error) {
+      console.error('Error changing page:', error);
+      toast.error('Error al cambiar de página');
+    }
+  };
 
   const handleDelete = async () => {
     if (locationToDelete === null) return;
@@ -95,44 +102,44 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
     router.push(`/locations/edit/${id}`);
   };
 
-  // Filtrar las ubicaciones basado en la búsqueda y el tipo seleccionado
-  const filteredLocations = locations.filter(location => {
-    const matchesSearch = searchTerm === '' ||
-      location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      location.floor?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesType = selectedType === 'all' || location.type === selectedType;
-
-    return matchesSearch && matchesType;
-  });
-
   return (
     <Card className="w-full max-w-[1200px]">
       <CardHeader className="px-4 md:px-8 pb-0">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
             <Input
-              placeholder="Buscar por nombre o piso..."
+              placeholder="Buscar por nombre, descripción, piso o referencia..."
               className="w-full md:w-64"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             <Select
-              value={selectedType}
-              onValueChange={setSelectedType}
+              value={typeFilter}
+              onValueChange={setTypeFilter}
             >
-              <SelectTrigger className="w-full md:w-56">
+              <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Todos los tipos" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los tipos</SelectItem>
                 {Object.entries(LocationTypes).map(([key, value]) => (
-                  <SelectItem key={value} value={value}>
-                    {key}
+                  <SelectItem key={key} value={key}>
+                    {value}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {(searchTerm || typeFilter !== 'all') && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10"
+                onClick={clearFilters}
+                title="Limpiar todos los filtros"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           <Button
@@ -143,7 +150,7 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
             Nueva Ubicación
           </Button>
         </div>
-        <hr className="border-t border-muted mt-4" />
+        <hr className="border-t border-muted mt-3" />
       </CardHeader>
 
       <CardContent className="px-4 md:px-8 pb-6">
@@ -169,8 +176,9 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
                 </TableRow>
               ) : filteredLocations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center h-24">
+                  <TableCell colSpan={7} className="text-center h-24">
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <MapPin className="h-10 w-10 opacity-30 mb-2" />
                       <p className="mb-2">No hay ubicaciones para mostrar</p>
                       <Button
                         onClick={() => router.push('/locations/new')}
@@ -187,7 +195,7 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
                 filteredLocations.map((location) => (
                   <TableRow key={location.id}>
                     <TableCell>{location.name}</TableCell>
-                    <TableCell>{location.type}</TableCell>
+                    <TableCell>{LocationTypes[location.type as keyof typeof LocationTypes] || location.type}</TableCell>
                     <TableCell>{location.floor}</TableCell>
                     <TableCell>{location.reference}</TableCell>
                     <TableCell>{`${location.capacity} ${location.capacityUnit}`}</TableCell>
@@ -239,6 +247,15 @@ export function LocationTable({ currentPage, itemsPerPage }: LocationTableProps)
               )}
             </TableBody>
           </Table>
+          {!isLoading.fetch && filteredLocations.length > 0 && (
+            <div className="mt-4">
+              <LocationPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

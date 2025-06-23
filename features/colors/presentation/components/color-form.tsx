@@ -43,7 +43,7 @@ export default function ColorForm() {
                 try {
                     const color = await getColorById(colorId);
                     if (color) {
-                        // Actualizar el formulario con los datos del color
+                        // Actualizar el formulario con los datos del color 
                         form.reset({
                             name: color.name,
                             hexCode: color.hexCode,
@@ -82,8 +82,8 @@ export default function ColorForm() {
                     {colorId ? "Editar Color" : "Nuevo Color"}
                 </CardTitle>
                 <CardDescription>
-                    {colorId 
-                        ? "Modifique los datos para actualizar este color" 
+                    {colorId
+                        ? "Modifique los datos para actualizar este color"
                         : "Complete los datos para crear un nuevo color"
                     }
                 </CardDescription>
@@ -97,10 +97,13 @@ export default function ColorForm() {
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nombre</FormLabel>
+                                    <FormLabel>Nombre *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Nombre del color" {...field} />
+                                        <Input placeholder="Nombre del color" maxLength={100} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/100 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -111,7 +114,7 @@ export default function ColorForm() {
                             name="hexCode"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Código HEX</FormLabel>
+                                    <FormLabel>Código HEX *</FormLabel>
 
                                     <div className="flex items-center gap-4">
                                         <div className="relative flex-1">
@@ -145,6 +148,7 @@ export default function ColorForm() {
                                                 <Input
                                                     {...field}
                                                     className="pl-12"
+                                                    maxLength={7}
                                                     onClick={() => setIsColorPickerOpen(true)}
                                                 />
                                             </FormControl>
@@ -155,7 +159,9 @@ export default function ColorForm() {
                                             style={{ backgroundColor: currentColor }}
                                         />
                                     </div>
-
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/7 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -166,10 +172,13 @@ export default function ColorForm() {
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Descripción</FormLabel>
+                                    <FormLabel>Descripción *</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Descripción del color" rows={4} {...field} />
+                                        <Textarea placeholder="Descripción del color" rows={4} maxLength={500} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/500 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}

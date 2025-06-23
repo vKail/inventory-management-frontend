@@ -102,10 +102,13 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                                         name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Nombre</FormLabel>
+                                                <FormLabel>Nombre *</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Nombre de la condición" {...field} />
+                                                    <Input placeholder="Nombre de la condición" maxLength={100} {...field} />
                                                 </FormControl>
+                                                <div className="text-xs text-muted-foreground text-right">
+                                                    {field.value?.length || 0}/100 caracteres
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -116,13 +119,17 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                                         name="description"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Descripción</FormLabel>
+                                                <FormLabel>Descripción *</FormLabel>
                                                 <FormControl>
                                                     <Textarea
                                                         placeholder="Descripción de la condición"
+                                                        maxLength={500}
                                                         {...field}
                                                     />
                                                 </FormControl>
+                                                <div className="text-xs text-muted-foreground text-right">
+                                                    {field.value?.length || 0}/500 caracteres
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

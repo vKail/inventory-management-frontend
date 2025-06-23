@@ -25,14 +25,17 @@ export const IdentificationSection = () => {
                             name="code"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Código del Bien</FormLabel>
+                                    <FormLabel>Código del Bien *</FormLabel>
                                     <div className="flex gap-2">
                                         <FormControl>
-                                            <Input placeholder="Código único del bien" {...field} />
+                                            <Input placeholder="Código único del bien" maxLength={50} {...field} />
                                         </FormControl>
                                         <Button type="button" variant="secondary" size="icon">
                                             <Barcode className="h-4 w-4" />
                                         </Button>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/50 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -46,8 +49,11 @@ export const IdentificationSection = () => {
                                 <FormItem>
                                     <FormLabel>Código Anterior</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Código anterior del bien" {...field} />
+                                        <Input placeholder="Código anterior del bien" maxLength={50} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/50 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -58,10 +64,13 @@ export const IdentificationSection = () => {
                             name="identifier"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Identificador</FormLabel>
+                                    <FormLabel>Identificador *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Identificador único" {...field} />
+                                        <Input placeholder="Identificador único" maxLength={100} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/100 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -72,10 +81,13 @@ export const IdentificationSection = () => {
                             name="commitmentNumber"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Nro de Acta/Matriz</FormLabel>
+                                    <FormLabel>Nro de Acta/Matriz *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Número de acta o matriz" {...field} />
+                                        <Input placeholder="Número de acta o matriz" maxLength={50} {...field} />
                                     </FormControl>
+                                    <div className="text-xs text-muted-foreground text-right">
+                                        {field.value?.length || 0}/50 caracteres
+                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -86,7 +98,7 @@ export const IdentificationSection = () => {
                             name="normativeType"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Tipo Normativo</FormLabel>
+                                    <FormLabel>Tipo Normativo *</FormLabel>
                                     <FormControl>
                                         <select
                                             {...field}

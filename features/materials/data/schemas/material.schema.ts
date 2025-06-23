@@ -8,7 +8,14 @@ export const materialSchema = z.object({
   description: z.string()
     .min(1, 'La descripción es requerida')
     .max(500, 'La descripción no puede tener más de 500 caracteres'),
-  materialType: z.enum([MaterialTypes.CONSUMABLE, MaterialTypes.TOOL, MaterialTypes.EQUIPMENT], {
+  materialType: z.enum([
+    MaterialTypes.CONSUMABLE,
+    MaterialTypes.TOOL,
+    MaterialTypes.EQUIPMENT,
+    MaterialTypes.METAL,
+    MaterialTypes.OTHER,
+    MaterialTypes.DELICATE
+  ], {
     required_error: 'El tipo de material es requerido',
     invalid_type_error: 'Tipo de material inválido'
   })

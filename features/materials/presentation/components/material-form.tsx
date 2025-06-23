@@ -90,10 +90,13 @@ export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, i
                                         name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Nombre</FormLabel>
+                                                <FormLabel>Nombre *</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Nombre del material" {...field} />
+                                                    <Input placeholder="Nombre del material" maxLength={100} {...field} />
                                                 </FormControl>
+                                                <div className="text-xs text-muted-foreground text-right">
+                                                    {field.value?.length || 0}/100 caracteres
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -104,13 +107,17 @@ export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, i
                                         name="description"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Descripción</FormLabel>
+                                                <FormLabel>Descripción *</FormLabel>
                                                 <FormControl>
                                                     <Textarea
                                                         placeholder="Descripción del material"
+                                                        maxLength={500}
                                                         {...field}
                                                     />
                                                 </FormControl>
+                                                <div className="text-xs text-muted-foreground text-right">
+                                                    {field.value?.length || 0}/500 caracteres
+                                                </div>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -121,8 +128,8 @@ export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, i
                                         name="materialType"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Tipo de Material</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormLabel>Tipo de Material *</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Seleccione un tipo" />
@@ -132,6 +139,9 @@ export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, i
                                                         <SelectItem value={MaterialTypes.CONSUMABLE}>Consumible</SelectItem>
                                                         <SelectItem value={MaterialTypes.TOOL}>Herramienta</SelectItem>
                                                         <SelectItem value={MaterialTypes.EQUIPMENT}>Equipo</SelectItem>
+                                                        <SelectItem value={MaterialTypes.METAL}>Metal</SelectItem>
+                                                        <SelectItem value={MaterialTypes.OTHER}>Otro</SelectItem>
+                                                        <SelectItem value={MaterialTypes.DELICATE}>Delicados</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormDescription>

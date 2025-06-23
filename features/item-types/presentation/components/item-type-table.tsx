@@ -5,13 +5,23 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { useItemTypeStore } from '../../context/item-types-store';
 import LoaderComponent from '@/shared/components/ui/Loader';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbList, BreadcrumbPage, BreadcrumbLink } from '@/components/ui/breadcrumb';
 import { Input } from '@/components/ui/input';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function ItemTypeTable() {
     const router = useRouter();
@@ -28,6 +38,7 @@ export default function ItemTypeTable() {
     } = useItemTypeStore();
 
     const [itemTypeToDelete, setItemTypeToDelete] = useState<string | null>(null);
+    const [itemTypeNameToDelete, setItemTypeNameToDelete] = useState<string>('');
     const itemsPerPage = 10;
 
     useEffect(() => {
@@ -43,29 +54,21 @@ export default function ItemTypeTable() {
         loadItemTypes();
     }, [getItemTypes, currentPage]);
 
-    const handleDelete = (id: string) => {
-        const toastId = toast('¿Deseas eliminar este tipo de item?', {
-            action: {
-                label: 'Eliminar',
-                onClick: async () => {
-                    try {
-                        await deleteItemType(id);
-                        toast.success('Tipo de item eliminado exitosamente');
-                    } catch (error) {
-                        console.error('Error deleting item type:', error);
-                        toast.error('Error al eliminar el tipo de item');
-                    } finally {
-                        toast.dismiss(toastId);
-                    }
-                },
-            },
-            cancel: {
-                label: 'Cancelar',
-                onClick: () => {
-                    toast.dismiss(toastId);
-                },
-            },
-        });
+    const confirmDelete = async () => {
+        if (itemTypeToDelete === null) return;
+
+        try {
+            await deleteItemType(itemTypeToDelete);
+            toast.success('Tipo de item eliminado exitosamente');
+            // Reload just the current page data
+            await getItemTypes(currentPage, itemsPerPage);
+        } catch (error) {
+            console.error('Error deleting item type:', error);
+            toast.error('Error al eliminar el tipo de item');
+        } finally {
+            setItemTypeToDelete(null);
+            setItemTypeNameToDelete('');
+        }
     };
 
     if (loading) {
@@ -125,7 +128,6 @@ export default function ItemTypeTable() {
                                 <TableHead>Código</TableHead>
                                 <TableHead>Nombre</TableHead>
                                 <TableHead>Descripción</TableHead>
-                                <TableHead>Estado</TableHead>
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -135,26 +137,58 @@ export default function ItemTypeTable() {
                                     <TableCell className="font-medium">{itemType.code}</TableCell>
                                     <TableCell>{itemType.name}</TableCell>
                                     <TableCell>{itemType.description}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={itemType.active ? "default" : "secondary"}>
-                                            {itemType.active ? "Activo" : "Inactivo"}
-                                        </Badge>
-                                    </TableCell>
                                     <TableCell className="text-right space-x-2">
                                         <Button
-                                            variant="outline"
+                                            variant="ghost"
                                             size="icon"
                                             onClick={() => router.push(`/item-types/edit/${itemType.id}`)}
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => handleDelete(itemType.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        const itemTypeToDelete = filteredItemTypes.find(it => it.id === itemType.id);
+                                                        setItemTypeToDelete(itemType.id);
+                                                        setItemTypeNameToDelete(itemTypeToDelete?.name || '');
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        {itemTypeNameToDelete ? (
+                                                            <>
+                                                                Esta acción no se puede deshacer. Se eliminará permanentemente el tipo de item{' '}
+                                                                <span className="font-semibold">"{itemTypeNameToDelete}"</span>.
+                                                            </>
+                                                        ) : (
+                                                            'Esta acción no se puede deshacer. Se eliminará permanentemente el tipo de item.'
+                                                        )}
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel onClick={() => {
+                                                        setItemTypeToDelete(null);
+                                                        setItemTypeNameToDelete('');
+                                                    }}>
+                                                        Cancelar
+                                                    </AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={confirmDelete}
+                                                        className="bg-red-600 hover:bg-red-700"
+                                                    >
+                                                        Eliminar
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </TableCell>
                                 </TableRow>
                             ))}
