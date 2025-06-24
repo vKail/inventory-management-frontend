@@ -32,7 +32,7 @@ export default function CertificateFormView({ id }: CertificateFormViewProps) {
                 if (certificate) {
                     setInitialData(certificate);
                 } else {
-                    toast.error('No se encontró el certificado');
+                    toast.error('No se encontró el Acta');
                     router.push('/certificates');
                 }
             }
@@ -44,15 +44,15 @@ export default function CertificateFormView({ id }: CertificateFormViewProps) {
         try {
             if (isEdit && id) {
                 await updateCertificate(id, data);
-                toast.success('Certificado actualizado exitosamente');
+                toast.success('Acta actualizada exitosamente');
             } else {
                 await addCertificate(data);
-                toast.success('Certificado creado exitosamente');
+                toast.success('Acta creada exitosamente');
             }
             router.push('/certificates');
         } catch (error) {
-            console.error('Error al guardar el certificado:', error);
-            toast.error('Error al guardar el certificado');
+            console.error('Error al guardar el Acta:', error);
+            toast.error('Error al guardar el Acta');
         }
     };
 

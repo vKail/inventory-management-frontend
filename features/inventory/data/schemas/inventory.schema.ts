@@ -20,7 +20,7 @@ export const inventorySchema = z.object({
     identifier: z.string().min(1, 'El identificador es requerido').max(100, 'El identificador no puede exceder 100 caracteres'),
     previousCode: z.string().max(50, 'El código anterior no puede exceder 50 caracteres').optional(),
     conditionId: z.number().int().min(1, 'La condición es requerida'),
-    certificateId: z.number().int().min(1, 'El certificado es requerido'),
+    certificateId: z.number().int().min(1, 'El Acta es requerido'),
     entryOrigin: z.string().min(1, 'El origen de entrada es requerido').max(20, 'El origen de entrada no puede exceder 20 caracteres'),
     entryType: z.string().min(1, 'El tipo de entrada es requerido').max(20, 'El tipo de entrada no puede exceder 20 caracteres'),
     acquisitionDate: z.string().min(1, 'La fecha de adquisición es requerida'),

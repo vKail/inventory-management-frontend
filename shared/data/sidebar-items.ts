@@ -87,6 +87,25 @@ export const sidebarItems = [
     group: 'Configuración',
     items: [
       {
+        title: 'Actas',
+        icon: File,
+        roles: [UserRole.ADMIN],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN],
+            href: '/certificates',
+          },
+          {
+            title: 'Nueva Acta',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN],
+            href: '/certificates/new',
+          },
+        ],
+      },
+      {
         title: 'Categorías',
         icon: Tag,
         roles: [UserRole.ADMIN],
@@ -144,6 +163,44 @@ export const sidebarItems = [
         ],
       },
       {
+        title: 'Estados',
+        icon: AlertCircle,
+        roles: [UserRole.ADMIN, UserRole.TEACHER],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN, UserRole.TEACHER],
+            href: '/states',
+          },
+          {
+            title: 'Nuevo Estado',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN, UserRole.TEACHER],
+            href: '/states/new',
+          },
+        ],
+      },
+      {
+        title: 'Materiales',
+        icon: Package,
+        roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+            href: '/materials',
+          },
+          {
+            title: 'Nuevo Material',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN, UserRole.TEACHER],
+            href: '/materials/new',
+          },
+        ],
+      },
+      {
         title: 'Tipos de items',
         icon: Boxes,
         roles: [UserRole.ADMIN, UserRole.TEACHER],
@@ -178,63 +235,6 @@ export const sidebarItems = [
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/locations/new',
-          },
-        ],
-      },
-      {
-        title: 'Actas',
-        icon: File,
-        roles: [UserRole.ADMIN],
-        subItems: [
-          {
-            title: 'Listar',
-            icon: List,
-            roles: [UserRole.ADMIN],
-            href: '/certificates',
-          },
-          {
-            title: 'Nueva Acta',
-            icon: CirclePlus,
-            roles: [UserRole.ADMIN],
-            href: '/certificates/new',
-          },
-        ],
-      },
-      {
-        title: 'Materiales',
-        icon: Package,
-        roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
-        subItems: [
-          {
-            title: 'Listar',
-            icon: List,
-            roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
-            href: '/materials',
-          },
-          {
-            title: 'Nuevo Material',
-            icon: CirclePlus,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/materials/new',
-          },
-        ],
-      },
-      {
-        title: 'Estados',
-        icon: AlertCircle,
-        roles: [UserRole.ADMIN, UserRole.TEACHER],
-        subItems: [
-          {
-            title: 'Listar',
-            icon: List,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/states',
-          },
-          {
-            title: 'Nuevo Estado',
-            icon: CirclePlus,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/states/new',
           },
         ],
       },

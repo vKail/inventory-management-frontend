@@ -105,7 +105,7 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
                 loading: false
             });
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Error al obtener los certificados";
+            const message = error instanceof Error ? error.message : "Error al obtener las Actas";
             set({ error: message, loading: false });
             toast.error(message);
         }
@@ -118,7 +118,7 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
             set({ loading: false });
             return certificate;
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Error al obtener el certificado";
+            const message = error instanceof Error ? error.message : "Error al obtener el Acta";
             set({ error: message, loading: false });
             toast.error(message);
             return undefined;
@@ -130,9 +130,9 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
             set({ loading: true, error: null });
             await CertificateService.getInstance().createCertificate(certificate);
             await get().getCertificates(1, 10); // Reset to first page after adding
-            toast.success('Certificado creado exitosamente');
+            toast.success('Acta creada exitosamente');
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Error al crear el certificado";
+            const message = error instanceof Error ? error.message : "Error al crear el Acta";
             set({ error: message, loading: false });
             toast.error(message);
         }
@@ -143,9 +143,9 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
             set({ loading: true, error: null });
             await CertificateService.getInstance().updateCertificate(certificateId, certificate);
             await get().getCertificates(get().currentPage, 10); // Stay on current page after update
-            toast.success('Certificado actualizado exitosamente');
+            toast.success('Acta actualizado exitosamente');
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Error al actualizar el certificado";
+            const message = error instanceof Error ? error.message : "Error al actualizar el Acta";
             set({ error: message, loading: false });
             toast.error(message);
         }
@@ -163,9 +163,9 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
                 // Refrescamos la página actual
                 await get().getCertificates(currentPage, 10);
             }
-            toast.success('Certificado eliminado exitosamente');
+            toast.success('Acta eliminado exitosamente');
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Error al eliminar el certificado";
+            const message = error instanceof Error ? error.message : "Error al eliminar el Acta";
             set({ error: message, loading: false });
             toast.error(message);
         }

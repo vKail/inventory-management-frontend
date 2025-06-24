@@ -82,7 +82,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
     });
 
     useEffect(() => {
-        if (initialData) {
+        if (initialData && id !== 'new') {
             form.reset({
                 number: initialData.number || 0,
                 date: initialData.date || '',
@@ -93,8 +93,19 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                 observations: initialData.observations || '',
                 accounted: initialData.accounted || false,
             });
+        } else if (id === 'new') {
+            form.reset({
+                number: 0,
+                date: '',
+                type: 'ENTRY',
+                status: 'DRAFT',
+                deliveryResponsibleId: 0,
+                receptionResponsibleId: 0,
+                observations: '',
+                accounted: false,
+            });
         }
-    }, [initialData, form]);
+    }, [initialData, form, id]);
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -119,7 +130,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
     };
 
     const getSelectedUser = (userId: number) => {
-        const user = users.find(u => u.id === userId.toString());
+        const user = users.find(u => Number(u.id) === Number(userId));
         return user ? `${user.person.dni} - ${user.person.lastName} ${user.person.firstName}` : '';
     };
 
@@ -134,11 +145,11 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <FileText className="inline mr-1 h-4 w-4 text-primary align-middle" />
-                            <BreadcrumbLink href="/certificates">Certificados</BreadcrumbLink>
+                            <BreadcrumbLink href="/certificates">Actas</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage>{id ? "Editar Certificado" : "Nuevo Certificado"}</BreadcrumbPage>
+                            <BreadcrumbPage>{id && id !== 'new' ? "Editar Acta" : "Nueva Acta"}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
@@ -146,11 +157,11 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
 
             <Card>
                 <CardHeader>
-                    <CardTitle>{id ? "Editar Certificado" : "Nuevo Certificado"}</CardTitle>
+                    <CardTitle>{id && id !== 'new' ? "Editar Acta" : "Nueva Acta"}</CardTitle>
                     <CardDescription>
-                        {id
-                            ? "Modifica la información del certificado existente."
-                            : "Completa la información para crear un nuevo certificado."}
+                        {id && id !== 'new'
+                            ? "Modifica la información del acta existente."
+                            : "Completa la información para crear una nueva acta."}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -166,9 +177,17 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                             <FormControl>
                                                 <Input
                                                     type="number"
-                                                    placeholder="Número del certificado"
+                                                    placeholder="Número del acta"
                                                     {...field}
-                                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                                    max={999999999}
+                                                    onInput={e => {
+                                                        const value = e.currentTarget.value;
+                                                        if (value.length > 9) {
+                                                            e.currentTarget.value = value.slice(0, 9);
+                                                        }
+                                                        field.onChange(Number(e.currentTarget.value));
+                                                    }}
+                                                    onChange={e => field.onChange(Number(e.target.value))}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -228,7 +247,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Tipo</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Selecciona un tipo" />
@@ -251,7 +270,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Estado</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Selecciona un estado" />
@@ -379,14 +398,14 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                         <FormLabel>Observaciones *</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Ingrese las observaciones del certificado"
+                                                placeholder="Ingrese las observaciones del acta"
                                                 className="resize-none"
-                                                maxLength={500}
+                                                maxLength={250}
                                                 {...field}
                                             />
                                         </FormControl>
                                         <div className="text-xs text-muted-foreground text-right">
-                                            {field.value?.length || 0}/500 caracteres
+                                            {(field.value?.length || 0)}/250 caracteres
                                         </div>
                                         <FormMessage />
                                     </FormItem>
@@ -403,7 +422,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                 Contabilizado
                                             </FormLabel>
                                             <FormDescription>
-                                                Marque esta opción si el certificado ya ha sido contabilizado.
+                                                Marque esta opción si el acta ya ha sido contabilizada.
                                             </FormDescription>
                                         </div>
                                         <FormControl>
@@ -426,7 +445,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                     Cancelar
                                 </Button>
                                 <Button type="submit" disabled={isLoading}>
-                                    {isLoading ? "Guardando..." : id ? "Actualizar" : "Crear"}
+                                    {isLoading ? "Guardando..." : id && id !== 'new' ? "Actualizar" : "Crear"}
                                 </Button>
                             </div>
                         </form>

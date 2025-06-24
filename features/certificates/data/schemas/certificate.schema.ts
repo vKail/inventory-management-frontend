@@ -5,7 +5,8 @@ export const CertificateStatus = z.enum(['DRAFT', 'APPROVED', 'CANCELLED']);
 
 export const certificateSchema = z.object({
     number: z.number()
-        .min(1, 'El número es requerido'),
+        .min(1, 'El número es requerido')
+        .max(999999999, 'El número no puede tener más de 9 dígitos'),
     date: z.string()
         .min(1, 'La fecha es requerida')
         .max(10, 'La fecha debe tener el formato YYYY-MM-DD')
@@ -18,7 +19,7 @@ export const certificateSchema = z.object({
         .min(1, 'El responsable de recepción es requerido'),
     observations: z.string()
         .min(1, 'Las observaciones son requeridas')
-        .max(500, 'Las observaciones no pueden tener más de 500 caracteres'),
+        .max(250, 'Las observaciones no pueden tener más de 250 caracteres'),
     accounted: z.boolean()
 });
 

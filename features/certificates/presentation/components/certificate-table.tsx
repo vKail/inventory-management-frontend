@@ -39,12 +39,12 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, subDays, subMonths, subYears, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
 import LoaderComponent from '@/shared/components/ui/Loader';
 import { CertificatePagination } from './certificate-pagination';
 
-// Definimos los tipos de certificado disponibles
+// Definimos los tipos de Actas disponibles
 const CertificateTypes = {
     ENTRY: "Entrada",
     EXIT: "Salida",
@@ -62,7 +62,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     const { getUsers, users } = useUserStore();
     const [certificateToDelete, setCertificateToDelete] = useState<string | null>(null);
     const {
-        filteredCertificates,
+        filteredCertificates: storeFilteredCertificates,
         searchTerm,
         typeFilter,
         dateFilter,
@@ -76,6 +76,21 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
         setDateFilter,
         clearFilters,
     } = useCertificateStore();
+
+    // Nuevo filtro de rango de fechas
+    type DateRangeType = 'all' | 'last7' | 'lastMonth' | 'lastYear';
+    const [dateRange, setDateRange] = useState<DateRangeType>('all');
+
+    // Filtrar actas según el rango de fechas seleccionado
+    const filteredCertificates = storeFilteredCertificates.filter(cert => {
+        if (dateRange === 'all') return true;
+        const certDate = new Date(cert.date);
+        const now = new Date();
+        if (dateRange === 'last7') return isAfter(certDate, subDays(now, 7));
+        if (dateRange === 'lastMonth') return isAfter(certDate, subMonths(now, 1));
+        if (dateRange === 'lastYear') return isAfter(certDate, subYears(now, 1));
+        return true;
+    });
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -115,11 +130,11 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
 
         try {
             await deleteCertificate(certificateToDelete);
-            toast.success('Certificado eliminado exitosamente');
+            toast.success('Acta eliminado exitosamente');
             setCertificateToDelete(null);
         } catch (error) {
-            console.error('Error al eliminar el certificado:', error);
-            toast.error('Error al eliminar el certificado');
+            console.error('Error al eliminar el Acta:', error);
+            toast.error('Error al eliminar el Acta');
         }
     };
 
@@ -167,7 +182,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     };
 
     const getResponsibleName = (userId: number) => {
-        const user = users.find(u => u.id === userId.toString());
+        const user = users.find(u => Number(u.id) === Number(userId));
         return user ? `${user.person.lastName} ${user.person.firstName}` : 'No asignado';
     };
 
@@ -202,19 +217,26 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Input
-                            type="date"
-                            placeholder="Fecha"
-                            className="w-full md:w-40"
-                            value={dateFilter}
-                            onChange={(e) => setDateFilter(e.target.value)}
-                        />
-                        {(searchTerm || typeFilter !== 'all' || dateFilter) && (
+                        <Select value={dateRange} onValueChange={(v: string) => setDateRange(v as DateRangeType)}>
+                            <SelectTrigger className="w-full md:w-40">
+                                <SelectValue placeholder="Rango de fechas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas las fechas</SelectItem>
+                                <SelectItem value="last7">Últimos 7 días</SelectItem>
+                                <SelectItem value="lastMonth">Último mes</SelectItem>
+                                <SelectItem value="lastYear">Último año</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {(searchTerm || typeFilter !== 'all' || dateRange !== 'all') && (
                             <Button
                                 variant="outline"
                                 size="icon"
                                 className="h-10 w-10"
-                                onClick={clearFilters}
+                                onClick={() => {
+                                    clearFilters();
+                                    setDateRange('all');
+                                }}
                                 title="Limpiar todos los filtros"
                             >
                                 <X className="h-4 w-4" />
@@ -227,7 +249,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                         className="bg-red-600 hover:bg-red-700"
                     >
                         <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Certificado
+                        Nueva Acta
                     </Button>
                 </div>
                 <hr className="border-t border-muted mt-3" />
@@ -260,14 +282,14 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                                     <TableCell colSpan={8} className="text-center h-24">
                                         <div className="flex flex-col items-center justify-center text-muted-foreground">
                                             <FileText className="h-10 w-10 opacity-30 mb-2" />
-                                            <p className="mb-2">No hay certificados para mostrar</p>
+                                            <p className="mb-2">No hay actas para mostrar</p>
                                             <Button
                                                 onClick={() => router.push('/certificates/new')}
                                                 variant="outline"
                                                 size="sm"
                                             >
                                                 <Plus className="mr-2 h-4 w-4" />
-                                                Crear primer certificado
+                                                Crear primera acta
                                             </Button>
                                         </div>
                                     </TableCell>
@@ -317,7 +339,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                                                         <AlertDialogHeader>
                                                             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                                             <AlertDialogDescription>
-                                                                Esta acción no se puede deshacer. Se eliminará permanentemente el certificado
+                                                                Esta acción no se puede deshacer. Se eliminará permanentemente el acta
                                                                 <span className="font-semibold"> #{certificate.number}</span>.
                                                             </AlertDialogDescription>
                                                         </AlertDialogHeader>

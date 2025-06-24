@@ -49,10 +49,10 @@ export class CertificateService implements CertificateServiceProps {
             if (response.success && response.data) {
                 return response.data;
             }
-            throw new Error(response.message.content.join(', ') || 'Certificado no encontrado');
+            throw new Error(response.message.content.join(', ') || 'Acta no encontrado');
         } catch (error: any) {
             console.error('Error fetching certificate:', error);
-            throw new Error(error.message || 'Error al cargar el certificado');
+            throw new Error(error.message || 'Error al cargar el Acta');
         }
     }
 
@@ -68,7 +68,7 @@ export class CertificateService implements CertificateServiceProps {
             throw new Error(response.message.content.join(', '));
         } catch (error: any) {
             console.error('Error creating certificate:', error);
-            throw new Error(error.message || 'Error al crear el certificado');
+            throw new Error(error.message || 'Error al crear el Acta');
         }
     }
 
@@ -85,9 +85,9 @@ export class CertificateService implements CertificateServiceProps {
         } catch (error: any) {
             console.error('Error updating certificate:', error);
             if (error.response?.status === 404) {
-                throw new Error('Certificado no encontrado');
+                throw new Error('Acta no encontrado');
             }
-            throw new Error(error.message || 'Error al actualizar el certificado');
+            throw new Error(error.message || 'Error al actualizar el Acta');
         }
     }
 

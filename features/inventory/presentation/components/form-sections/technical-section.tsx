@@ -44,15 +44,15 @@ export const TechnicalSection = () => {
                             name="certificateId"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Certificado *</FormLabel>
+                                    <FormLabel>Acta *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={certificateOptions}
                                             value={field.value}
                                             onChange={field.onChange}
-                                            placeholder="Seleccionar certificado"
-                                            searchPlaceholder="Buscar certificado..."
-                                            emptyMessage="No se encontraron certificados"
+                                            placeholder="Seleccionar Acta"
+                                            searchPlaceholder="Buscar Acta..."
+                                            emptyMessage="No se encontraron Actas"
                                         />
                                     </FormControl>
                                     <FormMessage />

@@ -26,11 +26,7 @@ export default function CertificateTableView() {
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <FileText className="inline mr-1 h-4 w-4 text-primary align-middle" />
-                            <BreadcrumbLink href="/certificates">Certificados</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>Lista de Certificados</BreadcrumbPage>
+                            <BreadcrumbLink>Actas</BreadcrumbLink>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
