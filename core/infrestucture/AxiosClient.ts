@@ -30,7 +30,7 @@ export class AxiosClient implements HttpHandler {
 
           if (message && Array.isArray(message.content) && message.content.length > 0) {
             if (success && !['get'].includes(response.config.method || '')) {
-              toast.success(message.content[0], {
+              console.log(message.content[0], {
                 duration: 2000,
                 position: 'top-right',
                 style: {
@@ -39,7 +39,7 @@ export class AxiosClient implements HttpHandler {
                 },
               });
             } else if (!success && message.displayable) {
-              toast.error(message.content[0], {
+              console.log(message.content[0], {
                 duration: 2000,
                 position: 'top-right',
                 style: {
