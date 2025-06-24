@@ -21,29 +21,39 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface MaterialFormProps {
-    initialValues?: IMaterial;
+    initialData?: Partial<IMaterial>;
     onSubmit: (data: MaterialFormValues) => Promise<void>;
-    isEditing?: boolean;
-    id?: number;
-    isLoading?: boolean;
+    isLoading: boolean;
+    id?: string;
 }
 
-export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, isLoading = false }: MaterialFormProps) {
+export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialFormProps) {
     const router = useRouter();
 
     const form = useForm<MaterialFormValues>({
         resolver: zodResolver(materialSchema),
-        defaultValues: initialValues || {
+        defaultValues: {
             name: '',
             description: '',
             materialType: MaterialTypes.CONSUMABLE
         }
     });
 
+    useEffect(() => {
+        if (initialData) {
+            form.reset({
+                name: initialData.name || '',
+                description: initialData.description || '',
+                materialType: initialData.materialType || MaterialTypes.CONSUMABLE,
+            });
+        }
+    }, [initialData, form]);
+
     return (
-        <div className="flex-1 space-y-6 container mx-auto px-4 max-w-7xl">
+        <div className="flex-1 space-y-6">
             {/* Breadcrumbs, título y descripción */}
             <div className="w-full">
                 <Breadcrumb className="mb-6">
@@ -58,7 +68,7 @@ export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, i
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage>{id ? "Editar Material" : "Nuevo Material"}</BreadcrumbPage>
+                            <BreadcrumbPage>{id && id !== 'new' ? "Editar Material" : "Nuevo Material"}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
@@ -77,9 +87,9 @@ export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, i
                 <div className="md:w-2/3">
                     <Card>
                         <CardHeader>
-                            <CardTitle>{id ? "Editar Material" : "Nuevo Material"}</CardTitle>
+                            <CardTitle>{id && id !== 'new' ? "Editar Material" : "Nuevo Material"}</CardTitle>
                             <CardDescription>
-                                {id ? "Modifica los datos del material" : "Complete los datos para crear un nuevo material"}
+                                {id && id !== 'new' ? "Modifica los datos del material" : "Complete los datos para crear un nuevo material"}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -163,11 +173,11 @@ export function MaterialForm({ initialValues, onSubmit, isEditing = false, id, i
                                         <Button type="submit" disabled={isLoading}>
                                             {isLoading ? (
                                                 <>
-                                                    <span className="animate-spin mr-2">⭮</span>
-                                                    {id ? "Actualizando..." : "Creando..."}
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    {id && id !== 'new' ? "Actualizando..." : "Creando..."}
                                                 </>
                                             ) : (
-                                                id ? "Actualizar" : "Crear"
+                                                id && id !== 'new' ? "Actualizar" : "Crear"
                                             )}
                                         </Button>
                                     </div>
