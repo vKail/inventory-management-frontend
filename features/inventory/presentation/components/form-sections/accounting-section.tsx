@@ -8,7 +8,7 @@ export const AccountingSection = () => {
     const form = useFormContext<InventoryFormData>();
 
     return (
-        <Card>
+        <Card id="accounting-section">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1 p-6 border-r">
                     <h3 className="text-2xl font-semibold leading-none tracking-tight">Información Contable</h3>
@@ -22,7 +22,7 @@ export const AccountingSection = () => {
                             control={form.control}
                             name="itemLine"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="itemLine">
                                     <FormLabel>Línea de Item *</FormLabel>
                                     <FormControl>
                                         <Input
@@ -50,7 +50,7 @@ export const AccountingSection = () => {
                             control={form.control}
                             name="accountingAccount"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="accountingAccount">
                                     <FormLabel>Cuenta Contable *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Cuenta contable" maxLength={20} {...field} />
@@ -67,7 +67,7 @@ export const AccountingSection = () => {
                             control={form.control}
                             name="observations"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="observations">
                                     <FormLabel>Observaciones</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Observaciones adicionales" maxLength={1000} {...field} />

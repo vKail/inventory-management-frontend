@@ -37,7 +37,7 @@ export const AdministrativeSection = () => {
     }));
 
     return (
-        <Card>
+        <Card id="administrative-section">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1 p-6 border-r">
                     <h3 className="text-2xl font-semibold leading-none tracking-tight">Información Administrativa</h3>
@@ -51,7 +51,7 @@ export const AdministrativeSection = () => {
                             control={form.control}
                             name="locationId"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="locationId">
                                     <FormLabel>Ubicación *</FormLabel>
                                     <FormControl>
                                         <Combobox
@@ -72,7 +72,7 @@ export const AdministrativeSection = () => {
                             control={form.control}
                             name="custodianId"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="custodianId">
                                     <FormLabel>Custodio *</FormLabel>
                                     <FormControl>
                                         <Combobox
@@ -93,7 +93,7 @@ export const AdministrativeSection = () => {
                             control={form.control}
                             name="conditionId"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="conditionId">
                                     <FormLabel>Condición *</FormLabel>
                                     <FormControl>
                                         <Combobox
@@ -114,7 +114,7 @@ export const AdministrativeSection = () => {
                             control={form.control}
                             name="availableForLoan"
                             render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <FormItem data-field="availableForLoan" className="flex flex-row items-center justify-between rounded-lg border p-4">
                                     <div className="space-y-0.5">
                                         <FormLabel className="text-base">
                                             Disponible para Préstamo

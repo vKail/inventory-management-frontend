@@ -10,7 +10,7 @@ export const IdentificationSection = () => {
     const form = useFormContext<InventoryFormData>();
 
     return (
-        <Card>
+        <Card id="identification-section">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1 p-6 border-r">
                     <h3 className="text-2xl font-semibold leading-none tracking-tight">Identificación y Códigos</h3>
@@ -24,7 +24,7 @@ export const IdentificationSection = () => {
                             control={form.control}
                             name="code"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="code">
                                     <FormLabel>Código del Bien *</FormLabel>
                                     <div className="flex gap-2">
                                         <FormControl>
@@ -46,7 +46,7 @@ export const IdentificationSection = () => {
                             control={form.control}
                             name="previousCode"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="previousCode">
                                     <FormLabel>Código Anterior</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Código anterior del bien" maxLength={50} {...field} />
@@ -63,7 +63,7 @@ export const IdentificationSection = () => {
                             control={form.control}
                             name="identifier"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="identifier">
                                     <FormLabel>Identificador *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Identificador único" maxLength={100} {...field} />
@@ -80,7 +80,7 @@ export const IdentificationSection = () => {
                             control={form.control}
                             name="commitmentNumber"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="commitmentNumber">
                                     <FormLabel>Nro de Acta/Matriz *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Número de acta o matriz" maxLength={50} {...field} />
@@ -97,7 +97,7 @@ export const IdentificationSection = () => {
                             control={form.control}
                             name="normativeType"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="normativeType">
                                     <FormLabel>Tipo Normativo *</FormLabel>
                                     <FormControl>
                                         <select
@@ -106,7 +106,8 @@ export const IdentificationSection = () => {
                                         >
                                             <option value="">Seleccione tipo</option>
                                             <option value="PROPERTY">Propiedad</option>
-                                            <option value="CONSUMABLE">Consumible</option>
+                                            <option value="ADMINISTRATIVE_CONTROL">Control Administrativo</option>
+                                            <option value="INVENTORY">Inventario</option>
                                         </select>
                                     </FormControl>
                                     <FormMessage />

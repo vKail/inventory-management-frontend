@@ -37,7 +37,7 @@ export const GeneralInfoSection = () => {
     }));
 
     return (
-        <Card>
+        <Card id="general-info-section">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1 p-6 border-r">
                     <h3 className="text-2xl font-semibold leading-none tracking-tight">Información General</h3>
@@ -51,7 +51,7 @@ export const GeneralInfoSection = () => {
                             control={form.control}
                             name="name"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="name">
                                     <FormLabel>Nombre *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Nombre del bien" maxLength={100} {...field} />
@@ -68,7 +68,7 @@ export const GeneralInfoSection = () => {
                             control={form.control}
                             name="description"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="description">
                                     <FormLabel>Descripción *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Descripción detallada" maxLength={500} {...field} />
@@ -85,7 +85,7 @@ export const GeneralInfoSection = () => {
                             control={form.control}
                             name="stock"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="stock">
                                     <FormLabel>Stock *</FormLabel>
                                     <FormControl>
                                         <Input
@@ -113,7 +113,7 @@ export const GeneralInfoSection = () => {
                             control={form.control}
                             name="itemTypeId"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="itemTypeId">
                                     <FormLabel>Tipo de Item *</FormLabel>
                                     <FormControl>
                                         <Combobox
@@ -134,7 +134,7 @@ export const GeneralInfoSection = () => {
                             control={form.control}
                             name="categoryId"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="categoryId">
                                     <FormLabel>Categoría *</FormLabel>
                                     <FormControl>
                                         <Combobox
@@ -155,7 +155,7 @@ export const GeneralInfoSection = () => {
                             control={form.control}
                             name="statusId"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="statusId">
                                     <FormLabel>Estado *</FormLabel>
                                     <FormControl>
                                         <Combobox

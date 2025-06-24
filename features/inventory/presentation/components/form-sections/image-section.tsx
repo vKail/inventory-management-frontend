@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface ImageSectionProps {
     onImageChange: (files: File[], descriptions: string[], dates: string[]) => void;
@@ -58,10 +59,22 @@ export const ImageSection = ({
         if (!files) return;
 
         const newFiles = Array.from(files);
-        const newDescriptions = [...descriptions, ...Array(newFiles.length).fill('')];
-        const newDates = [...photoDates, ...Array(newFiles.length).fill('')];
+        // Validar tipos de archivo permitidos
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        const validFiles = newFiles.filter(file => {
+            if (!allowedTypes.includes(file.type)) {
+                toast.error(`El archivo ${file.name} no es una imagen válida. Solo se permiten: PNG, JPG, JPEG, GIF, WEBP`);
+                return false;
+            }
+            return true;
+        });
 
-        onImageChange([...selectedFiles, ...newFiles], newDescriptions, newDates);
+        if (validFiles.length === 0) return;
+
+        const newDescriptions = [...descriptions, ...Array(validFiles.length).fill('')];
+        const newDates = [...photoDates, ...Array(validFiles.length).fill('')];
+
+        onImageChange([...selectedFiles, ...validFiles], newDescriptions, newDates);
     };
 
     const removeImage = (index: number) => {

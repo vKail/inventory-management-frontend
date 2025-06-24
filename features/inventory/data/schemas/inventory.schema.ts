@@ -8,7 +8,7 @@ export const inventorySchema = z.object({
     itemTypeId: z.number().int().min(1, 'El tipo de item es requerido'),
     categoryId: z.number().int().min(1, 'La categoría es requerida'),
     statusId: z.number().int().min(1, 'El estado es requerido'),
-    normativeType: z.enum(['PROPERTY', 'CONSUMABLE'], {
+    normativeType: z.enum(['PROPERTY', 'ADMINISTRATIVE_CONTROL', 'INVENTORY'], {
         required_error: 'El tipo normativo es requerido'
     }),
     origin: z.enum(['PURCHASE', 'DONATION', 'TRANSFER'], {

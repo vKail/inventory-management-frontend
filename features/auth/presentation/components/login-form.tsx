@@ -87,14 +87,6 @@ export default function LoginForm() {
           </form>
         </Form>
       </CardContent>
-
-      <CardFooter className="flex flex-col space-y-2">
-        <div className="text-sm text-muted-foreground text-center w-full">
-          <a href="#" className="hover:underline">
-            ¿Olvidó su contraseña?
-          </a>
-        </div>
-      </CardFooter>
     </>
   );
 }
