@@ -3,7 +3,7 @@ import { ApiResponse, IMaterial, PaginatedMaterials } from '../data/interfaces/m
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 interface MaterialServiceProps {
-  getMaterials: (page?: number, limit?: number) => Promise<PaginatedMaterials>;
+  getMaterials: (page?: number, limit?: number, filters?: { name?: string; materialType?: string }) => Promise<PaginatedMaterials>;
   getMaterialById: (id: number) => Promise<IMaterial | undefined>;
   createMaterial: (material: Partial<IMaterial>) => Promise<IMaterial | undefined>;
   updateMaterial: (id: number, material: Partial<IMaterial>) => Promise<IMaterial | undefined>;
@@ -22,15 +22,24 @@ export class MaterialService implements MaterialServiceProps {
   public static getInstance(): MaterialService {
     if (!MaterialService.instance) {
       MaterialService.instance = new MaterialService();
-  }
+    }
     return MaterialService.instance;
   }
 
-  public async getMaterials(page = 1, limit = 10): Promise<PaginatedMaterials> {
+  public async getMaterials(page = 1, limit = 10, filters?: { name?: string; materialType?: string }): Promise<PaginatedMaterials> {
     try {
-      const response = await this.httpClient.get<PaginatedMaterials>(
-        `${MaterialService.url}?page=${page}&limit=${limit}`
-      );
+      let url = `${MaterialService.url}?page=${page}&limit=${limit}`;
+
+      // Add filter parameters if provided
+      if (filters?.name && filters.name.trim() !== '') {
+        url += `&name=${encodeURIComponent(filters.name.trim())}`;
+      }
+
+      if (filters?.materialType && filters.materialType !== 'all') {
+        url += `&materialType=${encodeURIComponent(filters.materialType)}`;
+      }
+
+      const response = await this.httpClient.get<PaginatedMaterials>(url);
       return response.data;
     } catch (error) {
       console.error('Error fetching materials:', error);

@@ -2,6 +2,24 @@ import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
 import { ICertificate, PaginatedCertificates } from '../data/interfaces/certificate.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
+// Funciones de utilidad para formatear texto
+const capitalizeFirstLetter = (text: string): string => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+};
+
+const capitalizeWords = (text: string): string => {
+    if (!text) return '';
+    return text.split(' ').map(word => capitalizeFirstLetter(word)).join(' ');
+};
+
+const formatNullValue = (value: any): string => {
+    if (value === null || value === undefined || value === '') {
+        return 'No Aplica';
+    }
+    return value;
+};
+
 interface CertificateServiceProps {
     getCertificates: (page?: number, limit?: number) => Promise<PaginatedCertificates>;
     getCertificateById: (id: string) => Promise<ICertificate | undefined>;
@@ -58,9 +76,15 @@ export class CertificateService implements CertificateServiceProps {
 
     public async createCertificate(certificate: Partial<ICertificate>): Promise<ICertificate> {
         try {
+            // Aplicar formato de texto
+            const formattedCertificate = {
+                ...certificate,
+                observations: certificate.observations ? capitalizeWords(certificate.observations.trim()) : ''
+            };
+
             const response = await this.httpClient.post<ICertificate>(
                 CertificateService.url,
-                certificate
+                formattedCertificate
             );
             if (response.success && response.data) {
                 return response.data;
@@ -74,9 +98,15 @@ export class CertificateService implements CertificateServiceProps {
 
     public async updateCertificate(id: string, certificate: Partial<ICertificate>): Promise<ICertificate> {
         try {
+            // Aplicar formato de texto
+            const formattedCertificate = {
+                ...certificate,
+                observations: certificate.observations ? capitalizeWords(certificate.observations.trim()) : ''
+            };
+
             const response = await this.httpClient.patch<ICertificate>(
                 `${CertificateService.url}/${id}`,
-                certificate
+                formattedCertificate
             );
             if (response.success && response.data) {
                 return response.data;

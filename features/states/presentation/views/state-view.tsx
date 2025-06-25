@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { StateTable } from '../components/state-table';
+import { StatePagination } from '../components/state-pagination';
 import { AlertCircle } from 'lucide-react';
 import { useStateStore } from '../../context/state-store';
 import {
@@ -23,6 +24,10 @@ export default function StateView() {
     };
     loadStates();
   }, [currentPage, getStates]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6 overflow-hidden">
@@ -53,6 +58,17 @@ export default function StateView() {
         currentPage={currentPage}
         itemsPerPage={itemsPerPage}
       />
+
+      {/* Paginación */}
+      {totalPages > 0 && (
+        <div className="flex justify-center mt-6">
+          <StatePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

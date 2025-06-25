@@ -3,7 +3,7 @@ import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 import { ApiResponse, ItemType, PaginatedItemTypes } from '../data/interfaces/item-type.interface';
 
 interface ItemTypeServiceProps {
-  getItemTypes: (page?: number, limit?: number) => Promise<PaginatedItemTypes>;
+  getItemTypes: (page?: number, limit?: number, filters?: { name?: string }) => Promise<PaginatedItemTypes>;
   getItemTypeById: (id: string) => Promise<ItemType | undefined>;
   createItemType: (itemType: Omit<ItemType, 'id'>) => Promise<ItemType | undefined>;
   updateItemType: (id: string, itemType: Partial<Omit<ItemType, 'id'>>) => Promise<ItemType | undefined>;
@@ -26,11 +26,16 @@ export class ItemTypeService implements ItemTypeServiceProps {
     return ItemTypeService.instance;
   }
 
-  public async getItemTypes(page = 1, limit = 10): Promise<PaginatedItemTypes> {
+  public async getItemTypes(page = 1, limit = 10, filters?: { name?: string }): Promise<PaginatedItemTypes> {
     try {
-      const response = await this.httpClient.get<PaginatedItemTypes>(
-        `${ItemTypeService.url}?page=${page}&limit=${limit}`
-      );
+      let url = `${ItemTypeService.url}?page=${page}&limit=${limit}`;
+
+      // Add filter parameters if provided
+      if (filters?.name && filters.name.trim() !== '') {
+        url += `&name=${encodeURIComponent(filters.name.trim())}`;
+      }
+
+      const response = await this.httpClient.get<PaginatedItemTypes>(url);
       if (response.success) {
         return response.data;
       }

@@ -24,13 +24,12 @@ const normalizeMaterialType = (type: string): string => {
 
 interface MaterialState {
     materials: IMaterial[];
-    filteredMaterials: IMaterial[];
-    searchTerm: string;
-    typeFilter: string;
     loading: boolean;
     error: string | null;
     currentPage: number;
     totalPages: number;
+    searchTerm: string;
+    typeFilter: string;
     getMaterials: (page?: number, limit?: number) => Promise<void>;
     getMaterialById: (materialId: number) => Promise<IMaterial | undefined>;
     addMaterial: (material: Partial<IMaterial>) => Promise<void>;
@@ -47,70 +46,54 @@ export const useMaterialStore = create<MaterialState>()(
     persist(
         (set, get) => ({
             materials: [],
-            filteredMaterials: [],
-            searchTerm: '',
-            typeFilter: 'all',
             loading: false,
             error: null,
             currentPage: 1,
             totalPages: 1,
+            searchTerm: '',
+            typeFilter: 'all',
 
             setSearchTerm: (term: string) => {
-                const { materials, typeFilter } = get();
-                const filtered = materials.filter((material) => {
-                    const matchesSearch = material.name.toLowerCase().includes(term.toLowerCase()) ||
-                        material.description.toLowerCase().includes(term.toLowerCase());
-
-                    const matchesType = typeFilter === 'all' || normalizeMaterialType(material.materialType) === typeFilter;
-
-                    return matchesSearch && matchesType;
-                });
-                set({ searchTerm: term, filteredMaterials: filtered });
+                set({ searchTerm: term });
+                // Trigger a new API call with the updated search term
+                get().getMaterials(1, 10);
             },
 
             setTypeFilter: (type: string) => {
-                const { materials, searchTerm } = get();
-                const filtered = materials.filter((material) => {
-                    const matchesSearch = searchTerm === '' ||
-                        material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        material.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-                    const matchesType = type === 'all' || normalizeMaterialType(material.materialType) === type;
-
-                    return matchesSearch && matchesType;
-                });
-                set({ typeFilter: type, filteredMaterials: filtered });
+                set({ typeFilter: type });
+                // Trigger a new API call with the updated type filter
+                get().getMaterials(1, 10);
             },
 
             clearFilters: () => {
-                const { materials } = get();
                 set({
                     searchTerm: '',
-                    typeFilter: 'all',
-                    filteredMaterials: materials
+                    typeFilter: 'all'
                 });
+                // Trigger a new API call without filters
+                get().getMaterials(1, 10);
             },
 
             getMaterials: async (page = 1, limit = 10) => {
                 set({ loading: true });
                 try {
-                    const response = await MaterialService.getInstance().getMaterials(page, limit);
                     const { searchTerm, typeFilter } = get();
-                    const allMaterials = response.records;
 
-                    const filtered = allMaterials.filter((material) => {
-                        const matchesSearch = searchTerm === '' ||
-                            material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            material.description.toLowerCase().includes(searchTerm.toLowerCase());
+                    // Prepare filters for backend
+                    const filters: { name?: string; materialType?: string } = {};
 
-                        const matchesType = typeFilter === 'all' || normalizeMaterialType(material.materialType) === typeFilter;
+                    if (searchTerm && searchTerm.trim() !== '') {
+                        filters.name = searchTerm.trim();
+                    }
 
-                        return matchesSearch && matchesType;
-                    });
+                    if (typeFilter && typeFilter !== 'all') {
+                        filters.materialType = typeFilter;
+                    }
+
+                    const response = await MaterialService.getInstance().getMaterials(page, limit, filters);
 
                     set({
-                        materials: allMaterials,
-                        filteredMaterials: filtered,
+                        materials: response.records,
                         currentPage: response.page,
                         totalPages: response.pages,
                         loading: false,

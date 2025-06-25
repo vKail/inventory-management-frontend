@@ -19,7 +19,13 @@ export const certificateSchema = z.object({
         .min(1, 'El responsable de recepción es requerido'),
     observations: z.string()
         .min(1, 'Las observaciones son requeridas')
-        .max(250, 'Las observaciones no pueden tener más de 250 caracteres'),
+        .max(250, 'Las observaciones no pueden exceder 250 caracteres')
+        .refine((value) => {
+            if (!value || value.trim() === "") return false;
+            // Permite letras, números, espacios y signos de puntuación básicos para observaciones
+            const observationsRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s.,;:!?()\-_]+$/;
+            return observationsRegex.test(value.trim());
+        }, "Las observaciones deben contener solo letras, números, espacios y signos de puntuación válidos"),
     accounted: z.boolean()
 });
 

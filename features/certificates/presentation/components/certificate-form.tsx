@@ -135,7 +135,7 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
     };
 
     return (
-        <div className="flex-1 space-y-6 container mx-auto px-4 max-w-7xl">
+        <div className="space-y-4">
             <div className="w-full">
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
@@ -401,6 +401,8 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                                 placeholder="Ingrese las observaciones del acta"
                                                 className="resize-none"
                                                 maxLength={250}
+                                                descriptionOnly={true}
+                                                shouldAutoCapitalize={true}
                                                 {...field}
                                             />
                                         </FormControl>
@@ -441,10 +443,11 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
                                     variant="outline"
                                     onClick={() => router.push("/certificates")}
                                     disabled={isLoading}
+                                    className="cursor-pointer"
                                 >
                                     Cancelar
                                 </Button>
-                                <Button type="submit" disabled={isLoading}>
+                                <Button type="submit" disabled={isLoading} className="cursor-pointer">
                                     {isLoading ? "Guardando..." : id && id !== 'new' ? "Actualizar" : "Crear"}
                                 </Button>
                             </div>

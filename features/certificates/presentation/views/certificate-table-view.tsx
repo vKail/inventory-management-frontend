@@ -16,7 +16,7 @@ export default function CertificateTableView() {
     };
 
     return (
-        <div className="flex-1 space-y-6 container mx-auto px-4 max-w-7xl">
+        <div className="space-y-4">
             <div className="w-full">
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>

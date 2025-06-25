@@ -2,6 +2,24 @@ import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
 import { IColor, IColorResponse, PaginatedColors } from '../data/interfaces/color.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
+// Funciones de utilidad para formatear texto
+const capitalizeFirstLetter = (text: string): string => {
+  if (!text) return '';
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+};
+
+const capitalizeWords = (text: string): string => {
+  if (!text) return '';
+  return text.split(' ').map(word => capitalizeFirstLetter(word)).join(' ');
+};
+
+const formatNullValue = (value: any): string => {
+  if (value === null || value === undefined || value === '') {
+    return 'No Aplica';
+  }
+  return value;
+};
+
 interface ColorServiceProps {
   getColors: (page?: number, limit?: number, search?: string) => Promise<PaginatedColors>;
   getColorById: (id: number) => Promise<IColorResponse | undefined>;
@@ -57,7 +75,14 @@ export class ColorService implements ColorServiceProps {
 
   public async createColor(color: IColor): Promise<IColorResponse | undefined> {
     try {
-      const { data } = await this.httpClient.post<IColorResponse>(ColorService.url, color);
+      // Aplicar formato de texto
+      const formattedColor = {
+        ...color,
+        name: color.name ? capitalizeWords(color.name.trim()) : '',
+        description: color.description ? capitalizeWords(color.description.trim()) : ''
+      };
+
+      const { data } = await this.httpClient.post<IColorResponse>(ColorService.url, formattedColor);
       return data;
     } catch (error) {
       console.error('Error creating color:', error);
@@ -67,9 +92,16 @@ export class ColorService implements ColorServiceProps {
 
   public async updateColor(id: number, color: IColor): Promise<IColorResponse | undefined> {
     try {
+      // Aplicar formato de texto
+      const formattedColor = {
+        ...color,
+        name: color.name ? capitalizeWords(color.name.trim()) : '',
+        description: color.description ? capitalizeWords(color.description.trim()) : ''
+      };
+
       const { data } = await this.httpClient.patch<IColorResponse>(
         `${ColorService.url}/${id}`,
-        color
+        formattedColor
       );
       return data;
     } catch (error) {

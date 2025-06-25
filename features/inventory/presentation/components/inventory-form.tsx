@@ -70,29 +70,29 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
             // If not found by selectors, search through all form elements
             if (!errorElement) {
                 const allInputs = document.querySelectorAll('input, select, textarea, [role="combobox"], [data-radix-trigger]');
-                for (const input of allInputs) {
+                Array.from(allInputs).forEach((input) => {
+                    if (errorElement) return;
                     const inputElement = input as HTMLElement;
                     if (inputElement.getAttribute('name') === firstErrorField ||
                         inputElement.getAttribute('id') === firstErrorField ||
                         inputElement.getAttribute('data-field') === firstErrorField) {
                         errorElement = inputElement;
-                        break;
                     }
-                }
+                });
             }
 
             // Special handling for Combobox components
             if (!errorElement) {
                 // Look for Combobox trigger buttons that might contain the field name
                 const comboboxTriggers = document.querySelectorAll('[role="combobox"], [data-radix-trigger]');
-                for (const trigger of comboboxTriggers) {
+                Array.from(comboboxTriggers).forEach((trigger) => {
+                    if (errorElement) return;
                     const triggerElement = trigger as HTMLElement;
                     const parentFormItem = triggerElement.closest('[data-field]');
                     if (parentFormItem && parentFormItem.getAttribute('data-field') === firstErrorField) {
                         errorElement = triggerElement;
-                        break;
                     }
-                }
+                });
             }
 
             if (errorElement) {

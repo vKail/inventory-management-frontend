@@ -33,7 +33,6 @@ export default function MaterialView() {
                     <p className="text-muted-foreground">Todos los materiales registrados en el sistema</p>
                 </div>
             </div>
-
             <MaterialTable />
         </div>
     );

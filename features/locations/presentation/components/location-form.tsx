@@ -28,8 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { locationSchema, LocationFormValues } from '@/features/locations/data/schemas/location.schema';
-import { ILocation, ILocationFormData, LocationTypeLabels, CapacityUnitLabels } from '../../data/interfaces/location.interface'
+import { locationSchema } from '@/features/locations/data/schemas/location.schema';
+import { ILocation, LocationTypeLabels, CapacityUnitLabels } from '../../data/interfaces/location.interface'
+import { LocationFormValues } from '@/features/locations/data/schemas/location.schema';
 import { useEffect } from "react"
 import { useLocationStore } from "../../context/location-store"
 
@@ -71,7 +72,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
       form.reset({
         name: initialData.name || "",
         description: initialData.description || "",
-        parentLocationId: initialData.parentLocationId || null,
+        parentLocationId: initialData.parentLocationId ?? null,
         type: initialData.type || "BUILDING",
         floor: initialData.floor || "",
         reference: initialData.reference || "",
@@ -119,10 +120,16 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     <FormItem>
                       <FormLabel>Nombre *</FormLabel>
                       <FormControl>
-                        <Input {...field} maxLength={100} />
+                        <Input
+                          placeholder="Nombre de la ubicación"
+                          maxLength={30}
+                          textOnly={true}
+                          shouldAutoCapitalize={true}
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/100 caracteres
+                        {field.value?.length || 0}/30 caracteres
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -136,10 +143,16 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     <FormItem>
                       <FormLabel>Descripción *</FormLabel>
                       <FormControl>
-                        <Textarea {...field} maxLength={500} />
+                        <Textarea
+                          placeholder="Descripción de la ubicación"
+                          maxLength={250}
+                          textOnly={true}
+                          shouldAutoCapitalize={true}
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/500 caracteres
+                        {field.value?.length || 0}/250 caracteres
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -226,21 +239,25 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                 <FormField
                   control={form.control}
                   name="floor"
-                  render={({ field }) => {
-                    const { value, ...fieldProps } = field;
-                    return (
-                      <FormItem>
-                        <FormLabel>Piso (Opcional)</FormLabel>
-                        <FormControl>
-                          <Input {...fieldProps} value={value || ""} maxLength={50} />
-                        </FormControl>
-                        <div className="text-xs text-muted-foreground text-right">
-                          {(value?.length || 0)}/50 caracteres
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Piso (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Número o nombre del piso"
+                          maxLength={10}
+                          textOnly={true}
+                          shouldAutoCapitalize={true}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.length || 0}/10 caracteres
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
                 <FormField
@@ -250,10 +267,16 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                     <FormItem>
                       <FormLabel>Referencia *</FormLabel>
                       <FormControl>
-                        <Input {...field} maxLength={150} />
+                        <Input
+                          placeholder="Código o referencia de la ubicación"
+                          maxLength={50}
+                          textOnly={true}
+                          shouldAutoCapitalize={true}
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/150 caracteres
+                        {field.value?.length || 0}/50 caracteres
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -270,14 +293,24 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                         <FormControl>
                           <Input
                             type="number"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            placeholder="0"
+                            min="1"
+                            max="999999"
+                            maxLength={6}
                             {...field}
                             value={field.value || 0}
                             onChange={(e) => {
-                              const value = e.target.value;
+                              let value = e.target.value.replace(/[^0-9]/g, "");
+                              if (value.length > 6) value = value.slice(0, 6);
                               field.onChange(value === "" ? 0 : Number(value));
                             }}
                           />
                         </FormControl>
+                        <div className="text-xs text-muted-foreground text-right">
+                          {field.value?.toString().length || 0}/6 dígitos
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -318,14 +351,24 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                       <FormControl>
                         <Input
                           type="number"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="0"
+                          min="0"
+                          max="999999"
+                          maxLength={6}
                           {...field}
                           value={field.value || 0}
                           onChange={(e) => {
-                            const value = e.target.value;
+                            let value = e.target.value.replace(/[^0-9]/g, "");
+                            if (value.length > 6) value = value.slice(0, 6);
                             field.onChange(value === "" ? 0 : Number(value));
                           }}
                         />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {field.value?.toString().length || 0}/6 dígitos
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -336,12 +379,18 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notas *</FormLabel>
+                      <FormLabel>Notas</FormLabel>
                       <FormControl>
-                        <Textarea {...field} maxLength={1000} />
+                        <Textarea
+                          placeholder="Notas adicionales sobre la ubicación"
+                          maxLength={250}
+                          textOnly={true}
+                          shouldAutoCapitalize={true}
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/1000 caracteres
+                        {field.value?.length || 0}/250 caracteres
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -361,7 +410,7 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" variant="default" disabled={isLoading}>
             {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
           </Button>
         </div>

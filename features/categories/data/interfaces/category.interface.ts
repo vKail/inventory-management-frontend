@@ -7,7 +7,6 @@ export interface ICategory {
   parentCategory?: ICategory | null;
   standardUsefulLife: number;
   depreciationPercentage: string;
-  active: boolean;
 }
 
 export interface PaginatedResponse<T> {

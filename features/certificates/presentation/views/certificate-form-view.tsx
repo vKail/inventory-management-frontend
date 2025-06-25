@@ -57,7 +57,7 @@ export default function CertificateFormView({ id }: CertificateFormViewProps) {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <CertificateForm
                 id={id}
                 initialData={initialData}

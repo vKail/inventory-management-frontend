@@ -26,6 +26,7 @@ import { useConditionStore } from '@/features/conditions/context/condition-store
 import { toast } from "sonner";
 import { ConditionPagination } from './condition-pagination';
 import LoaderComponent from '@/shared/components/ui/Loader';
+import { formatNullValue, capitalizeWords, formatBooleanValue } from '@/lib/utils';
 
 export default function ConditionTable() {
     const router = useRouter();
@@ -77,13 +78,13 @@ export default function ConditionTable() {
     };
 
     return (
-        <Card className="w-full max-w-[1200px]">
-            <CardHeader className="px-4 md:px-8 pb-0">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+        <Card className="w-full">
+            <CardHeader className="px-2 sm:px-4 md:px-8 pb-0">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
                         <Input
                             placeholder="Buscar por nombre..."
-                            className="w-full md:w-64"
+                            className="w-full sm:w-64"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -91,7 +92,7 @@ export default function ConditionTable() {
 
                     <Button
                         onClick={() => router.push('/conditions/new')}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 cursor-pointer w-full sm:w-auto"
                     >
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Nueva Condición
@@ -100,82 +101,109 @@ export default function ConditionTable() {
                 <hr className="border-t border-muted mt-4" />
             </CardHeader>
 
-            <CardContent className="px-4 md:px-8">
+            <CardContent className="px-2 sm:px-4 md:px-8 pb-6">
                 <div className="min-h-[400px] flex flex-col justify-between">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Descripción</TableHead>
-                                <TableHead>Requiere Mantenimiento</TableHead>
-                                <TableHead className="text-right">Acciones</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={4}>
-                                        <LoaderComponent rows={5} columns={4} />
-                                    </TableCell>
-                                </TableRow>
-                            ) : filteredConditions.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} className="py-20 text-center text-muted-foreground">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Tags className="h-10 w-10 opacity-30" />
-                                            <span>No hay condiciones para mostrar</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredConditions.map((condition) => (
-                                    <TableRow key={condition.id}>
-                                        <TableCell>{condition.name}</TableCell>
-                                        <TableCell>{condition.description}</TableCell>
-                                        <TableCell>{condition.requiresMaintenance ? 'Sí' : 'No'}</TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    router.push(`/conditions/edit/${condition.id}`);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-600" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Esta acción no se puede deshacer. Esto eliminará permanentemente la condición.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                        <AlertDialogAction
-                                                            onClick={() => condition.id && handleDelete(condition.id)}
-                                                            className="bg-red-600 hover:bg-red-700"
-                                                        >
-                                                            Eliminar
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </TableCell>
+                    <div className="overflow-x-auto border rounded-md shadow-sm">
+                        <div className="min-w-full inline-block align-middle">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="min-w-[150px] w-[25%]">Nombre</TableHead>
+                                        <TableHead className="min-w-[200px] w-[45%]">Descripción</TableHead>
+                                        <TableHead className="min-w-[150px] w-[20%]">Requiere Mantenimiento</TableHead>
+                                        <TableHead className="min-w-[100px] w-[10%] text-right">Acciones</TableHead>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24">
+                                                <LoaderComponent rows={5} columns={4} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : filteredConditions.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Tags className="h-10 w-10 opacity-30" />
+                                                    <span>No hay condiciones para mostrar</span>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredConditions.map((condition) => (
+                                            <TableRow key={condition.id} className="hover:bg-muted/50">
+                                                <TableCell className="font-medium">
+                                                    {formatNullValue(capitalizeWords(condition.name), "Sin nombre")}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="max-w-[200px]">
+                                                        <div
+                                                            className="truncate"
+                                                            title={condition.description ? capitalizeWords(condition.description) : "Sin descripción"}
+                                                        >
+                                                            {formatNullValue(capitalizeWords(condition.description), "Sin descripción")}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${condition.requiresMaintenance
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                        {condition.requiresMaintenance ? 'Sí' : 'No'}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end space-x-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                router.push(`/conditions/edit/${condition.id}`);
+                                                            }}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="cursor-pointer"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        Esta acción no se puede deshacer. Se eliminará permanentemente la condición
+                                                                        <span className="font-semibold"> {formatNullValue(capitalizeWords(condition.name), "Sin nombre")}</span>.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                    <AlertDialogAction
+                                                                        onClick={() => condition.id && handleDelete(condition.id)}
+                                                                        className="bg-red-600 hover:bg-red-700"
+                                                                    >
+                                                                        Eliminar
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
                     {!loading && filteredConditions.length > 0 && (
                         <div className="mt-4">
                             <ConditionPagination

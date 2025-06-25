@@ -14,8 +14,8 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
-import { IMaterial, MaterialTypes } from '../../data/interfaces/material.interface';
-import { materialSchema, MaterialFormValues } from '../../data/schemas/material.schema';
+import { IMaterial } from '../../data/interfaces/material.interface';
+import { materialSchema, MaterialFormValues, MaterialTypes } from '../../data/schemas/material.schema';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from '@/components/ui/breadcrumb';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -74,12 +74,14 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                 </Breadcrumb>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-x-8 gap-y-8">
+            <div className="flex flex-col md:flex-row gap-8">
                 {/* Descripción a la izquierda */}
                 <div className="md:w-1/3">
-                    <h3 className="text-lg font-semibold mb-1">Detalles del material</h3>
-                    <p className="text-muted-foreground text-sm">
-                        Ingresa el nombre, descripción y tipo de material.
+                    <h3 className="text-2xl font-semibold mb-2">
+                        {id && id !== 'new' ? "Editar Material" : "Nuevo Material"}
+                    </h3>
+                    <p className="text-muted-foreground text-base">
+                        {id && id !== 'new' ? "Modifica los datos del material" : "Complete los datos para crear un nuevo material"}
                     </p>
                 </div>
 
@@ -87,9 +89,9 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                 <div className="md:w-2/3">
                     <Card>
                         <CardHeader>
-                            <CardTitle>{id && id !== 'new' ? "Editar Material" : "Nuevo Material"}</CardTitle>
+                            <CardTitle>Información del Material</CardTitle>
                             <CardDescription>
-                                {id && id !== 'new' ? "Modifica los datos del material" : "Complete los datos para crear un nuevo material"}
+                                Ingrese los datos requeridos para el material
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -102,10 +104,16 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                                             <FormItem>
                                                 <FormLabel>Nombre *</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Nombre del material" maxLength={100} {...field} />
+                                                    <Input
+                                                        placeholder="Nombre del material"
+                                                        maxLength={25}
+                                                        textOnly={true}
+                                                        shouldAutoCapitalize={true}
+                                                        {...field}
+                                                    />
                                                 </FormControl>
                                                 <div className="text-xs text-muted-foreground text-right">
-                                                    {field.value?.length || 0}/100 caracteres
+                                                    {field.value?.length || 0}/25 caracteres
                                                 </div>
                                                 <FormMessage />
                                             </FormItem>
@@ -121,12 +129,14 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                                                 <FormControl>
                                                     <Textarea
                                                         placeholder="Descripción del material"
-                                                        maxLength={500}
+                                                        maxLength={250}
+                                                        descriptionOnly={true}
+                                                        shouldAutoCapitalize={true}
                                                         {...field}
                                                     />
                                                 </FormControl>
                                                 <div className="text-xs text-muted-foreground text-right">
-                                                    {field.value?.length || 0}/500 caracteres
+                                                    {field.value?.length || 0}/250 caracteres
                                                 </div>
                                                 <FormMessage />
                                             </FormItem>
@@ -162,15 +172,16 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                                         )}
                                     />
 
-                                    <div className="flex justify-end gap-4 pt-4">
+                                    <div className="flex justify-end gap-4">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             onClick={() => router.push('/materials')}
+                                            className="cursor-pointer"
                                         >
                                             Cancelar
                                         </Button>
-                                        <Button type="submit" disabled={isLoading}>
+                                        <Button type="submit" disabled={isLoading} className="cursor-pointer">
                                             {isLoading ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

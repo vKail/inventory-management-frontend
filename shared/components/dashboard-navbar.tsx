@@ -54,13 +54,57 @@ export const DashboardNavbar = () => {
     };
   }, []);
 
-  const title =
-    sidebarItems
+  const title = (() => {
+    // Primero intentar encontrar una coincidencia exacta
+    const exactMatch = sidebarItems
       .find(item =>
         item.items.some(subItem => subItem.subItems.some(subSubItem => subSubItem.href === params))
       )
-      ?.items.find(item => item.subItems.some(subSubItem => subSubItem.href === params))?.title ||
-    'Dashboard';
+      ?.items.find(item => item.subItems.some(subSubItem => subSubItem.href === params))?.title;
+
+    if (exactMatch) return exactMatch;
+
+    // Si no hay coincidencia exacta, buscar por prefijo de ruta
+    const pathSegments = params.split('/');
+
+    // Para rutas como /categories/edit/123, buscar por /categories
+    if (pathSegments.length >= 2) {
+      const basePath = `/${pathSegments[1]}`;
+      const prefixMatch = sidebarItems
+        .find(item =>
+          item.items.some(subItem => subItem.subItems.some(subSubItem => subSubItem.href === basePath))
+        )
+        ?.items.find(item => item.subItems.some(subSubItem => subSubItem.href === basePath))?.title;
+
+      if (prefixMatch) return prefixMatch;
+    }
+
+    // Para rutas como /categories/new, buscar por /categories
+    if (pathSegments.length >= 3 && pathSegments[2] === 'new') {
+      const basePath = `/${pathSegments[1]}`;
+      const newMatch = sidebarItems
+        .find(item =>
+          item.items.some(subItem => subItem.subItems.some(subSubItem => subSubItem.href === basePath))
+        )
+        ?.items.find(item => item.subItems.some(subSubItem => subSubItem.href === basePath))?.title;
+
+      if (newMatch) return newMatch;
+    }
+
+    // Para rutas como /categories/edit/123, buscar por /categories
+    if (pathSegments.length >= 4 && pathSegments[2] === 'edit') {
+      const basePath = `/${pathSegments[1]}`;
+      const editMatch = sidebarItems
+        .find(item =>
+          item.items.some(subItem => subItem.subItems.some(subSubItem => subSubItem.href === basePath))
+        )
+        ?.items.find(item => item.subItems.some(subSubItem => subSubItem.href === basePath))?.title;
+
+      if (editMatch) return editMatch;
+    }
+
+    return 'Dashboard';
+  })();
   const { user } = useAuthStore();
 
   return (
