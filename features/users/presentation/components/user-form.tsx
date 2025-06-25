@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbPage, BreadcrumbLink } from '@/components/ui/breadcrumb'
+import { Users } from 'lucide-react'
 
 interface UserFormProps {
     initialData?: IUser;
@@ -23,21 +25,18 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
     const isEdit = !!initialData
 
     const form = useForm<UserFormValues>({
-        resolver: zodResolver(userSchema) as unknown as Resolver<UserFormValues, any, any>,
+        resolver: zodResolver(userSchema),
         defaultValues: {
             userName: '',
             password: '',
-            career: 'FISEI',
+            career: '',
             userType: UserRole.ADMINISTRATOR,
             status: UserStatus.ACTIVE,
             person: {
                 dni: '',
                 firstName: '',
-                middleName: '',
                 lastName: '',
-                secondLastName: '',
                 email: '',
-                birthDate: '',
                 phone: ''
             }
         },
@@ -48,17 +47,14 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
             form.reset({
                 userName: initialData.userName,
                 password: '',
-                career: initialData.career || 'FISEI',
+                career: initialData.career || '',
                 userType: initialData.userType as UserRole,
                 status: initialData.status as UserStatus,
                 person: {
                     dni: initialData.person?.dni || '',
                     firstName: initialData.person?.firstName || '',
-                    middleName: initialData.person?.middleName || '',
                     lastName: initialData.person?.lastName || '',
-                    secondLastName: initialData.person?.secondLastName || '',
                     email: initialData.person?.email || '',
-                    birthDate: initialData.person?.birthDate || '',
                     phone: initialData.person?.phone || ''
                 }
             })
@@ -66,10 +62,20 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
     }, [initialData, form])
 
     const handleSubmit = async (data: UserFormValues) => {
+        // Set person.type based on userType
+        let personType = 'DOCENTES';
+        if (data.userType === UserRole.STUDENT) {
+            personType = 'ESTUDIANTES';
+        }
+        const submitData = {
+            ...data,
+            person: {
+                ...data.person,
+                type: personType
+            }
+        };
         try {
-            console.log('Form data being submitted:', data);
-            await onSubmit(data);
-            console.log('Form submission successful');
+            await onSubmit(submitData);
         } catch (error) {
             console.error('Error submitting form:', error);
         }
@@ -78,6 +84,26 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
     return (
         <div className="flex flex-col items-center w-full px-6 md:px-12">
             <div className="w-full max-w-[1200px]">
+                {/* Breadcrumb */}
+                <Breadcrumb className="mb-6">
+                    <BreadcrumbList>
+                        <BreadcrumbItem>
+                            <span className="text-muted-foreground font-medium">Administración</span>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbLink href="/users">
+                                <Users className="inline mr-1 h-4 w-4 text-primary align-middle" />
+                                <BreadcrumbPage>Usuarios</BreadcrumbPage>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <Users className="inline mr-1 h-4 w-4 text-primary align-middle" />
+                            <BreadcrumbPage>{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
                 <Card>
                     <CardHeader>
                         <CardTitle>{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</CardTitle>
@@ -226,10 +252,19 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                             name="person.firstName"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Nombre</FormLabel>
+                                                    <FormLabel>Nombre *</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Nombre" {...field} />
+                                                        <Input
+                                                            placeholder="Nombre del usuario"
+                                                            maxLength={30}
+                                                            textOnly={true}
+                                                            shouldAutoCapitalize={true}
+                                                            {...field}
+                                                        />
                                                     </FormControl>
+                                                    <div className="text-xs text-muted-foreground text-right">
+                                                        {field.value?.length || 0}/30 caracteres
+                                                    </div>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -240,38 +275,19 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                             name="person.lastName"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Apellido</FormLabel>
+                                                    <FormLabel>Apellido *</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Apellido" {...field} />
+                                                        <Input
+                                                            placeholder="Apellido del usuario"
+                                                            maxLength={30}
+                                                            textOnly={true}
+                                                            shouldAutoCapitalize={true}
+                                                            {...field}
+                                                        />
                                                     </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="person.middleName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Segundo Nombre (Opcional)</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Segundo Nombre" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="person.secondLastName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Segundo Apellido (Opcional)</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Segundo Apellido" {...field} />
-                                                    </FormControl>
+                                                    <div className="text-xs text-muted-foreground text-right">
+                                                        {field.value?.length || 0}/30 caracteres
+                                                    </div>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -290,20 +306,6 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                                 </FormItem>
                                             )}
                                         />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="person.birthDate"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Fecha de Nacimiento (Opcional)</FormLabel>
-                                                    <FormControl>
-                                                        <Input type="date" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                     </div>
                                 </div>
 
@@ -316,8 +318,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                     >
                                         Cancelar
                                     </Button>
-                                    <Button 
-                                        type="button" 
+                                    <Button
+                                        type="button"
                                         disabled={isLoading}
                                         onClick={() => {
                                             const formData = form.getValues();

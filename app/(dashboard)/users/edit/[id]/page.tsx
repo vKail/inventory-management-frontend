@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import UserFormView from '@/features/users/presentation/views/user-form-view';
 
 function EditUserContent() {
-  return <UserFormView />;
+  return <UserFormView />
 }
 
 export default function EditUserPage() {

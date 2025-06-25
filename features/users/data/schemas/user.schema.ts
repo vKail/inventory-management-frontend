@@ -12,12 +12,16 @@ export enum UserStatus {
   INACTIVE = 'INACTIVE'
 }
 
+const nameRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s_\/.\-,]+$/;
+
 export const userSchema = z.object({
-  userName: z.string().min(2, 'El nombre de usuario es requerido'),
+  userName: z.string()
+    .min(2, 'El nombre de usuario es requerido')
+    .max(30, 'El nombre de usuario no puede exceder 30 caracteres')
+    .refine((value) => nameRegex.test(value), 'El usuario solo puede contener letras, números, espacios y los caracteres _ / - , .'),
   password: z.string()
-    .min(6, 'La contraseña debe tener al menos 6 caracteres')
-    .optional(),
-  career: z.string().nullable(),
+    .min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  career: z.string().min(1, 'La carrera es requerida'),
   userType: z.enum([
     UserRole.ADMINISTRATOR,
     UserRole.STUDENT,
@@ -26,18 +30,13 @@ export const userSchema = z.object({
   ], {
     required_error: 'El tipo de usuario es requerido'
   }),
-  status: z.enum([UserStatus.ACTIVE, UserStatus.INACTIVE])
-    .optional()
-    .default(UserStatus.ACTIVE),
+  status: z.enum([UserStatus.ACTIVE, UserStatus.INACTIVE]),
   person: z.object({
-    dni: z.string().min(10, 'El DNI debe tener 10 dígitos'),
-    firstName: z.string().min(2, 'El nombre es requerido'),
-    middleName: z.string().optional(),
-    lastName: z.string().min(2, 'El apellido es requerido'),
-    secondLastName: z.string().optional(),
-    email: z.string().email('Email inválido'),
-    birthDate: z.string().optional(),
-    phone: z.string().optional()
+    dni: z.string().length(10, 'El DNI debe tener 10 dígitos'),
+    firstName: z.string().min(1, { message: 'El nombre es requerido' }).max(30, { message: 'Máximo 30 caracteres' }),
+    lastName: z.string().min(1, { message: 'El apellido es requerido' }).max(30, { message: 'Máximo 30 caracteres' }),
+    email: z.string().email('Debe ser un email válido'),
+    phone: z.string().length(10, 'El teléfono debe tener 10 dígitos'),
   })
 });
 

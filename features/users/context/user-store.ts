@@ -8,11 +8,12 @@ interface UserStore {
     filteredUsers: IUser[];
     searchTerm: string;
     statusFilter: string;
+    userTypeFilter: string;
     loading: boolean;
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getUsers: (page?: number, limit?: number) => Promise<void>;
+    getUsers: (page?: number, limit?: number, filters?: { userName?: string; status?: string; userType?: string }) => Promise<void>;
     getUserById: (userId: string) => Promise<IUser | undefined>;
     addUser: (user: Partial<IUser>) => Promise<void>;
     updateUser: (userId: string, user: Partial<IUser>) => Promise<void>;
@@ -21,6 +22,7 @@ interface UserStore {
     refreshTable: () => Promise<void>;
     setSearchTerm: (term: string) => void;
     setStatusFilter: (status: string) => void;
+    setUserTypeFilter: (userType: string) => void;
     clearFilters: () => void;
 }
 
@@ -33,75 +35,61 @@ export const useUserStore = create<UserStore>()(
             filteredUsers: [],
             searchTerm: '',
             statusFilter: 'all',
+            userTypeFilter: 'all',
             loading: false,
             error: null,
             currentPage: 1,
             totalPages: 1,
 
             setSearchTerm: (term: string) => {
-                const { users, statusFilter } = get();
-                const filtered = users.filter((user) => {
-                    const matchesSearch = user.userName.toLowerCase().includes(term.toLowerCase()) ||
-                        user.person?.firstName?.toLowerCase().includes(term.toLowerCase()) ||
-                        user.person?.lastName?.toLowerCase().includes(term.toLowerCase()) ||
-                        user.person?.email?.toLowerCase().includes(term.toLowerCase());
-
-                    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-
-                    return matchesSearch && matchesStatus;
+                set({ searchTerm: term });
+                get().getUsers(1, 10, {
+                    userName: term,
+                    status: get().statusFilter !== 'all' ? get().statusFilter : undefined,
+                    userType: get().userTypeFilter !== 'all' ? get().userTypeFilter : undefined,
                 });
-                set({ searchTerm: term, filteredUsers: filtered });
             },
 
             setStatusFilter: (status: string) => {
-                const { users, searchTerm } = get();
-                const filtered = users.filter((user) => {
-                    const matchesSearch = searchTerm === '' ||
-                        user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        user.person?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        user.person?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        user.person?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-
-                    const matchesStatus = status === 'all' || user.status === status;
-
-                    return matchesSearch && matchesStatus;
+                set({ statusFilter: status });
+                get().getUsers(1, 10, {
+                    userName: get().searchTerm,
+                    status: status !== 'all' ? status : undefined,
+                    userType: get().userTypeFilter !== 'all' ? get().userTypeFilter : undefined,
                 });
-                set({ statusFilter: status, filteredUsers: filtered });
+            },
+
+            setUserTypeFilter: (userType: string) => {
+                set({ userTypeFilter: userType });
+                get().getUsers(1, 10, {
+                    userName: get().searchTerm,
+                    status: get().statusFilter !== 'all' ? get().statusFilter : undefined,
+                    userType: userType !== 'all' ? userType : undefined,
+                });
             },
 
             refreshTable: async () => {
                 const { currentPage } = get();
-                await get().getUsers(currentPage, 10);
+                await get().getUsers(currentPage, 10, {
+                    userName: get().searchTerm,
+                    status: get().statusFilter !== 'all' ? get().statusFilter : undefined,
+                    userType: get().userTypeFilter !== 'all' ? get().userTypeFilter : undefined,
+                });
             },
 
-            getUsers: async (page = 1, limit = 10) => {
+            getUsers: async (page = 1, limit = 10, filters = {}) => {
                 try {
                     set({ loading: true, error: null });
-                    const response = await UserService.getInstance().getUsers(page, limit);
+                    const response = await UserService.getInstance().getUsers(page, limit, filters);
 
                     if (response.pages > 0 && page > response.pages) {
-                        await get().getUsers(1, limit);
+                        await get().getUsers(1, limit, filters);
                         return;
                     }
 
-                    const { searchTerm, statusFilter } = get();
-                    const allUsers = response.records;
-
-                    const filtered = allUsers.filter((user) => {
-                        const matchesSearch = searchTerm === '' ||
-                            user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.person?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.person?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.person?.email?.toLowerCase().includes(searchTerm.toLowerCase());
-
-                        const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-
-                        return matchesSearch && matchesStatus;
-                    });
-
                     set({
-                        users: allUsers,
-                        filteredUsers: filtered,
+                        users: response.records,
+                        filteredUsers: response.records,
                         currentPage: response.page,
                         totalPages: response.pages,
                         loading: false,
@@ -193,12 +181,12 @@ export const useUserStore = create<UserStore>()(
             },
 
             clearFilters: () => {
-                const { users } = get();
                 set({
                     searchTerm: '',
                     statusFilter: 'all',
-                    filteredUsers: users
+                    userTypeFilter: 'all',
                 });
+                get().getUsers(1, 10, {});
             }
         }),
         {
