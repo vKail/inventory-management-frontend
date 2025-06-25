@@ -3,7 +3,8 @@ import { z } from "zod";
 export const returnedItemSchema = z.object({
     loanDetailId: z.number(),
     returnConditionId: z.number().min(1, "Debe seleccionar una condición de retorno"),
-    returnObservations: z.string().optional()
+    returnObservations: z.string().optional(),
+    quantity: z.number().min(1, "La cantidad es requerida")
 });
 
 export const loanReturnSchema = z.object({

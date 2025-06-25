@@ -20,6 +20,36 @@ interface LoanDetailsModalProps {
     onReturn?: (loan: Loan) => void;
 }
 
+// Helper function to truncate text with ellipsis
+const truncateText = (text: string, maxLength: number = 100) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+};
+
+// Helper function to format long text with line breaks
+const formatLongText = (text: string, maxLineLength: number = 80) => {
+    if (!text) return '';
+    if (text.length <= maxLineLength) return text;
+
+    // Split by spaces and create lines
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    words.forEach(word => {
+        if ((currentLine + word).length <= maxLineLength) {
+            currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+            if (currentLine) lines.push(currentLine);
+            currentLine = word;
+        }
+    });
+
+    if (currentLine) lines.push(currentLine);
+    return lines.join('\n');
+};
+
 export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDetailsModalProps) {
     const [loan, setLoan] = useState<Loan | null>(null);
     const [loading, setLoading] = useState(true);
@@ -205,12 +235,12 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                         <div className="grid grid-cols-2 gap-3 text-sm">
                             <div>
                                 <p className="text-muted-foreground">Solicitante</p>
-                                <p className="font-medium">
+                                <p className="font-medium break-words">
                                     {userDetails ?
                                         `${userDetails.firstName} ${userDetails.lastName}` :
                                         'Cargando...'}
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-muted-foreground break-words">
                                     {userDetails?.type || 'Cargando...'}
                                 </p>
                             </div>
@@ -227,16 +257,16 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Entrega</p>
-                                        <p className="font-medium">{formatDate(loan.deliveryDate)}</p>
+                                        <p className="font-medium break-words">{formatDate(loan.deliveryDate)}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Devolución Programada</p>
-                                        <p className="font-medium">{formatDate(loan.scheduledReturnDate)}</p>
+                                        <p className="font-medium break-words">{formatDate(loan.scheduledReturnDate)}</p>
                                     </div>
                                     {loan.actualReturnDate && (
                                         <div>
                                             <p className="text-sm text-muted-foreground">Devolución Real</p>
-                                            <p className="font-medium">{formatDate(loan.actualReturnDate)}</p>
+                                            <p className="font-medium break-words">{formatDate(loan.actualReturnDate)}</p>
                                         </div>
                                     )}
                                 </div>
@@ -259,37 +289,49 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                                                 <div key={index} className="bg-muted/50 p-3 rounded-md">
                                                     <div className="space-y-2">
                                                         <div>
-                                                            <h4 className="font-medium text-sm">{item?.name || 'Cargando...'}</h4>
-                                                            <p className="text-xs text-muted-foreground">
+                                                            <h4 className="font-medium text-sm break-words">
+                                                                {item?.name || 'Cargando...'}
+                                                            </h4>
+                                                            <p className="text-xs text-muted-foreground break-words">
                                                                 Código: {item?.code || 'N/A'} | Identificador: {item?.identifier || 'N/A'}
                                                             </p>
-                                                            <p className="text-xs text-muted-foreground">
+                                                            <p className="text-xs text-muted-foreground break-words">
                                                                 <span className="font-medium">Cantidad prestada:</span> {detail.quantity || 'N/A'}
                                                             </p>
                                                         </div>
 
                                                         <div className="grid grid-cols-1 gap-2">
                                                             <div>
-                                                                <p className="text-xs text-muted-foreground">
+                                                                <p className="text-xs text-muted-foreground break-words">
                                                                     <span className="font-medium">Condición de salida:</span> {exitCondition || detail.exitConditionId}
                                                                 </p>
                                                                 {detail.exitObservations && (
-                                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                                        <span className="font-medium">Observaciones de salida:</span> {detail.exitObservations}
-                                                                    </p>
+                                                                    <div className="mt-1">
+                                                                        <p className="text-xs text-muted-foreground font-medium">
+                                                                            Observaciones de salida:
+                                                                        </p>
+                                                                        <p className="text-xs text-muted-foreground break-all whitespace-pre-wrap">
+                                                                            {detail.exitObservations}
+                                                                        </p>
+                                                                    </div>
                                                                 )}
                                                             </div>
 
                                                             {/* Return Information - Only show if loan is returned */}
                                                             {loan.status === LoanStatus.RETURNED && returnCondition && (
                                                                 <div className="pt-2 border-t border-border">
-                                                                    <p className="text-xs text-green-700">
+                                                                    <p className="text-xs text-green-700 break-words">
                                                                         <span className="font-medium">Condición de retorno:</span> {returnCondition}
                                                                     </p>
                                                                     {detail.returnObservations && (
-                                                                        <p className="text-xs text-green-700 mt-1">
-                                                                            <span className="font-medium">Observaciones de retorno:</span> {detail.returnObservations}
-                                                                        </p>
+                                                                        <div className="mt-1">
+                                                                            <p className="text-xs text-green-700 font-medium">
+                                                                                Observaciones de retorno:
+                                                                            </p>
+                                                                            <p className="text-xs text-green-700 break-all whitespace-pre-wrap">
+                                                                                {detail.returnObservations}
+                                                                            </p>
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             )}
@@ -310,22 +352,22 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Aprobador</p>
-                                        <p className="font-medium">
+                                        <p className="font-medium break-words">
                                             {approverDetails?.person ?
                                                 `${approverDetails.person.firstName} ${approverDetails.person.lastName}` :
                                                 'No asignado'}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">
+                                        <p className="text-xs text-muted-foreground break-words">
                                             {approverDetails?.userType || ''}
                                         </p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Documento de Responsabilidad</p>
-                                        <p className="font-medium">{loan.responsibilityDocument ? "Presentado" : "Pendiente"}</p>
+                                        <p className="font-medium break-words">{loan.responsibilityDocument ? "Presentado" : "Pendiente"}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Recordatorio</p>
-                                        <p className="font-medium">{loan.reminderSent ? "Enviado" : "No enviado"}</p>
+                                        <p className="font-medium break-words">{loan.reminderSent ? "Enviado" : "No enviado"}</p>
                                     </div>
                                 </div>
                             </div>
@@ -336,7 +378,9 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                             <Card className="p-4">
                                 <div className="space-y-2">
                                     <h3 className="font-medium text-sm">Notas del Préstamo</h3>
-                                    <p className="text-sm text-muted-foreground">{loan.notes}</p>
+                                    <p className="text-sm text-muted-foreground break-all whitespace-pre-wrap">
+                                        {loan.notes}
+                                    </p>
                                 </div>
                             </Card>
                         )}

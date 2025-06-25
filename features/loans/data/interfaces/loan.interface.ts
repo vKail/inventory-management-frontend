@@ -186,7 +186,8 @@ export interface LoanResponse {
  * Represents the filters that can be applied to loan queries
  */
 export interface LoanFilters {
-    search?: string;
+    deliveryDateRange?: string; // '7days' | '1month' | '6months' | '1year'
+    dueDateRange?: string; // '7days' | '1month' | '6months' | '1year'
     status?: string;
     view?: 'table' | 'grid' | 'list';
 }
@@ -211,6 +212,7 @@ export interface LoanState {
     setSelectedLoan: (loan: Loan | null) => void;
     setPage: (page: number) => void;
     setFilters: (filters: Partial<LoanFilters>) => void;
+    clearFilters: () => void;
     refreshTable: () => Promise<void>;
 }
 
