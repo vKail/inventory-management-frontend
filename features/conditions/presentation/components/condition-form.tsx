@@ -34,6 +34,7 @@ interface ConditionFormProps {
 export function ConditionForm({ initialData, onSubmit, isLoading, id }: ConditionFormProps) {
     const router = useRouter();
     const { getConditionById } = useConditionStore();
+    const isEdit = id !== undefined && id !== 'new';
 
     const form = useForm<ConditionFormValues>({
         resolver: zodResolver(conditionSchema),
@@ -55,8 +56,7 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
     }, [initialData, form]);
 
     return (
-        <div className="flex-1 space-y-6 container mx-auto px-4 max-w-7xl">
-            {/* Breadcrumbs, título y descripción */}
+        <div className="space-y-4">
             <div className="w-full">
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
@@ -70,18 +70,20 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage>{id ? "Editar Condición" : "Nueva Condición"}</BreadcrumbPage>
+                            <BreadcrumbPage>{isEdit ? "Editar Condición" : "Nueva Condición"}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-x-8 gap-y-8">
-                {/* Descripción a la izquierda */}
+            <div className="flex flex-col md:flex-row gap-8">
+                {/* Texto descriptivo a la izquierda */}
                 <div className="md:w-1/3">
-                    <h3 className="text-lg font-semibold mb-1">Detalles de la condición</h3>
-                    <p className="text-muted-foreground text-sm">
-                        Ingresa el nombre, descripción y si requiere mantenimiento para la condición.
+                    <h3 className="text-2xl font-semibold mb-2">
+                        {isEdit ? "Editar Condición" : "Nueva Condición"}
+                    </h3>
+                    <p className="text-muted-foreground text-base">
+                        {isEdit ? "Modifica los datos de la condición." : "Complete los datos para crear una nueva condición."}
                     </p>
                 </div>
 
@@ -89,9 +91,9 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                 <div className="md:w-2/3">
                     <Card>
                         <CardHeader>
-                            <CardTitle>{id ? "Editar Condición" : "Nueva Condición"}</CardTitle>
+                            <CardTitle>Información de la Condición</CardTitle>
                             <CardDescription>
-                                {id ? "Modifica los datos de la condición" : "Complete los datos para crear una nueva condición"}
+                                Ingrese los datos requeridos para la condición
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -104,10 +106,16 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                                             <FormItem>
                                                 <FormLabel>Nombre *</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Nombre de la condición" maxLength={100} {...field} />
+                                                    <Input
+                                                        placeholder="Nombre de la condición"
+                                                        maxLength={25}
+                                                        textOnly={true}
+                                                        shouldAutoCapitalize={true}
+                                                        {...field}
+                                                    />
                                                 </FormControl>
                                                 <div className="text-xs text-muted-foreground text-right">
-                                                    {field.value?.length || 0}/100 caracteres
+                                                    {field.value?.length || 0}/25 caracteres
                                                 </div>
                                                 <FormMessage />
                                             </FormItem>
@@ -123,12 +131,14 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                                                 <FormControl>
                                                     <Textarea
                                                         placeholder="Descripción de la condición"
-                                                        maxLength={500}
+                                                        maxLength={250}
+                                                        descriptionOnly={true}
+                                                        shouldAutoCapitalize={true}
                                                         {...field}
                                                     />
                                                 </FormControl>
                                                 <div className="text-xs text-muted-foreground text-right">
-                                                    {field.value?.length || 0}/500 caracteres
+                                                    {field.value?.length || 0}/250 caracteres
                                                 </div>
                                                 <FormMessage />
                                             </FormItem>
@@ -158,22 +168,23 @@ export function ConditionForm({ initialData, onSubmit, isLoading, id }: Conditio
                                         )}
                                     />
 
-                                    <div className="flex justify-end gap-4 pt-4">
+                                    <div className="flex justify-end gap-4">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             onClick={() => router.push('/conditions')}
+                                            className="cursor-pointer"
                                         >
                                             Cancelar
                                         </Button>
-                                        <Button type="submit" disabled={isLoading}>
+                                        <Button type="submit" disabled={isLoading} className="cursor-pointer">
                                             {isLoading ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    {id ? "Actualizando..." : "Creando..."}
+                                                    {isEdit ? "Actualizando..." : "Creando..."}
                                                 </>
                                             ) : (
-                                                id ? "Actualizar" : "Crear"
+                                                isEdit ? "Actualizar" : "Crear"
                                             )}
                                         </Button>
                                     </div>

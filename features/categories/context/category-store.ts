@@ -129,7 +129,7 @@ export const useCategoryStore = create<CategoryStore>()(
       },
 
       getParentCategoryNameById: (parentId: number | null | undefined): string => {
-        if (!parentId) return 'Ninguna';
+        if (!parentId) return 'No Aplica';
         const parent = get().categories.find(cat => cat.id === parentId);
         return parent ? parent.name : 'Desconocida';
       },

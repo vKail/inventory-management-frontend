@@ -31,8 +31,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PlusCircle, Pencil, Trash2, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from "@/components/ui/badge";
 import LoaderComponent from '@/shared/components/ui/Loader';
+import { formatNullValue, capitalizeWords } from '@/lib/utils';
 
 interface StateTableProps {
   currentPage: number;
@@ -123,47 +123,48 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Descripción</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={4}>
-                  <LoaderComponent rows={5} columns={4} />
-                </TableCell>
+                <TableHead className="w-[200px]">Nombre</TableHead>
+                <TableHead className="w-[400px]">Descripción</TableHead>
+                <TableHead className="w-[100px] text-right">Acciones</TableHead>
               </TableRow>
-            ) : filteredStates.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="py-20 text-center text-muted-foreground">
-                  <div className="flex flex-col items-center gap-2">
-                    <AlertCircle className="h-10 w-10 opacity-30" />
-                    <span>No hay estados para mostrar</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredStates.map((state) => (
-                <TableRow key={state.id}>
-                  <TableCell>{state.name}</TableCell>
-                  <TableCell>{state.description}</TableCell>
-                  <TableCell>
-                    <Badge variant={state.active ? "default" : "secondary"}>
-                      {state.active ? "Activo" : "Inactivo"}
-                    </Badge>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3}>
+                    <LoaderComponent rows={5} columns={3} />
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                </TableRow>
+              ) : filteredStates.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="py-20 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2">
+                      <AlertCircle className="h-10 w-10 opacity-30" />
+                      <span>No hay estados para mostrar</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredStates.map((state) => (
+                  <TableRow key={state.id}>
+                    <TableCell className="font-medium">
+                      {formatNullValue(capitalizeWords(state.name), "Sin nombre")}
+                    </TableCell>
+                    <TableCell className="max-w-[400px]">
+                      <div className="truncate" title={state.description}>
+                        {formatNullValue(capitalizeWords(state.description), "Sin descripción")}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right space-x-2">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(state.id)}
+                        className="cursor-pointer"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -173,6 +174,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
                             variant="ghost"
                             size="icon"
                             onClick={() => setStateToDelete(state.id)}
+                            className="cursor-pointer"
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
@@ -182,7 +184,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
                             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                             <AlertDialogDescription>
                               Esta acción no se puede deshacer. Se eliminará permanentemente el estado
-                              <span className="font-semibold"> {state.name}</span>.
+                              <span className="font-semibold"> {formatNullValue(capitalizeWords(state.name), "Sin nombre")}</span>.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -195,13 +197,13 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

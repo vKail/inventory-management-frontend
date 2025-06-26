@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const textRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:!?()\-_/@]+$/;
+
 export const locationSchema = z.object({
     name: z.string().min(1, 'El nombre es requerido').max(100, 'El nombre no puede exceder 100 caracteres'),
     description: z.string().min(1, 'La descripción es requerida').max(500, 'La descripción no puede exceder 500 caracteres'),
@@ -13,8 +15,21 @@ export const locationSchema = z.object({
     capacityUnit: z.enum(['UNITS', 'METERS', 'SQUARE_METERS'], {
         errorMap: () => ({ message: 'Unidad de capacidad inválida' })
     }),
-    occupancy: z.number().min(0, 'La ocupación debe ser mayor o igual a 0'),
-    notes: z.string().max(1000, 'Las notas no pueden exceder 1000 caracteres').optional()
+    occupancy: z.number()
+        .min(0, "La ocupación no puede ser negativa")
+        .max(999999, "La ocupación no puede exceder 999,999"),
+    notes: z.string()
+        .max(250, "Las notas no pueden exceder 250 caracteres")
+        .refine((value) => {
+            if (!value || value.trim() === "") return true;
+            return textRegex.test(value.trim());
+        }, "Las notas deben contener solo letras, números, espacios y caracteres válidos (.,;:!?()_-@/)"),
+}).refine((data) => data.capacity >= data.occupancy, {
+    message: "La capacidad debe ser mayor o igual a la ocupación",
+    path: ["capacity"],
+}).refine((data) => data.occupancy <= data.capacity, {
+    message: "La ocupación no puede ser mayor que la capacidad",
+    path: ["occupancy"],
 });
 
 export type LocationFormValues = z.infer<typeof locationSchema>; 

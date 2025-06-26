@@ -50,11 +50,8 @@ export default function UserFormView() {
                 person: {
                     dni: data.person.dni,
                     firstName: data.person.firstName,
-                    middleName: data.person.middleName || '',
                     lastName: data.person.lastName,
-                    secondLastName: data.person.secondLastName || '',
                     email: data.person.email,
-                    birthDate: data.person.birthDate || '',
                     phone: data.person.phone || ''
                 }
             };

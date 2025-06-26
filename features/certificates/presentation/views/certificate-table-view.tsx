@@ -16,7 +16,7 @@ export default function CertificateTableView() {
     };
 
     return (
-        <div className="flex-1 space-y-6 container mx-auto px-4 max-w-7xl">
+        <div className="space-y-4">
             <div className="w-full">
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
@@ -26,11 +26,7 @@ export default function CertificateTableView() {
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <FileText className="inline mr-1 h-4 w-4 text-primary align-middle" />
-                            <BreadcrumbLink href="/certificates">Certificados</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>Lista de Certificados</BreadcrumbPage>
+                            <BreadcrumbLink>Actas</BreadcrumbLink>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>

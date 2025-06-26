@@ -9,7 +9,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <DashboardSidebar />
       <main className="w-screen h-screen px-3 m-3">
         <DashboardNavbar />
-        <SidebarTrigger />
         {children}
         <Toaster />
       </main>

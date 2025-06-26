@@ -1,5 +1,8 @@
 "use client";
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export const DepreciationForm = () => {
   const [usefulLife, setUsefulLife] = useState(0);
@@ -8,47 +11,47 @@ export const DepreciationForm = () => {
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto">
-        <table className="min-w-full border">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="border px-4 py-2 text-left text-sm font-medium">Vida Útil (años)</th>
-              <th className="border px-4 py-2 text-left text-sm font-medium">Depreciación (%)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="border px-4 py-2">
-                <input
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Vida Útil (años)</TableHead>
+              <TableHead>Depreciación (%)</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell>
+                <Input
                   type="number"
-                  className="w-full border rounded px-3 py-2"
                   value={usefulLife}
                   onChange={(e) => setUsefulLife(Number(e.target.value))}
                   min="0"
+                  placeholder="Ingrese la vida útil"
                 />
-              </td>
-              <td className="border px-4 py-2">
-                <input
+              </TableCell>
+              <TableCell>
+                <Input
                   type="number"
-                  className="w-full border rounded px-3 py-2"
                   value={depreciation}
                   onChange={(e) => setDepreciation(Number(e.target.value))}
                   min="0"
                   step="0.01"
+                  placeholder="Ingrese el porcentaje"
                 />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
-      
-	<div className="flex justify-end">
-	<button
-		type="button"
-		className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-	>
-		Guardar
-	</button>
-	</div>
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          className="bg-red-600 hover:bg-red-700"
+        >
+          Guardar
+        </Button>
+      </div>
     </div>
   );
 };

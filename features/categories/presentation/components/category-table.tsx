@@ -34,6 +34,9 @@ import { useCategoryStore } from '@/features/categories/context/category-store';
 import { toast } from "sonner";
 import LoaderComponent from '@/shared/components/ui/Loader';
 import { CategoryPagination } from './category-pagination';
+import { formatNullValue, capitalizeWords, formatBooleanValue } from '@/lib/utils';
+import { formatNumber } from "@/lib/utils";
+import { ICategory } from "../../data/interfaces/category.interface";
 
 interface CategoryTableProps {
   currentPage: number;
@@ -97,13 +100,13 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
   };
 
   return (
-    <Card className="w-full max-w-[1200px]">
-      <CardHeader className="px-4 md:px-8 pb-0">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+    <Card className="w-full">
+      <CardHeader className="px-2 sm:px-4 md:px-8 pb-0">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
             <Input
               placeholder="Buscar por nombre o código..."
-              className="w-full md:w-64"
+              className="w-full sm:w-64"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -111,7 +114,7 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
               value={parentCategoryFilter}
               onValueChange={setParentCategoryFilter}
             >
-              <SelectTrigger className="w-full md:w-56">
+              <SelectTrigger className="w-full sm:w-56">
                 <SelectValue placeholder="Todas las categorías padre" />
               </SelectTrigger>
               <SelectContent>
@@ -124,7 +127,7 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
                 variant="outline"
                 size="icon"
                 onClick={clearFilters}
-                className="h-10 w-10"
+                className="h-10 w-10 cursor-pointer"
                 title="Limpiar filtros"
               >
                 <X className="h-4 w-4" />
@@ -134,7 +137,7 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
 
           <Button
             onClick={() => router.push('/categories/new')}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-700 cursor-pointer w-full sm:w-auto"
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Nueva Categoría
@@ -143,88 +146,110 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
         <hr className="border-t border-muted mt-4" />
       </CardHeader>
 
-      <CardContent className="px-4 md:px-8 pb-6">
+      <CardContent className="px-2 sm:px-4 md:px-8 pb-6">
         <div className="min-h-[400px] flex flex-col justify-between">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Categoría Padre</TableHead>
-                <TableHead>Vida Útil</TableHead>
-                <TableHead>% Depreciación</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7}>
-                    <LoaderComponent rows={5} columns={7} />
-                  </TableCell>
-                </TableRow>
-              ) : filteredCategories.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-20 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <Tags className="h-10 w-10 opacity-30" />
-                      <span>No hay categorías para mostrar</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredCategories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell>{category.code}</TableCell>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell>{category.description}</TableCell>
-                    <TableCell>{category.parentCategory?.name || 'Ninguna'}</TableCell>
-                    <TableCell>{category.standardUsefulLife} años</TableCell>
-                    <TableCell>{category.depreciationPercentage}%</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(category.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setCategoryToDelete(category.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará permanentemente la categoría
-                              <span className="font-semibold"> {category.name}</span> y todos sus datos asociados.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={handleDelete}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Eliminar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
+          <div className="overflow-x-auto border rounded-md shadow-sm">
+            <div className="min-w-full inline-block align-middle">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[100px] w-[12%]">Código</TableHead>
+                    <TableHead className="min-w-[150px] w-[18%]">Nombre</TableHead>
+                    <TableHead className="min-w-[200px] w-[25%]">Descripción</TableHead>
+                    <TableHead className="min-w-[120px] w-[15%]">Categoría Padre</TableHead>
+                    <TableHead className="min-w-[80px] w-[10%]">Vida Útil</TableHead>
+                    <TableHead className="min-w-[100px] w-[12%]">% Depreciación</TableHead>
+                    <TableHead className="min-w-[100px] w-[8%] text-right">Acciones</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24">
+                        <LoaderComponent rows={5} columns={7} />
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredCategories.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Tags className="h-10 w-10 opacity-30" />
+                          <span>No hay categorías para mostrar</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredCategories.map((category) => (
+                      <TableRow key={category.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium">
+                          {formatNullValue(category.code, "Sin código")}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatNullValue(capitalizeWords(category.name), "Sin nombre")}
+                        </TableCell>
+                        <TableCell className="max-w-[250px] truncate">
+                          {formatNullValue(capitalizeWords(category.description), "Sin descripción")}
+                        </TableCell>
+                        <TableCell>
+                          {category.parentCategory
+                            ? capitalizeWords(category.parentCategory.name)
+                            : "No Aplica"
+                          }
+                        </TableCell>
+                        <TableCell>
+                          {formatNumber(category.standardUsefulLife)} años
+                        </TableCell>
+                        <TableCell>
+                          {formatNumber(parseFloat(category.depreciationPercentage))}%
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(category.id)}
+                              className="cursor-pointer"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setCategoryToDelete(category.id)}
+                                  className="cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Se eliminará permanentemente la categoría
+                                    <span className="font-semibold"> {formatNullValue(capitalizeWords(category.name), "Sin nombre")}</span>.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel onClick={() => setCategoryToDelete(null)}>
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleDelete}>
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
           {!loading && filteredCategories.length > 0 && (
             <div className="mt-4">
               <CategoryPagination

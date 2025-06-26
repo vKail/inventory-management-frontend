@@ -21,21 +21,51 @@ export const useAuthStore = create<AuthSession>()(
       token: null,
       role: null,
       getUser: () => get().user,
-      clearUser: () => set({ user: null, token: null, role: null }),
+      clearUser: () => set({ user: null, token: null, role: null, isAuthenticated: false }),
       isAuthenticated: false,
       login: async user => {
-        const response = await AuthService.getInstance().login(user);
-        set({ user: response?.user, token: response?.token, role: response?.user.userType });
-        set({ isAuthenticated: !!response?.token });
+        try {
+          console.log('Auth store: Starting login...');
+          const response = await AuthService.getInstance().login(user);
+          console.log('Auth store: Login response:', response);
+
+          if (response?.token && response?.user) {
+            console.log('Auth store: Setting authentication state...');
+            set({
+              user: response.user,
+              token: response.token,
+              role: response.user.userType,
+              isAuthenticated: true
+            });
+            console.log('Auth store: Authentication state set successfully');
+          } else {
+            console.error('Auth store: Invalid login response - no token or user');
+            throw new Error('Invalid login response');
+          }
+        } catch (error) {
+          console.error('Auth store: Login error:', error);
+          set({ user: null, token: null, role: null, isAuthenticated: false });
+          throw error;
+        }
       },
       logout: async () => {
-        await AuthService.getInstance().logout();
-        set({ user: null, token: null, role: null, isAuthenticated: false });
+        try {
+          await AuthService.getInstance().logout();
+        } catch (error) {
+          console.error('Auth store: Logout error:', error);
+        } finally {
+          set({ user: null, token: null, role: null, isAuthenticated: false });
+        }
       },
     }),
     {
       name: 'auth-storage',
-      partialize: state => ({ user: state.user }),
+      partialize: state => ({
+        user: state.user,
+        token: state.token,
+        role: state.role,
+        isAuthenticated: state.isAuthenticated
+      }),
     }
   )
 );

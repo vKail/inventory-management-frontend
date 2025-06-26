@@ -12,7 +12,7 @@ import { UserTable } from '../components/user-table';
 
 export default function UserView() {
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6 overflow-hidden">
+    <div className="flex-1 space-y-4 overflow-hidden">
       {/* Breadcrumbs y título */}
       <div className="flex items-center justify-between space-y-2">
         <div>
@@ -28,12 +28,10 @@ export default function UserView() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-
           <h2 className="text-2xl font-bold tracking-tight">Lista de Usuarios</h2>
           <p className="text-muted-foreground">Todos los usuarios registrados en el sistema</p>
         </div>
       </div>
-
       <UserTable />
     </div>
   );

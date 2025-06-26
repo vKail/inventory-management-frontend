@@ -9,8 +9,10 @@ function UsersContent() {
 
 export default function UsersPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <UsersContent />
-        </Suspense>
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+            <Suspense fallback={<div>Loading...</div>}>
+                <UsersContent />
+            </Suspense>
+        </div>
     );
 }

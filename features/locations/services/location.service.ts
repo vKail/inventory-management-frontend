@@ -1,6 +1,7 @@
 import { HttpHandler } from '@/core/data/interfaces/HttpHandler';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 import { ILocation, PaginatedLocations } from '../data/interfaces/location.interface';
+import { LocationFormValues } from '../data/schemas/location.schema';
 
 export class LocationService {
     private static instance: LocationService;
@@ -80,7 +81,7 @@ export class LocationService {
         }
     }
 
-    async updateLocation(id: number, location: Partial<ILocation>): Promise<ILocation> {
+    async updateLocation(id: number, location: Partial<LocationFormValues>): Promise<ILocation> {
         try {
             const response = await this.httpClient.patch<ILocation>(`${LocationService.url}/${id}`, location);
             if (response.success) {

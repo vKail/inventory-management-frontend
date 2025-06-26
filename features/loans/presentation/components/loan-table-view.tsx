@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "../../data/utils/date-formatter";
 import { useState, useEffect } from "react";
 import { LoanDetailsModal } from "./loan-details-modal";
-import { LoanPagination } from "./loan-pagination";
 import { UserService } from "@/features/users/services/user.service";
 
 interface LoanTableViewProps {
@@ -138,16 +137,6 @@ export function LoanTableView({
                     </TableBody>
                 </Table>
             </div>
-
-            {loans.length > 0 && (
-                <div className="mt-4">
-                    <LoanPagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={onPageChange}
-                    />
-                </div>
-            )}
 
             <LoanDetailsModal
                 isOpen={selectedLoanId !== null}

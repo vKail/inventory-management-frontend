@@ -111,10 +111,15 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                     <FormItem>
                       <FormLabel>Código *</FormLabel>
                       <FormControl>
-                        <Input {...field} maxLength={50} />
+                        <Input
+                          placeholder="Código de la categoría"
+                          maxLength={10}
+                          codeOnly={true}
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/50 caracteres
+                        {field.value?.length || 0}/10 caracteres
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -128,10 +133,16 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                     <FormItem>
                       <FormLabel>Nombre *</FormLabel>
                       <FormControl>
-                        <Input {...field} maxLength={100} />
+                        <Input
+                          placeholder="Nombre de la categoría"
+                          maxLength={25}
+                          textOnly={true}
+                          shouldAutoCapitalize={true}
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/100 caracteres
+                        {field.value?.length || 0}/25 caracteres
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -145,10 +156,16 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                     <FormItem>
                       <FormLabel>Descripción *</FormLabel>
                       <FormControl>
-                        <Textarea {...field} maxLength={500} />
+                        <Textarea
+                          placeholder="Descripción de la categoría"
+                          maxLength={250}
+                          descriptionOnly={true}
+                          shouldAutoCapitalize={true}
+                          {...field}
+                        />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/500 caracteres
+                        {field.value?.length || 0}/250 caracteres
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -173,7 +190,7 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="none">Ninguna</SelectItem>
+                          <SelectItem value="none">No Aplica</SelectItem>
                           {categories
                             .filter((cat) => cat.id !== initialData?.id)
                             .map((category) => (
@@ -238,10 +255,11 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                     type="button"
                     variant="outline"
                     onClick={() => router.push('/categories')}
+                    className="cursor-pointer"
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit" disabled={isLoading}>
+                  <Button type="submit" disabled={isLoading} className="cursor-pointer">
                     {isLoading ? 'Guardando...' : initialData ? 'Actualizar' : 'Crear'}
                   </Button>
                 </div>

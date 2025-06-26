@@ -8,6 +8,7 @@ import { ILocation } from '../../data/interfaces/location.interface';
 import { useState, useEffect } from 'react';
 import { Wrench } from 'lucide-react';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from '@/components/ui/breadcrumb';
+
 interface LocationViewProps {
     id?: string;
 }

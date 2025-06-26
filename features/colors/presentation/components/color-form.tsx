@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 import {
     Card, CardHeader, CardTitle, CardDescription, CardContent,
@@ -18,6 +18,8 @@ import {
 import {
     Popover, PopoverTrigger, PopoverContent,
 } from "@/components/ui/popover";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from '@/components/ui/breadcrumb';
+import { Palette } from 'lucide-react';
 
 import { ColorFormValues, colorSchema } from "../../data/schemas/color.schema";
 import { useColorForm } from "../../hooks/use-color-form";
@@ -27,6 +29,7 @@ export default function ColorForm() {
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const params = useParams();
+    const router = useRouter();
     const colorId = params?.id as number | undefined;
     const { getColorById } = useColorStore();
 
@@ -67,8 +70,7 @@ export default function ColorForm() {
     const handleSubmit = form.handleSubmit(onSubmit);
 
     const handleCancel = () => {
-        form.reset();
-        setIsColorPickerOpen(false);
+        router.push('/colors');
     };
 
     if (isLoading) {
@@ -76,126 +78,164 @@ export default function ColorForm() {
     }
 
     return (
-        <Card className="w-full max-w-4xl">
-            <CardHeader>
-                <CardTitle className="text-2xl font-bold">
-                    {colorId ? "Editar Color" : "Nuevo Color"}
-                </CardTitle>
-                <CardDescription>
-                    {colorId
-                        ? "Modifique los datos para actualizar este color"
-                        : "Complete los datos para crear un nuevo color"
-                    }
-                </CardDescription>
-            </CardHeader>
+        <div className="space-y-4">
+            <div className="w-full">
+                <Breadcrumb className="mb-6">
+                    <BreadcrumbList>
+                        <BreadcrumbItem>
+                            <span className="text-muted-foreground font-medium">Configuración</span>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <Palette className="inline mr-1 h-4 w-4 text-primary align-middle" />
+                            <BreadcrumbLink href="/colors">Colores</BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbPage>{colorId ? "Editar Color" : "Nuevo Color"}</BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            </div>
 
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nombre *</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Nombre del color" maxLength={100} {...field} />
-                                    </FormControl>
-                                    <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/100 caracteres
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+            <Card>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-1">
+                        <CardHeader>
+                            <CardTitle>{colorId ? "Editar Color" : "Nuevo Color"}</CardTitle>
+                            <CardDescription>
+                                {colorId
+                                    ? "Modifique los datos para actualizar este color."
+                                    : "Complete los datos para crear un nuevo color."}
+                            </CardDescription>
+                        </CardHeader>
+                    </div>
 
-                        <FormField
-                            control={form.control}
-                            name="hexCode"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Código HEX *</FormLabel>
+                    <div className="lg:col-span-2">
+                        <CardContent>
+                            <Form {...form}>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div className="flex flex-col space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Nombre *</FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="Nombre del color"
+                                                            maxLength={25}
+                                                            textOnly={true}
+                                                            shouldAutoCapitalize={true}
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <div className="text-xs text-muted-foreground text-right">
+                                                        {field.value?.length || 0}/25 caracteres
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative flex-1">
-                                            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <Popover
-                                                    open={isColorPickerOpen}
-                                                    onOpenChange={setIsColorPickerOpen}
-                                                >
-                                                    <PopoverTrigger asChild>
+                                        <FormField
+                                            control={form.control}
+                                            name="hexCode"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Código HEX *</FormLabel>
+
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="relative flex-1">
+                                                            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                                                                <Popover
+                                                                    open={isColorPickerOpen}
+                                                                    onOpenChange={setIsColorPickerOpen}
+                                                                >
+                                                                    <PopoverTrigger asChild>
+                                                                        <div
+                                                                            className="w-5 h-5 rounded-full border shadow-sm cursor-pointer"
+                                                                            style={{ backgroundColor: currentColor }}
+                                                                        />
+                                                                    </PopoverTrigger>
+
+                                                                    <PopoverContent className="p-2 w-auto">
+                                                                        <div className="flex flex-col gap-2">
+                                                                            <HexColorPicker
+                                                                                color={currentColor}
+                                                                                onChange={(c) =>
+                                                                                    form.setValue("hexCode", c, { shouldValidate: true })
+                                                                                }
+                                                                            />
+                                                                            <p className="text-xs text-center">{currentColor}</p>
+                                                                        </div>
+                                                                    </PopoverContent>
+                                                                </Popover>
+                                                            </div>
+
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                    className="pl-12"
+                                                                    maxLength={7}
+                                                                    onClick={() => setIsColorPickerOpen(true)}
+                                                                />
+                                                            </FormControl>
+                                                        </div>
+
                                                         <div
-                                                            className="w-5 h-5 rounded-full border shadow-sm cursor-pointer"
+                                                            className="w-12 h-12 rounded-full border shadow-sm"
                                                             style={{ backgroundColor: currentColor }}
                                                         />
-                                                    </PopoverTrigger>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground text-right">
+                                                        {field.value?.length || 0}/7 caracteres
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                                    <PopoverContent className="p-2 w-auto">
-                                                        <div className="flex flex-col gap-2">
-                                                            <HexColorPicker
-                                                                color={currentColor}
-                                                                onChange={(c) =>
-                                                                    form.setValue("hexCode", c, { shouldValidate: true })
-                                                                }
-                                                            />
-                                                            <p className="text-xs text-center">{currentColor}</p>
-                                                        </div>
-                                                    </PopoverContent>
-                                                </Popover>
-                                            </div>
-
-                                            <FormControl>
-                                                <Input
-                                                    {...field}
-                                                    className="pl-12"
-                                                    maxLength={7}
-                                                    onClick={() => setIsColorPickerOpen(true)}
-                                                />
-                                            </FormControl>
-                                        </div>
-
-                                        <div
-                                            className="w-12 h-12 rounded-full border shadow-sm"
-                                            style={{ backgroundColor: currentColor }}
+                                        <FormField
+                                            control={form.control}
+                                            name="description"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Descripción *</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            placeholder="Descripción del color"
+                                                            maxLength={250}
+                                                            descriptionOnly={true}
+                                                            shouldAutoCapitalize={true}
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <div className="text-xs text-muted-foreground text-right">
+                                                        {field.value?.length || 0}/250 caracteres
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
                                         />
                                     </div>
-                                    <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/7 caracteres
+
+                                    <div className="flex justify-end gap-4">
+                                        <Button type="button" variant="outline" onClick={handleCancel} className="cursor-pointer">
+                                            Cancelar
+                                        </Button>
+
+                                        <Button type="submit" className="bg-red-500 hover:bg-red-600 text-white cursor-pointer">
+                                            {colorId ? "Actualizar" : "Guardar"}
+                                        </Button>
                                     </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Descripción *</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Descripción del color" rows={4} maxLength={500} {...field} />
-                                    </FormControl>
-                                    <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/500 caracteres
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="flex justify-end space-x-2 pt-4">
-                            <Button type="button" variant="outline" onClick={handleCancel}>
-                                Cancelar
-                            </Button>
-
-                            <Button type="submit" className="bg-red-500 hover:bg-red-600 text-white">
-                                {colorId ? "Actualizar" : "Guardar"}
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card>
+                                </form>
+                            </Form>
+                        </CardContent>
+                    </div>
+                </div>
+            </Card>
+        </div>
     );
 }

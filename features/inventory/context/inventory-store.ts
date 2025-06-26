@@ -160,7 +160,11 @@ export const useInventoryStore = create<InventoryState>()(
                     const { images, ...itemData } = data;
 
                     // Actualizar el item primero
-                    await inventoryService.updateInventoryItem(id, itemData);
+                    const response = await inventoryService.updateInventoryItem(id, itemData);
+
+                    if (!response.success) {
+                        throw new Error(response.message.content.join(', '));
+                    }
 
                     // Si hay imágenes nuevas, subirlas en una petición separada
                     if (images && images.length > 0) {
@@ -169,6 +173,7 @@ export const useInventoryStore = create<InventoryState>()(
 
                     // Mantenemos la página actual después de actualizar
                     await get().refreshTable();
+                    set({ loading: false });
                 } catch (error) {
                     set({ error: 'Error al actualizar el item', loading: false });
                     console.error('Error updating item:', error);

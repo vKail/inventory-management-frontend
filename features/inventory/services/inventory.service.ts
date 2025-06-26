@@ -13,7 +13,7 @@ interface InventoryServiceProps {
     getInventoryItems: (page?: number, limit?: number, queryParams?: string) => Promise<PaginatedInventoryResponse>;
     getInventoryItemById: (id: string) => Promise<InventoryItem | undefined>;
     createInventoryItem: (item: FormData) => Promise<IHttpResponse<InventoryItem>>;
-    updateInventoryItem: (id: string, item: Partial<FormData>) => Promise<InventoryItem | undefined>;
+    updateInventoryItem: (id: string, item: Record<string, any>) => Promise<IHttpResponse<InventoryItem>>;
     deleteInventoryItem: (id: string) => Promise<void>;
     addImageToId: (itemId: number, file: File, imageData?: ImageUploadData) => Promise<void>;
     getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
@@ -58,7 +58,8 @@ export class InventoryService implements InventoryServiceProps {
             // Convertir strings a números para campos específicos
             if (['stock', 'itemTypeId', 'categoryId', 'statusId', 'locationId',
                 'custodianId', 'conditionId', 'certificateId', 'itemLine'].includes(key)) {
-                data[key] = parseInt(value.toString());
+                const numValue = parseInt(value.toString(), 10);
+                data[key] = isNaN(numValue) ? 0 : numValue;
             }
             // Convertir strings a booleanos
             else if (['availableForLoan', 'critical', 'dangerous',
@@ -85,7 +86,7 @@ export class InventoryService implements InventoryServiceProps {
         // Convertir strings numéricos a números
         const numericFields = [
             'stock', 'itemTypeId', 'categoryId', 'statusId',
-            'locationId', 'conditionId', 'certificateId', 'itemLine'
+            'locationId', 'custodianId', 'conditionId', 'certificateId', 'itemLine'
         ];
 
         // Convertir strings booleanos a booleanos
@@ -98,7 +99,8 @@ export class InventoryService implements InventoryServiceProps {
             if (key === 'id') return; // Ignorar el campo id
 
             if (numericFields.includes(key)) {
-                transformed[key] = parseInt(value as string, 10);
+                const numValue = parseInt(value as string, 10);
+                transformed[key] = isNaN(numValue) ? 0 : numValue;
             } else if (booleanFields.includes(key)) {
                 transformed[key] = value === 'true';
             } else {
@@ -138,20 +140,27 @@ export class InventoryService implements InventoryServiceProps {
         }
     }
 
-    public async updateInventoryItem(id: string, data: Record<string, any>): Promise<InventoryItem | undefined> {
+    public async updateInventoryItem(id: string, data: Record<string, any>): Promise<IHttpResponse<InventoryItem>> {
         try {
             const transformedData = this.transformEditData(data);
             const response = await this.httpClient.patch<InventoryItem>(
                 `${InventoryService.url}/${id}`,
                 transformedData
             );
-            if (!response.success) {
-                throw new Error(response.message.content.join(', '));
-            }
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error updating inventory item:', error);
-            throw error;
+            // Return error response instead of throwing
+            return {
+                success: false,
+                message: {
+                    content: error instanceof Error ? [error.message] : ['Error desconocido al actualizar el item'],
+                    dispayable: true
+                },
+                data: null as any,
+                statusCode: 500,
+                metadata: null
+            };
         }
     }
 

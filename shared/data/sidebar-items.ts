@@ -11,7 +11,8 @@ import {
   Tag,
   User,
   Users,
-  File
+  AlertCircle,
+  File,
 } from 'lucide-react';
 
 export const sidebarItems = [
@@ -30,7 +31,7 @@ export const sidebarItems = [
             href: '/inventory',
           },
           {
-            title: 'Nuevo bien',
+            title: 'Nuevo Item',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/inventory/new',
@@ -49,7 +50,7 @@ export const sidebarItems = [
             href: '/loans',
           },
           {
-            title: 'Nuevo préstamo',
+            title: 'Nuevo Préstamo',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/loans/new',
@@ -73,7 +74,7 @@ export const sidebarItems = [
             href: '/users',
           },
           {
-            title: 'Nuevo usuario',
+            title: 'Nuevo Usuario',
             icon: CirclePlus,
             roles: [UserRole.ADMIN],
             href: '/users/new',
@@ -86,6 +87,25 @@ export const sidebarItems = [
     group: 'Configuración',
     items: [
       {
+        title: 'Actas',
+        icon: File,
+        roles: [UserRole.ADMIN],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN],
+            href: '/certificates',
+          },
+          {
+            title: 'Nueva Acta',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN],
+            href: '/certificates/new',
+          },
+        ],
+      },
+      {
         title: 'Categorías',
         icon: Tag,
         roles: [UserRole.ADMIN],
@@ -97,7 +117,7 @@ export const sidebarItems = [
             href: '/categories',
           },
           {
-            title: 'Nueva categoría',
+            title: 'Nueva Categoría',
             icon: CirclePlus,
             roles: [UserRole.ADMIN],
             href: '/categories/new',
@@ -116,7 +136,7 @@ export const sidebarItems = [
             href: '/colors',
           },
           {
-            title: 'Nuevo color',
+            title: 'Nuevo Color',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/colors/new',
@@ -135,7 +155,7 @@ export const sidebarItems = [
             href: '/conditions',
           },
           {
-            title: 'Nueva condición',
+            title: 'Nueva Condición',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/conditions/new',
@@ -143,7 +163,45 @@ export const sidebarItems = [
         ],
       },
       {
-        title: 'Tipos de items',
+        title: 'Estados',
+        icon: AlertCircle,
+        roles: [UserRole.ADMIN, UserRole.TEACHER],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN, UserRole.TEACHER],
+            href: '/states',
+          },
+          {
+            title: 'Nuevo Estado',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN, UserRole.TEACHER],
+            href: '/states/new',
+          },
+        ],
+      },
+      {
+        title: 'Materiales',
+        icon: Package,
+        roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+            href: '/materials',
+          },
+          {
+            title: 'Nuevo Material',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN, UserRole.TEACHER],
+            href: '/materials/new',
+          },
+        ],
+      },
+      {
+        title: 'Tipos de items',
         icon: Boxes,
         roles: [UserRole.ADMIN, UserRole.TEACHER],
         subItems: [
@@ -154,7 +212,7 @@ export const sidebarItems = [
             href: '/item-types',
           },
           {
-            title: 'Nuevo tipo de item',
+            title: 'Nuevo Tipo de item',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/item-types/new',
@@ -173,67 +231,10 @@ export const sidebarItems = [
             href: '/locations',
           },
           {
-            title: 'Nueva ubicación',
+            title: 'Nueva Ubicación',
             icon: CirclePlus,
             roles: [UserRole.ADMIN, UserRole.TEACHER],
             href: '/locations/new',
-          },
-        ],
-      },
-      {
-        title: 'Certificados',
-        icon: File,
-        roles: [UserRole.ADMIN],
-        subItems: [
-          {
-            title: 'Listar',
-            icon: List,
-            roles: [UserRole.ADMIN],
-            href: '/certificates',
-          },
-          {
-            title: 'Nuevo certificado',
-            icon: CirclePlus,
-            roles: [UserRole.ADMIN],
-            href: '/certificates/new',
-          },
-        ],
-      },
-      {
-        title: 'Materiales',
-        icon: Package,
-        roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
-        subItems: [
-          {
-            title: 'Listar',
-            icon: List,
-            roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
-            href: '/materials',
-          },
-          {
-            title: 'Nuevo material',
-            icon: CirclePlus,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/materials/new',
-          },
-        ],
-      },
-      {
-        title: 'Estados',
-        icon: Package,
-        roles: [UserRole.ADMIN, UserRole.TEACHER],
-        subItems: [
-          {
-            title: 'Listar',
-            icon: List,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/states',
-          },
-          {
-            title: 'Nuevo estado',
-            icon: CirclePlus,
-            roles: [UserRole.ADMIN, UserRole.TEACHER],
-            href: '/states/new',
           },
         ],
       },

@@ -18,7 +18,7 @@ interface LocationStore {
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getLocations: (page?: number, limit?: number) => Promise<void>;
+    getLocations: (page?: number, limit?: number, search?: string, type?: string) => Promise<void>;
     getLocationById: (locationId: number) => Promise<ILocation | undefined>;
     addLocation: (location: LocationFormValues) => Promise<void>;
     updateLocation: (locationId: number, location: LocationFormValues) => Promise<void>;
@@ -50,68 +50,43 @@ export const useLocationStore = create<LocationStore>()(
             loading: false,
 
             setSearchTerm: (term: string) => {
-                const { locations, typeFilter } = get();
-                const filtered = locations.filter((location) => {
-                    const matchesSearch = location.name.toLowerCase().includes(term.toLowerCase()) ||
-                        location.description.toLowerCase().includes(term.toLowerCase()) ||
-                        location.floor.toLowerCase().includes(term.toLowerCase()) ||
-                        location.reference.toLowerCase().includes(term.toLowerCase());
-
-                    const matchesType = typeFilter === 'all' || location.type === typeFilter;
-
-                    return matchesSearch && matchesType;
-                });
-                set({ searchTerm: term, filteredLocations: filtered });
+                set({ searchTerm: term });
+                // Trigger backend search
+                get().getLocations(1, 10, term, get().typeFilter);
             },
 
             setTypeFilter: (type: string) => {
-                const { locations, searchTerm } = get();
-                const filtered = locations.filter((location) => {
-                    const matchesSearch = searchTerm === '' ||
-                        location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        location.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        location.floor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        location.reference.toLowerCase().includes(searchTerm.toLowerCase());
-
-                    const matchesType = type === 'all' || location.type === type;
-
-                    return matchesSearch && matchesType;
-                });
-                set({ typeFilter: type, filteredLocations: filtered });
+                set({ typeFilter: type });
+                // Trigger backend filter
+                get().getLocations(1, 10, get().searchTerm, type);
             },
 
             clearFilters: () => {
-                const { locations } = get();
                 set({
                     searchTerm: '',
-                    typeFilter: 'all',
-                    filteredLocations: locations
+                    typeFilter: 'all'
                 });
+                // Reset to first page with no filters
+                get().getLocations(1, 10);
             },
 
-            getLocations: async (page = 1, limit = 10) => {
+            getLocations: async (page = 1, limit = 10, search = '', type = 'all') => {
                 set(state => ({ isLoading: { ...state.isLoading, fetch: true } }));
                 try {
-                    const response = await LocationService.getInstance().getLocations(page, limit);
+                    // Build query parameters for backend filtering
+                    const filters: { name?: string; type?: string } = {};
+                    if (search && search.trim()) {
+                        filters.name = search.trim();
+                    }
+                    if (type && type !== 'all') {
+                        filters.type = type;
+                    }
+
+                    const response = await LocationService.getInstance().getLocations(page, limit, filters);
                     if (response && response.records) {
-                        const { searchTerm, typeFilter } = get();
-                        const allLocations = response.records;
-
-                        const filtered = allLocations.filter((location) => {
-                            const matchesSearch = searchTerm === '' ||
-                                location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                location.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                location.floor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                location.reference.toLowerCase().includes(searchTerm.toLowerCase());
-
-                            const matchesType = typeFilter === 'all' || location.type === typeFilter;
-
-                            return matchesSearch && matchesType;
-                        });
-
                         set({
-                            locations: allLocations,
-                            filteredLocations: filtered,
+                            locations: response.records,
+                            filteredLocations: response.records,
                             currentPage: response.page,
                             totalPages: Math.ceil(response.total / limit),
                             isLoading: { ...get().isLoading, fetch: false },
@@ -152,7 +127,8 @@ export const useLocationStore = create<LocationStore>()(
                         coordinates: ''
                     };
                     await LocationService.getInstance().createLocation(fullLocation);
-                    await get().getLocations(1, 10); // Reset to first page after adding
+                    // Refresh with current filters
+                    await get().getLocations(1, 10, get().searchTerm, get().typeFilter);
                     set(state => ({ isLoading: { ...state.isLoading, create: false } }));
                 } catch (error) {
                     console.error('Error adding location:', error);
@@ -176,7 +152,8 @@ export const useLocationStore = create<LocationStore>()(
                         coordinates: ''
                     };
                     await LocationService.getInstance().updateLocation(id, partialLocation);
-                    await get().getLocations(get().currentPage, 10); // Stay on current page after update
+                    // Refresh with current filters
+                    await get().getLocations(get().currentPage, 10, get().searchTerm, get().typeFilter);
                     set(state => ({ isLoading: { ...state.isLoading, update: false } }));
                 } catch (error) {
                     console.error('Error updating location:', error);
@@ -195,10 +172,10 @@ export const useLocationStore = create<LocationStore>()(
                     const { currentPage, locations } = get();
                     if (locations.length === 1 && currentPage > 1) {
                         // Si es el último item de la página actual y no es la primera página
-                        await get().getLocations(currentPage - 1, 10);
+                        await get().getLocations(currentPage - 1, 10, get().searchTerm, get().typeFilter);
                     } else {
                         // Refrescamos la página actual
-                        await get().getLocations(currentPage, 10);
+                        await get().getLocations(currentPage, 10, get().searchTerm, get().typeFilter);
                     }
                     set(state => ({ isLoading: { ...state.isLoading, delete: false } }));
                 } catch (error) {

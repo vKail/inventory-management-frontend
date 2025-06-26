@@ -30,7 +30,7 @@ export class AxiosClient implements HttpHandler {
 
           if (message && Array.isArray(message.content) && message.content.length > 0) {
             if (success && !['get'].includes(response.config.method || '')) {
-              toast.success(message.content[0], {
+              console.log(message.content[0], {
                 duration: 2000,
                 position: 'top-right',
                 style: {
@@ -39,7 +39,7 @@ export class AxiosClient implements HttpHandler {
                 },
               });
             } else if (!success && message.displayable) {
-              toast.error(message.content[0], {
+              console.log(message.content[0], {
                 duration: 2000,
                 position: 'top-right',
                 style: {
@@ -86,12 +86,20 @@ export class AxiosClient implements HttpHandler {
 
           if (error.response.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
             if (typeof window !== 'undefined') {
-              document.dispatchEvent(new CustomEvent('unauthorized'));
+              document.dispatchEvent(new CustomEvent('Usuario No Autorizado'));
+            }
+          }
+
+          if (error.response.message === 'Token not Found') {
+            if (typeof window !== 'undefined') {
+              document.dispatchEvent(new CustomEvent('Sesion Finalizada'));
+              window.location.href = '/login';
             }
           }
 
           if (error.response.status === HTTP_STATUS_CODE.FORBIDDEN) {
             if (typeof window !== 'undefined') {
+              document.dispatchEvent(new CustomEvent('Usuario Sin Suficientes Permisos'))
               window.location.href = '/dashboard';
             }
           }

@@ -34,7 +34,7 @@ export const DashboardSidebar = () => {
           <AvatarFallback
             className={state !== 'collapsed' ? 'text-primary bg-primary/10' : 'hidden'}
           >
-            GIIT
+            GITT
           </AvatarFallback>
         </Avatar>
       </SidebarHeader>

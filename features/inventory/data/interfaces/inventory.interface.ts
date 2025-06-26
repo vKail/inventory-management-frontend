@@ -13,7 +13,7 @@ export interface BaseInventoryItem {
     itemTypeId: number;
     categoryId: number;
     statusId: number;
-    normativeType: 'PROPERTY' | 'CONSUMABLE';
+    normativeType: 'PROPERTY' | 'ADMINISTRATIVE_CONTROL' | 'INVENTORY';
     origin: 'PURCHASE' | 'DONATION' | 'TRANSFER';
     locationId: number;
     custodianId: number;
@@ -84,7 +84,7 @@ export type InventoryFormData = {
     itemTypeId: number;
     categoryId: number;
     statusId: number;
-    normativeType: 'PROPERTY' | 'CONSUMABLE';
+    normativeType: 'PROPERTY' | 'ADMINISTRATIVE_CONTROL' | 'INVENTORY';
     origin: 'PURCHASE' | 'DONATION' | 'TRANSFER';
     locationId: number;
     custodianId: number;

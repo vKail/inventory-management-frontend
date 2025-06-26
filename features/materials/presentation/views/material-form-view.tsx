@@ -8,9 +8,13 @@ import { MaterialForm } from '../components/material-form';
 import { MaterialFormValues } from '../../data/schemas/material.schema';
 import { toast } from 'sonner';
 
-export default function MaterialFormView({ params }: { params: { id?: string } }) {
+interface MaterialFormViewProps {
+    id: string;
+}
+
+export default function MaterialFormView({ id }: MaterialFormViewProps) {
     const router = useRouter();
-    const isEdit = params.id !== undefined && params.id !== 'new';
+    const isEdit = id !== undefined && id !== 'new';
 
     const {
         getMaterialById,
@@ -19,24 +23,27 @@ export default function MaterialFormView({ params }: { params: { id?: string } }
         loading,
     } = useMaterialStore();
 
-    const [initialData, setInitialData] = useState<IMaterial | undefined>(undefined);
+    const [initialData, setInitialData] = useState<Partial<IMaterial> | undefined>(undefined);
 
     useEffect(() => {
         const loadData = async () => {
-            if (isEdit && params.id) {
-                const material = await getMaterialById(Number(params.id));
+            if (isEdit && id) {
+                const material = await getMaterialById(Number(id));
                 if (material) {
                     setInitialData(material);
+                } else {
+                    toast.error('No se encontró el material');
+                    router.push('/materials');
                 }
             }
         };
         loadData();
-    }, [isEdit, params.id, getMaterialById]);
+    }, [isEdit, id, getMaterialById, router]);
 
     const handleSubmit = async (data: MaterialFormValues) => {
         try {
-            if (isEdit && params.id) {
-                await updateMaterial(Number(params.id), data);
+            if (isEdit && id) {
+                await updateMaterial(Number(id), data);
                 toast.success('Material actualizado exitosamente');
             } else {
                 await addMaterial(data);
@@ -52,10 +59,10 @@ export default function MaterialFormView({ params }: { params: { id?: string } }
     return (
         <div className="space-y-6">
             <MaterialForm
-                initialValues={initialData}
+                id={id}
+                initialData={initialData}
                 onSubmit={handleSubmit}
                 isLoading={loading}
-                id={isEdit ? Number(params.id) : undefined}
             />
         </div>
     );
