@@ -24,7 +24,7 @@ export interface BaseInventoryItem {
   certificateId: number;
   entryOrigin: string;
   entryType: string;
-  acquisitionDate: string;
+  acquisitionDate: Date;
   commitmentNumber: string;
   modelCharacteristics: string;
   brandBreedOther: string;
