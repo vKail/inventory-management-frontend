@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
@@ -9,6 +9,15 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+
+interface ImageData {
+    id: string;
+    file: File;
+    preview: string;
+    description: string;
+    photoDate: string;
+    isPrimary: boolean;
+}
 
 interface ImageSectionProps {
     onImageChange: (files: File[], descriptions: string[], dates: string[]) => void;
@@ -19,15 +28,6 @@ interface ImageSectionProps {
     setPhotoDates: (dates: string[]) => void;
 }
 
-interface ImageItem {
-    id: string;
-    file: File;
-    url: string;
-    description: string;
-    photoDate: string;
-    isPrimary: boolean;
-}
-
 export const ImageSection = ({
     onImageChange,
     selectedFiles,
@@ -36,196 +36,262 @@ export const ImageSection = ({
     photoDates,
     setPhotoDates
 }: ImageSectionProps) => {
-    const [images, setImages] = useState<ImageItem[]>([]);
+    const [imageData, setImageData] = useState<ImageData[]>([]);
     const MAX_IMAGES = 5;
 
-    // Initialize images from props
-    useEffect(() => {
-        const imageItems = selectedFiles.map((file, index) => ({
-            id: `${file.name}-${index}`,
+    // Sync with parent state
+    const syncWithParent = useCallback(() => {
+        const newImageData = selectedFiles.map((file, index) => ({
+            id: `img-${Date.now()}-${index}`,
             file,
-            url: URL.createObjectURL(file),
+            preview: URL.createObjectURL(file),
             description: descriptions[index] || '',
             photoDate: photoDates[index] || '',
             isPrimary: index === 0
         }));
-        setImages(imageItems);
-
-        // Cleanup URLs when component unmounts or images change
-        return () => {
-            imageItems.forEach(item => URL.revokeObjectURL(item.url));
-        };
+        setImageData(newImageData);
     }, [selectedFiles, descriptions, photoDates]);
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files) return;
+    // Initialize on mount and when props change
+    useEffect(() => {
+        syncWithParent();
+    }, [syncWithParent]);
+
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
 
         const newFiles = Array.from(files);
 
-        // Check if adding these files would exceed the limit
+        // Check limit
         if (selectedFiles.length + newFiles.length > MAX_IMAGES) {
-            toast.error(`Puedes subir máximo ${MAX_IMAGES} imágenes`);
+            toast.error(`Máximo ${MAX_IMAGES} imágenes permitidas`);
             return;
         }
 
-        // Validate file types
+        // Validate files
+        const validFiles: File[] = [];
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        const validFiles = newFiles.filter(file => {
+
+        for (const file of newFiles) {
             if (!allowedTypes.includes(file.type)) {
-                toast.error(`El archivo ${file.name} no es una imagen válida. Solo se permiten: PNG, JPG, JPEG, GIF, WEBP`);
-                return false;
+                toast.error(`${file.name}: Formato no soportado`);
+                continue;
             }
             if (file.size > 10 * 1024 * 1024) {
-                toast.error(`El archivo ${file.name} excede el límite de 10MB`);
-                return false;
+                toast.error(`${file.name}: Archivo muy grande (máx 10MB)`);
+                continue;
             }
-            return true;
-        });
+            validFiles.push(file);
+        }
 
         if (validFiles.length === 0) return;
 
-        // Add new files to existing ones
+        // Create new image data
+        const newImageData: ImageData[] = validFiles.map((file, index) => ({
+            id: `img-${Date.now()}-${selectedFiles.length + index}`,
+            file,
+            preview: URL.createObjectURL(file),
+            description: '',
+            photoDate: '',
+            isPrimary: selectedFiles.length === 0 && index === 0
+        }));
+
+        // Update state
         const updatedFiles = [...selectedFiles, ...validFiles];
         const updatedDescriptions = [...descriptions, ...Array(validFiles.length).fill('')];
         const updatedDates = [...photoDates, ...Array(validFiles.length).fill('')];
 
+        setImageData(prev => [...prev, ...newImageData]);
         onImageChange(updatedFiles, updatedDescriptions, updatedDates);
+
+        // Clear input
+        event.target.value = '';
     };
 
-    const removeImage = (index: number) => {
-        const newFiles = selectedFiles.filter((_, i) => i !== index);
-        const newDescriptions = descriptions.filter((_, i) => i !== index);
-        const newDates = photoDates.filter((_, i) => i !== index);
+    const removeImage = (imageId: string) => {
+        const imageIndex = imageData.findIndex(img => img.id === imageId);
+        if (imageIndex === -1) return;
 
+        // Revoke object URL
+        URL.revokeObjectURL(imageData[imageIndex].preview);
+
+        // Remove from arrays
+        const newFiles = selectedFiles.filter((_, i) => i !== imageIndex);
+        const newDescriptions = descriptions.filter((_, i) => i !== imageIndex);
+        const newDates = photoDates.filter((_, i) => i !== imageIndex);
+
+        // Update image data
+        const newImageData = imageData.filter(img => img.id !== imageId);
+        setImageData(newImageData);
+
+        // Update parent
         onImageChange(newFiles, newDescriptions, newDates);
     };
 
-    const updateDescription = (index: number, value: string) => {
+    const updateDescription = (imageId: string, value: string) => {
+        const imageIndex = imageData.findIndex(img => img.id === imageId);
+        if (imageIndex === -1) return;
+
         const newDescriptions = [...descriptions];
-        newDescriptions[index] = value;
+        newDescriptions[imageIndex] = value;
         setDescriptions(newDescriptions);
+
+        // Update local state
+        setImageData(prev => prev.map(img =>
+            img.id === imageId ? { ...img, description: value } : img
+        ));
     };
 
-    const updatePhotoDate = (index: number, date: string) => {
+    const updatePhotoDate = (imageId: string, date: string) => {
+        const imageIndex = imageData.findIndex(img => img.id === imageId);
+        if (imageIndex === -1) return;
+
         const newDates = [...photoDates];
-        newDates[index] = date;
+        newDates[imageIndex] = date;
         setPhotoDates(newDates);
+
+        // Update local state
+        setImageData(prev => prev.map(img =>
+            img.id === imageId ? { ...img, photoDate: date } : img
+        ));
+    };
+
+    const triggerFileInput = () => {
+        const input = document.getElementById('image-upload') as HTMLInputElement;
+        if (input) input.click();
     };
 
     return (
-        <Card>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-1 p-6 border-r">
-                    <h3 className="text-2xl font-semibold leading-none tracking-tight">Imágenes</h3>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        Sube imágenes del item y configura sus propiedades.
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Máximo {MAX_IMAGES} imágenes. La primera será la imagen principal.
+        <Card className="overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
+                {/* Header Section */}
+                <div className="lg:col-span-1 p-6 bg-muted/30 border-b lg:border-b-0 lg:border-r">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                            <ImageIcon className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">Imágenes</h3>
+                            <p className="text-sm text-muted-foreground">
+                                {imageData.length}/{MAX_IMAGES} imágenes
+                            </p>
+                        </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        Sube imágenes del item. La primera será la imagen principal.
                     </p>
                 </div>
-                <div className="md:col-span-3 p-6">
+
+                {/* Content Section */}
+                <div className="lg:col-span-3 p-6">
                     <div className="space-y-6">
                         {/* Upload Area */}
-                        {selectedFiles.length < MAX_IMAGES && (
-                            <div className="flex items-center justify-center w-full">
-                                <div className="relative w-full">
-                                    <label
-                                        htmlFor="images"
-                                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
-                                    >
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <Upload className="w-6 h-6 mb-2 text-gray-500" />
-                                            <p className="text-sm text-gray-500">
-                                                <span className="font-semibold">Haga clic para subir</span> o arrastre y suelte
-                                            </p>
-                                            <p className="text-xs text-gray-500">PNG, JPG, JPEG, GIF, WEBP (MAX. 10MB)</p>
-                                        </div>
-                                        <Input
-                                            id="images"
-                                            type="file"
-                                            multiple
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handleImageChange}
-                                        />
-                                    </label>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        className="absolute bottom-2 right-2 z-10"
-                                        onClick={() => document.getElementById('images')?.click()}
-                                    >
-                                        Subir Imagen
-                                    </Button>
+                        {imageData.length < MAX_IMAGES && (
+                            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                                <input
+                                    id="image-upload"
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleFileSelect}
+                                />
+                                <div className="space-y-4">
+                                    <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                                        <Upload className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">
+                                            Arrastra imágenes aquí o{" "}
+                                            <button
+                                                type="button"
+                                                onClick={triggerFileInput}
+                                                className="text-primary hover:underline"
+                                            >
+                                                haz clic para seleccionar
+                                            </button>
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            PNG, JPG, JPEG, GIF, WEBP (máx 10MB cada una)
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Image Cards */}
-                        {images.length > 0 && (
-                            <div className="space-y-4">
-                                {images.map((image, index) => (
-                                    <Card key={image.id} className="p-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {/* Image Side */}
-                                            <div className="relative group">
+                        {/* Image Grid */}
+                        {imageData.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {imageData.map((image, index) => (
+                                    <Card key={image.id} className="overflow-hidden">
+                                        <div className="flex flex-col">
+                                            {/* Image Preview */}
+                                            <div className="relative aspect-video bg-muted">
                                                 <img
-                                                    src={image.url}
+                                                    src={image.preview}
                                                     alt={`Imagen ${index + 1}`}
-                                                    className="w-full h-48 object-cover rounded-lg"
+                                                    className="w-full h-full object-cover"
                                                 />
-                                                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                                                    <Button
-                                                        type="button"
-                                                        variant="destructive"
-                                                        size="icon"
-                                                        onClick={() => removeImage(index)}
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
+                                                <div className="absolute top-2 left-2">
+                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${image.isPrimary
+                                                        ? 'bg-blue-500 text-white'
+                                                        : 'bg-gray-500 text-white'
+                                                        }`}>
+                                                        {image.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
+                                                    </span>
                                                 </div>
-                                                <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                                                    {image.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeImage(image.id)}
+                                                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
                                             </div>
 
-                                            {/* Form Side */}
-                                            <div className="space-y-4">
+                                            {/* Form Fields */}
+                                            <div className="p-4 space-y-4">
                                                 <div>
-                                                    <label className="text-sm font-medium">Descripción</label>
+                                                    <label className="text-sm font-medium block mb-2">
+                                                        Descripción
+                                                    </label>
                                                     <Input
                                                         value={image.description}
-                                                        onChange={(e) => updateDescription(index, e.target.value)}
-                                                        placeholder="Descripción de la imagen"
+                                                        onChange={(e) => updateDescription(image.id, e.target.value)}
+                                                        placeholder="Describe esta imagen..."
                                                         maxLength={250}
+                                                        className="text-sm"
                                                     />
-                                                    <div className="text-xs text-muted-foreground text-right">
-                                                        {image.description.length}/250 caracteres
+                                                    <div className="text-xs text-muted-foreground text-right mt-1">
+                                                        {image.description.length}/250
                                                     </div>
                                                 </div>
+
                                                 <div>
-                                                    <label className="text-sm font-medium">Fecha de la Foto</label>
+                                                    <label className="text-sm font-medium block mb-2">
+                                                        Fecha de la foto
+                                                    </label>
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <Button
-                                                                variant={"outline"}
-                                                                className={`w-full pl-3 text-left font-normal ${!image.photoDate && "text-muted-foreground"}`}
+                                                                variant="outline"
+                                                                className={`w-full justify-start text-left font-normal ${!image.photoDate && "text-muted-foreground"
+                                                                    }`}
                                                             >
+                                                                <CalendarIcon className="mr-2 h-4 w-4" />
                                                                 {image.photoDate ? (
                                                                     format(new Date(image.photoDate), "PPP", { locale: es })
                                                                 ) : (
-                                                                    <span>Seleccionar fecha</span>
+                                                                    "Seleccionar fecha"
                                                                 )}
-                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                             </Button>
                                                         </PopoverTrigger>
                                                         <PopoverContent className="w-auto p-0" align="start">
                                                             <Calendar
                                                                 mode="single"
                                                                 selected={image.photoDate ? new Date(image.photoDate) : undefined}
-                                                                onSelect={(date) => updatePhotoDate(index, date?.toISOString() || '')}
+                                                                onSelect={(date) => updatePhotoDate(image.id, date?.toISOString() || '')}
                                                                 disabled={(date) => date > new Date()}
                                                                 initialFocus
                                                             />
@@ -239,12 +305,20 @@ export const ImageSection = ({
                             </div>
                         )}
 
-                        {/* No Images State */}
-                        {images.length === 0 && (
-                            <div className="text-center py-8 text-muted-foreground">
-                                <Upload className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                <p>No hay imágenes seleccionadas</p>
-                                <p className="text-sm">Sube hasta {MAX_IMAGES} imágenes para este item</p>
+                        {/* Empty State */}
+                        {imageData.length === 0 && (
+                            <div className="text-center py-12">
+                                <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                                <h3 className="text-lg font-medium mb-2">No hay imágenes</h3>
+                                <p className="text-muted-foreground mb-4">
+                                    Sube imágenes para mostrar el item
+                                </p>
+                                <Button onClick={triggerFileInput} variant="outline">
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Subir primera imagen
+                                </Button>
                             </div>
                         )}
                     </div>
