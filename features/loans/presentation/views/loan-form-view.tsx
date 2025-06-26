@@ -39,6 +39,17 @@ import { z } from "zod";
 import { Label } from "@/components/ui/label";
 import { UserService } from "@/features/users/services/user.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { loanService } from "../../services/loan.service";
 
 interface RequestorInfo {
     firstName: string;
@@ -63,6 +74,7 @@ interface ScannedItem {
     conditionId?: string;
     exitConditionId?: string;
     quantity: number;
+    stock: number;
 }
 
 export function LoanFormView() {
@@ -75,6 +87,8 @@ export function LoanFormView() {
     const [isScanModalOpen, setIsScanModalOpen] = useState(false);
     const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
     const [conditionNames, setConditionNames] = useState<Record<string, string>>({});
+    const [showBlacklistDialog, setShowBlacklistDialog] = useState(false);
+    const [pendingLoanData, setPendingLoanData] = useState<LoanCreateType | null>(null);
 
     const [requestorInfo, setRequestorInfo] = useState<RequestorInfo>({
         firstName: "",
@@ -86,13 +100,14 @@ export function LoanFormView() {
 
     const formSchema = z.object({
         requestorId: z.string().min(1, "La cédula es requerida"),
-        scheduledReturnDate: z.string().min(1, "La fecha de devolución es requerida").refine(
+        scheduledReturnDate: z.date({
+            required_error: "La fecha de devolución es requerida",
+        }).refine(
             (date) => {
-                const selectedDate = new Date(date);
                 const now = new Date();
-                const twoHoursFromNow = addHours(now, 2);
-                const fourWeeksFromNow = addWeeks(now, 4);
-                return selectedDate >= twoHoursFromNow && selectedDate <= fourWeeksFromNow;
+                const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+                const fourWeeksFromNow = new Date(now.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
+                return date >= twoHoursFromNow && date <= fourWeeksFromNow;
             },
             {
                 message: "La fecha de devolución debe ser mínimo 2 horas y máximo 4 semanas desde ahora"
@@ -120,7 +135,7 @@ export function LoanFormView() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             requestorId: "",
-            scheduledReturnDate: format(addHours(new Date(), 2), "yyyy-MM-dd'T'HH:mm"),
+            scheduledReturnDate: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
             reason: "",
             notes: "",
             requestorInfo: {
@@ -130,7 +145,7 @@ export function LoanFormView() {
                 phone: "",
                 type: ""
             },
-            blockBlackListed: false,
+            blockBlackListed: true,
             loanDetails: []
         }
     });
@@ -149,13 +164,16 @@ export function LoanFormView() {
         const loadConditions = async () => {
             try {
                 await getConditions(1, 100); // Load first 100 conditions
-                console.log("Conditions loaded:", conditions);
             } catch (error) {
                 console.error("Error loading conditions:", error);
             }
         };
         loadConditions();
     }, [getConditions]);
+
+    // Debug useEffect para monitorear el estado del modal
+    useEffect(() => {
+    }, [showBlacklistDialog, pendingLoanData]);
 
     const handleValidate = async () => {
         const requestorId = form.getValues("requestorId");
@@ -213,14 +231,53 @@ export function LoanFormView() {
 
         // Obtener el nombre de la condición
         let conditionName = "No especificada";
+        let conditionId = item.conditionId?.toString();
+
         if (item.conditionId) {
-            const condition = await getConditionById(item.conditionId.toString());
-            if (condition) {
-                conditionName = condition.name;
-                setConditionNames(prev => ({
-                    ...prev,
-                    [item.conditionId!.toString()]: condition.name
-                }));
+            try {
+                const condition = await getConditionById(item.conditionId.toString());
+                if (condition) {
+                    conditionName = condition.name;
+                    setConditionNames(prev => ({
+                        ...prev,
+                        [item.conditionId!.toString()]: condition.name
+                    }));
+                } else {
+                    // Si no se encuentra la condición, usar la primera disponible
+                    if (conditions.length > 0) {
+                        conditionId = conditions[0].id.toString();
+                        conditionName = conditions[0].name;
+                        toast.warning(`La condición con id ${item.conditionId} no fue encontrada. Se ha establecido la condición "${conditionName}" por defecto.`);
+                    } else {
+                        toast.error("No se encontraron condiciones disponibles");
+                        return;
+                    }
+                }
+            } catch (error: any) {
+                // Solo mostrar toast si es el error específico de condición no encontrada
+                if (error?.message?.content?.includes("Condición con id") && error?.message?.content?.includes("no encontrada")) {
+                    if (conditions.length > 0) {
+                        conditionId = conditions[0].id.toString();
+                        conditionName = conditions[0].name;
+                        toast.warning(`La condición con id ${item.conditionId} no fue encontrada. Se ha establecido la condición "${conditionName}" por defecto.`);
+                    } else {
+                        toast.error("No se encontraron condiciones disponibles");
+                        return;
+                    }
+                } else if (conditions.length === 0) {
+                    toast.error("No se encontraron condiciones disponibles");
+                    return;
+                } else {
+                    // Para otros errores, usar la primera condición sin mostrar toast
+                    conditionId = conditions[0].id.toString();
+                    conditionName = conditions[0].name;
+                }
+            }
+        } else {
+            // Si no hay conditionId, usar la primera condición disponible
+            if (conditions.length > 0) {
+                conditionId = conditions[0].id.toString();
+                conditionName = conditions[0].name;
             }
         }
 
@@ -230,21 +287,18 @@ export function LoanFormView() {
             characteristics: item.modelCharacteristics || "",
             image: item.images?.[0]?.filePath || null,
             exitObservations: "",
-            conditionId: item.conditionId?.toString(),
-            exitConditionId: item.conditionId?.toString(),
-            quantity: 1
+            conditionId: conditionId,
+            exitConditionId: conditionId,
+            quantity: 1,
+            stock: item.stock
         };
-
-        console.log("New scanned item:", newItem);
-        console.log("Available conditions:", conditions);
 
         setScannedItems(prev => [...prev, newItem]);
 
-        console.log(newItem)
         // Agregar el detalle al formulario
         const loanDetail = {
             itemId: Number(item.id),
-            exitConditionId: Number(item.conditionId) || 0,
+            exitConditionId: Number(conditionId) || 0,
             exitObservations: "",
             quantity: 1
         };
@@ -266,7 +320,6 @@ export function LoanFormView() {
 
     const handleExitConditionChange = (itemCode: string, conditionId: string | number) => {
         const conditionIdStr = conditionId.toString();
-        console.log("Changing exit condition for item:", itemCode, "to:", conditionIdStr);
 
         setScannedItems(prev =>
             prev.map(item =>
@@ -286,7 +339,27 @@ export function LoanFormView() {
     };
 
     const handleQuantityChange = (itemCode: string, quantity: number) => {
-        console.log("Changing quantity for item:", itemCode, "to:", quantity);
+
+        // Find the item to get its stock limit
+        const item = scannedItems.find(i => i.code === itemCode);
+        if (item) {
+            // Validate stock limit (max 7 digits)
+            if (quantity > 9999999) {
+                toast.error("La cantidad no puede exceder 9,999,999");
+                return;
+            }
+
+            // Validate against available stock
+            if (quantity > item.stock) {
+                toast.error(`La cantidad no puede exceder el stock disponible (${item.stock})`);
+                return;
+            }
+
+            // Ensure minimum quantity
+            if (quantity < 1) {
+                quantity = 1;
+            }
+        }
 
         setScannedItems(prev =>
             prev.map(item =>
@@ -311,9 +384,10 @@ export function LoanFormView() {
     };
 
     const handleSubmit = async () => {
+        let loanCreate: LoanCreateType | undefined;
+
         try {
             const formData = form.getValues();
-            console.log("Form data:", formData);
 
             // Validar usando Zod
             const validationResult = formSchema.safeParse(formData);
@@ -328,14 +402,50 @@ export function LoanFormView() {
                         message: error.message
                     });
                 });
+
+                // Focus on the first error field
+                const firstError = errors[0];
+                if (firstError) {
+                    const fieldPath = firstError.path.join('.');
+
+                    // Focus on specific fields based on the error path
+                    if (fieldPath.includes('requestorId')) {
+                        // Focus on requestor validation section
+                        const requestorSection = document.querySelector('[data-section="requestor"]');
+                        requestorSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (fieldPath.includes('scheduledReturnDate')) {
+                        // Focus on date picker
+                        const dateInput = document.querySelector('[data-field="scheduledReturnDate"]');
+                        dateInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (fieldPath.includes('reason')) {
+                        // Focus on reason field
+                        const reasonInput = document.querySelector('[data-field="reason"]');
+                        reasonInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (fieldPath.includes('loanDetails')) {
+                        // Focus on loan details section
+                        const detailsSection = document.querySelector('[data-section="loan-details"]');
+                        detailsSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+
+                toast.error("Por favor, complete todos los campos requeridos");
                 return;
             }
 
-            console.log("Processing loan details...");
+            // Validate stock limits for all items
+            for (const item of scannedItems) {
+                if (item.quantity > item.stock) {
+                    toast.error(`La cantidad del item "${item.name}" excede el stock disponible (${item.stock})`);
+                    return;
+                }
+                if (item.quantity > 9999999) {
+                    toast.error(`La cantidad del item "${item.name}" no puede exceder 9,999,999`);
+                    return;
+                }
+            }
+
             const loanDetails = await Promise.all(scannedItems.map(async item => {
-                console.log("Processing item:", item);
                 const inventoryItem = await getInventoryItemByCode(item.code);
-                console.log("Inventory item found:", inventoryItem);
                 return {
                     itemId: Number(inventoryItem?.id) || 0,
                     exitConditionId: Number(inventoryItem?.conditionId) || 0,
@@ -344,27 +454,144 @@ export function LoanFormView() {
                 };
             }));
 
-            console.log("Loan details processed:", loanDetails);
 
-            const loanCreate: LoanCreateType = {
+            loanCreate = {
                 requestorId: formData.requestorId,
-                scheduledReturnDate: formData.scheduledReturnDate,
+                scheduledReturnDate: format(formData.scheduledReturnDate, "yyyy-MM-dd'T'HH:mm"),
                 reason: formData.reason,
                 notes: formData.notes || "",
-                blockBlackListed: false,
+                blockBlackListed: true,
                 loanDetails
             };
 
-            console.log("Sending loan create request:", loanCreate);
-            const response = await createLoan(loanCreate);
-            console.log("Loan create response:", response);
+            await submitLoanWithBlacklistHandling(loanCreate);
+        } catch (error: any) {
 
-            toast.success("Préstamo creado exitosamente");
-            router.push("/loans");
-        } catch (error) {
-            console.error("Error creating loan:", error);
-            toast.error("Error al crear el préstamo");
+
+            // Verificar si es un error de blacklist en el catch
+            let errorMessage = '';
+
+            // Intentar obtener el mensaje de error del servidor
+            if (error?.response?.data?.message?.content) {
+                errorMessage = error.response.data.message.content.join(' ');
+            } else if (error?.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error?.message) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = error?.toString() || '';
+            }
+
+
+            if (errorMessage.toLowerCase().includes("lista negra") ||
+                errorMessage.toLowerCase().includes("blacklist") ||
+                errorMessage.toLowerCase().includes("no puede hacer préstamos") ||
+                errorMessage.toLowerCase().includes("morosos")) {
+
+                if (loanCreate) {
+                    setPendingLoanData(loanCreate);
+                    setShowBlacklistDialog(true);
+                }
+            } else {
+                // Otro tipo de error
+                toast.error("Error al crear el préstamo");
+            }
         }
+    };
+
+    const submitLoanWithBlacklistHandling = async (loanData: LoanCreateType) => {
+        try {
+            // Llamar directamente al servicio para tener control total sobre la respuesta
+            const response = await loanService.create(loanData);
+
+
+            if (response.success) {
+                toast.success("Préstamo creado exitosamente");
+                router.push("/loans");
+            } else {
+                // Verificar si es un error de blacklist
+                const errorMessage = response.message.content.join(' ');
+
+
+                if (errorMessage.toLowerCase().includes("lista negra") ||
+                    errorMessage.toLowerCase().includes("blacklist") ||
+                    errorMessage.toLowerCase().includes("no puede hacer préstamos") ||
+                    errorMessage.toLowerCase().includes("morosos")) {
+
+                    setPendingLoanData(loanData);
+                    setShowBlacklistDialog(true);
+                } else {
+                    // Otro tipo de error
+                    toast.error(errorMessage);
+                }
+            }
+        } catch (error: any) {
+
+            // Verificar si es un error de blacklist en el catch
+            let errorMessage = '';
+
+            // Intentar obtener el mensaje de error del servidor
+            if (error?.response?.data?.message?.content) {
+                errorMessage = error.response.data.message.content.join(' ');
+            } else if (error?.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error?.message) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = error?.toString() || '';
+            }
+
+            if (errorMessage.toLowerCase().includes("lista negra") ||
+                errorMessage.toLowerCase().includes("blacklist") ||
+                errorMessage.toLowerCase().includes("no puede hacer préstamos") ||
+                errorMessage.toLowerCase().includes("morosos")) {
+
+                setPendingLoanData(loanData);
+                setShowBlacklistDialog(true);
+            } else {
+                // Otro tipo de error
+                toast.error("Error al crear el préstamo");
+            }
+        }
+    };
+
+    const handleBlacklistContinue = async () => {
+        if (!pendingLoanData) return;
+
+        try {
+            // Send the request again with blockBlackListed: false
+            const loanDataWithoutBlacklist = {
+                ...pendingLoanData,
+                blockBlackListed: false
+            };
+
+            const response = await loanService.create(loanDataWithoutBlacklist);
+
+            if (response.success) {
+                // Solo mostrar toast de éxito y redirigir después de confirmación exitosa
+                toast.success("Préstamo creado exitosamente");
+                setShowBlacklistDialog(false);
+                setPendingLoanData(null);
+                router.push("/loans");
+            } else {
+                // Si hay otro error después del retry
+                const errorMessage = response.message.content.join(' ');
+                toast.error(errorMessage);
+                setShowBlacklistDialog(false);
+                setPendingLoanData(null);
+            }
+        } catch (error: any) {
+            console.error("Error creating loan after blacklist confirmation:", error);
+            toast.error("Error al crear el préstamo");
+            setShowBlacklistDialog(false);
+            setPendingLoanData(null);
+        }
+    };
+
+    const handleBlacklistCancel = () => {
+        setShowBlacklistDialog(false);
+        setPendingLoanData(null);
+        // No mostrar toast aquí, solo cerrar el modal
     };
 
     return (
@@ -388,31 +615,24 @@ export function LoanFormView() {
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
-                <Button variant="destructive" className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" x2="12" y1="8" y2="12" />
-                        <line x1="12" x2="12.01" y1="16" y2="16" />
-                    </svg>
-                    Lista Negra
-                </Button>
+
             </div>
 
             <Form {...form}>
                 <form className="space-y-10">
                     {/* Sección del Solicitante */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start" data-section="requestor">
                         <div className="pt-2">
-                            <h2 className="text-lg font-bold">Solicitante</h2>
+                            <h2 className="text-lg font-bold">Información del Solicitante</h2>
                             <p className="text-muted-foreground text-sm">
-                                Datos personales y de contacto del solicitante del préstamo.
+                                Valide la información del solicitante del préstamo.
                             </p>
                         </div>
                         <div className="md:col-span-2">
                             <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
                                 <div className="flex flex-col space-y-1.5 p-6">
-                                    <h3 className="tracking-tight text-xl font-bold">Información del Solicitante</h3>
-                                    <p className="text-muted-foreground">Complete los datos del solicitante.</p>
+                                    <h3 className="tracking-tight text-xl font-bold">Datos del Solicitante</h3>
+                                    <p className="text-muted-foreground">Complete la información del solicitante.</p>
                                 </div>
                                 <div className="p-6 pt-0">
                                     <div className="grid grid-cols-1 gap-6">
@@ -422,10 +642,15 @@ export function LoanFormView() {
                                                     control={form.control}
                                                     name="requestorId"
                                                     render={({ field }) => (
-                                                        <FormItem className="flex-1">
-                                                            <FormLabel>Cédula</FormLabel>
+                                                        <FormItem>
+                                                            <FormLabel>DNI del Solicitante *</FormLabel>
                                                             <FormControl>
-                                                                <Input {...field} />
+                                                                <Input
+                                                                    placeholder="Ingrese el DNI del solicitante"
+                                                                    {...field}
+                                                                    data-field="requestorId"
+                                                                    className="w-full"
+                                                                />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -509,12 +734,13 @@ export function LoanFormView() {
                                                 name="reason"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Motivo del Préstamo</FormLabel>
+                                                        <FormLabel>Motivo del Préstamo *</FormLabel>
                                                         <FormControl>
                                                             <Textarea
                                                                 {...field}
                                                                 maxLength={250}
                                                                 placeholder="Ingrese el motivo del préstamo (máximo 250 caracteres)"
+                                                                data-field="reason"
                                                             />
                                                         </FormControl>
                                                         <div className="text-xs text-muted-foreground text-right">
@@ -529,66 +755,83 @@ export function LoanFormView() {
                                                 name="scheduledReturnDate"
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col">
-                                                        <FormLabel>Fecha y Hora de Devolución Programada</FormLabel>
-                                                        <div className="flex gap-2">
+                                                        <FormLabel>Fecha y Hora de Devolución Programada *</FormLabel>
+                                                        <FormControl>
                                                             <Popover>
                                                                 <PopoverTrigger asChild>
-                                                                    <FormControl>
-                                                                        <Button
-                                                                            variant={"outline"}
-                                                                            className={cn(
-                                                                                "w-full pl-3 text-left font-normal",
-                                                                                !field.value && "text-muted-foreground"
-                                                                            )}
-                                                                        >
-                                                                            {field.value ? (
-                                                                                format(new Date(field.value), "PPP HH:mm", { locale: es })
-                                                                            ) : (
-                                                                                <span>Seleccione una fecha y hora</span>
-                                                                            )}
-                                                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                                        </Button>
-                                                                    </FormControl>
+                                                                    <Button
+                                                                        variant={"outline"}
+                                                                        className={cn(
+                                                                            "w-full pl-3 text-left font-normal",
+                                                                            !field.value && "text-muted-foreground"
+                                                                        )}
+                                                                        data-field="scheduledReturnDate"
+                                                                    >
+                                                                        {field.value ? (
+                                                                            format(field.value, "PPP 'a las' HH:mm", { locale: es })
+                                                                        ) : (
+                                                                            <span>Seleccionar fecha y hora</span>
+                                                                        )}
+                                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                    </Button>
                                                                 </PopoverTrigger>
                                                                 <PopoverContent className="w-auto p-0" align="start">
+                                                                    <div className="p-3 border-b">
+                                                                        <div className="flex items-center gap-2 mb-2">
+                                                                            <label className="text-sm font-medium">Hora:</label>
+                                                                            <Input
+                                                                                type="time"
+                                                                                className="w-32"
+                                                                                value={field.value ? format(field.value, "HH:mm") : ""}
+                                                                                onChange={(e) => {
+                                                                                    if (field.value && e.target.value) {
+                                                                                        const [hours, minutes] = e.target.value.split(':').map(Number);
+                                                                                        const newDate = new Date(field.value);
+                                                                                        newDate.setHours(hours);
+                                                                                        newDate.setMinutes(minutes);
+
+                                                                                        // Validate the new datetime
+                                                                                        const now = new Date();
+                                                                                        const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+                                                                                        const fourWeeksFromNow = new Date(now.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
+
+                                                                                        if (newDate >= twoHoursFromNow && newDate <= fourWeeksFromNow) {
+                                                                                            field.onChange(newDate);
+                                                                                        } else {
+                                                                                            toast.error("La fecha y hora debe ser mínimo 2 horas y máximo 4 semanas desde ahora");
+                                                                                        }
+                                                                                    }
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                        <p className="text-xs text-muted-foreground">
+                                                                            Selecciona la fecha y luego ajusta la hora
+                                                                        </p>
+                                                                    </div>
                                                                     <Calendar
                                                                         mode="single"
-                                                                        selected={field.value ? new Date(field.value) : undefined}
+                                                                        selected={field.value}
                                                                         onSelect={(date) => {
                                                                             if (date) {
-                                                                                const now = new Date();
-                                                                                const selectedDate = new Date(date);
-                                                                                selectedDate.setHours(now.getHours());
-                                                                                selectedDate.setMinutes(now.getMinutes());
-                                                                                field.onChange(format(selectedDate, "yyyy-MM-dd'T'HH:mm"));
+                                                                                // Preserve the current time when changing date
+                                                                                const currentTime = field.value || new Date();
+                                                                                const newDate = new Date(date);
+                                                                                newDate.setHours(currentTime.getHours());
+                                                                                newDate.setMinutes(currentTime.getMinutes());
+                                                                                field.onChange(newDate);
                                                                             }
                                                                         }}
                                                                         disabled={(date) => {
                                                                             const now = new Date();
-                                                                            const twoHoursFromNow = addHours(now, 2);
-                                                                            const fourWeeksFromNow = addWeeks(now, 4);
+                                                                            const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+                                                                            const fourWeeksFromNow = new Date(now.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
                                                                             return date < twoHoursFromNow || date > fourWeeksFromNow;
                                                                         }}
                                                                         initialFocus
                                                                     />
-                                                                    <div className="p-3 border-t">
-                                                                        <Input
-                                                                            type="time"
-                                                                            value={field.value ? format(new Date(field.value), "HH:mm") : ""}
-                                                                            onChange={(e) => {
-                                                                                if (field.value) {
-                                                                                    const [hours, minutes] = e.target.value.split(":");
-                                                                                    const date = new Date(field.value);
-                                                                                    date.setHours(parseInt(hours));
-                                                                                    date.setMinutes(parseInt(minutes));
-                                                                                    field.onChange(format(date, "yyyy-MM-dd'T'HH:mm"));
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                    </div>
                                                                 </PopoverContent>
                                                             </Popover>
-                                                        </div>
+                                                        </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -621,7 +864,7 @@ export function LoanFormView() {
                     </div>
 
                     {/* Sección de Detalles del Préstamo */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start" data-section="loan-details">
                         <div className="pt-2">
                             <h2 className="text-lg font-bold">Detalles del Préstamo</h2>
                             <p className="text-muted-foreground text-sm">
@@ -679,12 +922,11 @@ export function LoanFormView() {
                                                                 <div className="flex-1">
                                                                     <Label htmlFor={`exit-condition-${item.code}`}>Condición de salida</Label>
                                                                     <p className="text-xs text-muted-foreground mb-2">
-                                                                        La condición por defecto es la condición actual del item. Si la condición cambia, por favor actualícela.
+                                                                        Condición actual del item: {conditionNames[item.conditionId || ''] || 'No especificada'}
                                                                     </p>
                                                                     <Select
                                                                         value={String(item.exitConditionId || item.conditionId || "")}
                                                                         onValueChange={(value) => {
-                                                                            console.log("Select onChange called with value:", value, "type:", typeof value);
                                                                             handleExitConditionChange(item.code, value);
                                                                         }}
                                                                     >
@@ -702,14 +944,28 @@ export function LoanFormView() {
                                                                 </div>
                                                                 <div className="w-32">
                                                                     <Label htmlFor={`quantity-${item.code}`}>Cantidad</Label>
-                                                                    <Input
-                                                                        id={`quantity-${item.code}`}
-                                                                        type="number"
-                                                                        min="1"
-                                                                        value={item.quantity}
-                                                                        onChange={(e) => handleQuantityChange(item.code, parseInt(e.target.value) || 1)}
-                                                                        className="mt-1"
-                                                                    />
+                                                                    {item.stock === 0 ? (
+                                                                        <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded text-center">
+                                                                            <p className="text-xs text-red-600 font-medium">
+                                                                                No hay stock de este item
+                                                                            </p>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Input
+                                                                                id={`quantity-${item.code}`}
+                                                                                type="number"
+                                                                                min="1"
+                                                                                max={item.stock}
+                                                                                value={item.quantity}
+                                                                                onChange={(e) => handleQuantityChange(item.code, parseInt(e.target.value) || 1)}
+                                                                                className="mt-1"
+                                                                            />
+                                                                            <p className="text-xs text-muted-foreground mt-1">
+                                                                                Stock disponible: {item.stock}
+                                                                            </p>
+                                                                        </>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                             <div className="mt-4">
@@ -783,7 +1039,7 @@ export function LoanFormView() {
                         <Button
                             type="button"
                             onClick={handleSubmit}
-                            disabled={form.formState.isSubmitting}
+                            disabled={form.formState.isSubmitting || !form.watch("blockBlackListed")}
                         >
                             {form.formState.isSubmitting ? "Creando..." : "Solicitar Préstamo"}
                         </Button>
@@ -796,6 +1052,47 @@ export function LoanFormView() {
                 onClose={() => setIsScanModalOpen(false)}
                 onScanComplete={handleScanComplete}
             />
+
+            <AlertDialog open={showBlacklistDialog} onOpenChange={handleBlacklistCancel}>
+                <AlertDialogContent className="sm:max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" x2="12" y1="8" y2="12" />
+                                <line x1="12" x2="12.01" y1="16" y2="16" />
+                            </svg>
+                            Usuario en Lista Negra
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-left">
+                            <div className="space-y-3">
+                                <p className="text-base">
+                                    El usuario no puede hacer préstamos porque está en la lista negra, ¿desea continuar?
+                                </p>
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <p className="text-sm text-yellow-800">
+                                        <strong>Nota:</strong> Al continuar, se procederá con el préstamo a pesar de que el usuario se encuentra en la lista negra.
+                                    </p>
+                                </div>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                        <AlertDialogCancel
+                            onClick={handleBlacklistCancel}
+                            className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        >
+                            Cancelar Préstamo
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleBlacklistContinue}
+                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Continuar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

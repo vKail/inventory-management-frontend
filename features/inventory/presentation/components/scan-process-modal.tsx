@@ -71,7 +71,6 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
 
             if (event.key === "Enter") {
                 if (barcodeBuffer.current) {
-                    console.log('Barcode scanned:', barcodeBuffer.current);
                     setScannedCode(barcodeBuffer.current);
                     setIsReadyToSearch(true);
                     barcodeBuffer.current = "";
@@ -88,26 +87,22 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
     const handleScan = async (code: string) => {
         if (!code) return;
 
-        console.log('Starting scan with code:', code);
         setIsScanning(true);
         setError("");
 
         try {
             // Primero intentamos buscar por código
             let item = await getInventoryItemByCode(code);
-            console.log('Item found by code:', item);
 
             // Si no se encuentra por código, intentamos buscar por ID
             if (!item) {
                 const foundById = await getInventoryItem(code);
-                console.log('Item found by ID:', foundById);
                 if (foundById) {
                     item = foundById;
                 }
             }
 
             if (item) {
-                console.log('Final item to display:', item);
                 setFoundItem(item);
                 onScanComplete?.(item);
                 toast.success("Item encontrado");
@@ -176,8 +171,40 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
             .map(([key, value]) => `${key}: ${value}`)
             .join('\n');
 
-        navigator.clipboard.writeText(text);
-        toast.success("Información copiada al portapapeles");
+        // Función para copiar al portapapeles con fallback
+        const copyToClipboard = async (text: string) => {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    // Método moderno para HTTPS
+                    await navigator.clipboard.writeText(text);
+                    toast.success("Información copiada al portapapeles");
+                } else {
+                    // Fallback para HTTP o navegadores antiguos
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-999999px";
+                    textArea.style.top = "-999999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+
+                    try {
+                        document.execCommand('copy');
+                        toast.success("Información copiada al portapapeles");
+                    } catch (err) {
+                        toast.error("No se pudo copiar al portapapeles. Copia manual: " + text);
+                    } finally {
+                        document.body.removeChild(textArea);
+                    }
+                }
+            } catch (err) {
+                toast.error("Error al copiar al portapapeles");
+                console.error('Error copying to clipboard:', err);
+            }
+        };
+
+        copyToClipboard(text);
     };
 
     return (
@@ -275,7 +302,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                         </div>
 
                                         {/* Detalles Básicos */}
-                                        <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
+                                        <div className="space-y-4 bg-secondary p-4 rounded-lg">
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-lg font-semibold">{foundItem.name}</h3>
                                                 <div className="flex items-center gap-2">
@@ -307,7 +334,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                     {/* Columna Derecha: Detalles Adicionales */}
                                     <div className="space-y-6">
                                         {/* Clasificación */}
-                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
                                             <h4 className="font-medium text-lg">Clasificación</h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
@@ -334,7 +361,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                         </div>
 
                                         {/* Materiales */}
-                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
                                             <h4 className="font-medium text-lg">Materiales</h4>
                                             <div className="space-y-2">
                                                 {foundItem.materials && foundItem.materials.length > 0 ? (
@@ -355,7 +382,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                         </div>
 
                                         {/* Colores */}
-                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
                                             <h4 className="font-medium text-lg">Colores</h4>
                                             <div className="space-y-2">
                                                 {foundItem.colors && foundItem.colors.length > 0 ? (
@@ -382,7 +409,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                         </div>
 
                                         {/* Fechas */}
-                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
                                             <h4 className="font-medium text-lg">Fechas</h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
@@ -407,14 +434,14 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                                         </div>
 
                                         {/* Características */}
-                                        <div className="bg-muted/50 p-4 rounded-lg space-y-4">
+                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
                                             <h4 className="font-medium text-lg">Características</h4>
                                             <div className="flex flex-wrap gap-2">
-                                                {foundItem.critical && <Badge variant="destructive">Crítico</Badge>}
-                                                {foundItem.dangerous && <Badge variant="destructive">Peligroso</Badge>}
+                                                {foundItem.critical && <Badge>Crítico</Badge>}
+                                                {foundItem.dangerous && <Badge>Peligroso</Badge>}
                                                 {foundItem.requiresSpecialHandling && <Badge>Manejo Especial</Badge>}
                                                 {foundItem.perishable && <Badge>Perecedero</Badge>}
-                                                {foundItem.availableForLoan && <Badge variant="secondary">Disponible para Préstamo</Badge>}
+                                                {foundItem.availableForLoan && <Badge>Disponible para Préstamo</Badge>}
                                                 {!foundItem.critical && !foundItem.dangerous && !foundItem.requiresSpecialHandling &&
                                                     !foundItem.perishable && !foundItem.availableForLoan && (
                                                         <p className="text-sm text-muted-foreground">No hay características especiales</p>
@@ -424,7 +451,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
 
                                         {/* Observaciones */}
                                         {foundItem.observations && (
-                                            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                                            <div className="bg-secondary p-4 rounded-lg space-y-2">
                                                 <h4 className="font-medium text-lg">Observaciones</h4>
                                                 <p className="text-sm text-muted-foreground">{foundItem.observations}</p>
                                             </div>

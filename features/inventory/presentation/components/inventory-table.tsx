@@ -32,7 +32,6 @@ export const InventoryTable = ({
 
     useEffect(() => {
         getInventoryItems(currentPage);
-        console.log("YUMMIIIIII", items)
     }, [currentPage, getInventoryItems]);
 
     const handleDelete = async (id: string) => {

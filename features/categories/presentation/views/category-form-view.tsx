@@ -66,7 +66,7 @@ export default function CategoryFormView({ id }: CategoryFormViewProps) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="space-y-4">
       <div className="mb-6">
         <Breadcrumb className="mb-4">
           <BreadcrumbList>

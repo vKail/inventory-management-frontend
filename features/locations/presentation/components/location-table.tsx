@@ -34,16 +34,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import LoaderComponent from '@/shared/components/ui/Loader';
 import { LocationPagination } from './location-pagination';
-
-// Definimos los tipos de ubicación disponibles
-const LocationTypes = {
-  BUILDING: "Edificio",
-  FLOOR: "Piso",
-  OFFICE: "Oficina",
-  WAREHOUSE: "Almacen",
-  SHELF: "Estante",
-  LABORATORY: "Laboratorio",
-} as const;
+import { formatNullValue, capitalizeWords } from '@/lib/utils';
+import { LocationTypeLabels, CapacityUnitLabels } from '@/features/locations/data/interfaces/location.interface';
 
 export function LocationTable() {
   const router = useRouter();
@@ -102,8 +94,13 @@ export function LocationTable() {
     router.push(`/locations/edit/${id}`);
   };
 
+  const truncateText = (text: string, maxLength: number) => {
+    if (!text) return "Sin datos";
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  };
+
   return (
-    <Card className="w-full max-w-[1200px]">
+    <Card className="w-full max-w-[1400px]">
       <CardHeader className="px-4 md:px-8 pb-0">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
@@ -122,7 +119,7 @@ export function LocationTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los tipos</SelectItem>
-                {Object.entries(LocationTypes).map(([key, value]) => (
+                {Object.entries(LocationTypeLabels).map(([key, value]) => (
                   <SelectItem key={key} value={key}>
                     {value}
                   </SelectItem>
@@ -144,7 +141,8 @@ export function LocationTable() {
 
           <Button
             onClick={() => router.push('/locations/new')}
-            className="bg-red-600 hover:bg-red-700"
+            variant="default"
+            className="w-full sm:w-auto"
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Nueva Ubicación
@@ -155,98 +153,129 @@ export function LocationTable() {
 
       <CardContent className="px-4 md:px-8 pb-6">
         <div className="min-h-[400px] flex flex-col justify-between">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Piso</TableHead>
-                <TableHead>Referencia</TableHead>
-                <TableHead>Capacidad</TableHead>
-                <TableHead>Ocupación</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading.fetch ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7}>
-                    <LoaderComponent rows={5} columns={7} />
-                  </TableCell>
+                  <TableHead className="w-[180px]">Nombre</TableHead>
+                  <TableHead className="w-[200px]">Descripción</TableHead>
+                  <TableHead className="w-[120px]">Tipo</TableHead>
+                  <TableHead className="w-[100px]">Piso</TableHead>
+                  <TableHead className="w-[120px]">Referencia</TableHead>
+                  <TableHead className="w-[100px]">Capacidad</TableHead>
+                  <TableHead className="w-[100px]">Ocupación</TableHead>
+                  <TableHead className="w-[100px] text-right">Acciones</TableHead>
                 </TableRow>
-              ) : filteredLocations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <MapPin className="h-10 w-10 opacity-30 mb-2" />
-                      <p className="mb-2">No hay ubicaciones para mostrar</p>
-                      <Button
-                        onClick={() => router.push('/locations/new')}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Crear primera ubicación
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredLocations.map((location) => (
-                  <TableRow key={location.id}>
-                    <TableCell>{location.name}</TableCell>
-                    <TableCell>{LocationTypes[location.type as keyof typeof LocationTypes] || location.type}</TableCell>
-                    <TableCell>{location.floor}</TableCell>
-                    <TableCell>{location.reference}</TableCell>
-                    <TableCell>{`${location.capacity} ${location.capacityUnit}`}</TableCell>
-                    <TableCell>
-                      <Badge variant={location.occupancy && location.capacity && location.occupancy < location.capacity ? "default" : "default"}>
-                        {location.occupancy}/{location.capacity}
-                      </Badge>
+              </TableHeader>
+              <TableBody>
+                {isLoading.fetch ? (
+                  <TableRow>
+                    <TableCell colSpan={8}>
+                      <LoaderComponent rows={5} columns={8} />
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                  </TableRow>
+                ) : filteredLocations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center h-24">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <MapPin className="h-10 w-10 opacity-30 mb-2" />
+                        <p className="mb-2">No hay ubicaciones para mostrar</p>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(location.id ?? 0)}
+                          onClick={() => router.push('/locations/new')}
+                          variant="outline"
+                          size="sm"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Crear primera ubicación
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setLocationToDelete(location.id ?? 0)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción no se puede deshacer. Esto eliminará permanentemente la ubicación.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setLocationToDelete(null)}>
-                                Cancelar
-                              </AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDelete}>
-                                Eliminar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredLocations.map((location) => (
+                    <TableRow key={location.id} className="h-16">
+                      <TableCell className="font-medium">
+                        {formatNullValue(capitalizeWords(location.name), "Sin nombre")}
+                      </TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <div className="truncate" title={location.description}>
+                          {formatNullValue(truncateText(location.description, 50), "Sin descripción")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {LocationTypeLabels[location.type] || location.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {formatNullValue(capitalizeWords(location.floor), "Sin piso")}
+                      </TableCell>
+                      <TableCell>
+                        {formatNullValue(capitalizeWords(location.reference), "Sin referencia")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <span className="font-medium">{location.capacity}</span>
+                          <span className="text-muted-foreground ml-1">
+                            {CapacityUnitLabels[location.capacityUnit]}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <span className="font-medium">{location.occupancy}</span>
+                          <span className="text-muted-foreground ml-1">
+                            {CapacityUnitLabels[location.capacityUnit]}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(location.id!)}
+                            className="h-8 w-8"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setLocationToDelete(location.id!)}
+                                className="h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción no se puede deshacer. Se eliminará permanentemente la ubicación
+                                  <span className="font-semibold"> {formatNullValue(capitalizeWords(location.name), "Sin nombre")}</span>.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setLocationToDelete(null)}>
+                                  Cancelar
+                                </AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete}>
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
           {!isLoading.fetch && filteredLocations.length > 0 && (
             <div className="mt-4">
               <LocationPagination

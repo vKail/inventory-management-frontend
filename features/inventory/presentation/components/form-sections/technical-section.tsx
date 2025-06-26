@@ -29,7 +29,7 @@ export const TechnicalSection = () => {
     }));
 
     return (
-        <Card>
+        <Card id="technical-section">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1 p-6 border-r">
                     <h3 className="text-2xl font-semibold leading-none tracking-tight">Información Técnica</h3>
@@ -43,16 +43,16 @@ export const TechnicalSection = () => {
                             control={form.control}
                             name="certificateId"
                             render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Certificado *</FormLabel>
+                                <FormItem data-field="certificateId">
+                                    <FormLabel>Acta *</FormLabel>
                                     <FormControl>
                                         <Combobox
                                             options={certificateOptions}
                                             value={field.value}
                                             onChange={field.onChange}
-                                            placeholder="Seleccionar certificado"
-                                            searchPlaceholder="Buscar certificado..."
-                                            emptyMessage="No se encontraron certificados"
+                                            placeholder="Seleccionar Acta"
+                                            searchPlaceholder="Buscar Acta..."
+                                            emptyMessage="No se encontraron Actas"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -64,7 +64,7 @@ export const TechnicalSection = () => {
                             control={form.control}
                             name="entryOrigin"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="entryOrigin">
                                     <FormLabel>Origen de Entrada *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Origen del bien" maxLength={20} {...field} />
@@ -81,7 +81,7 @@ export const TechnicalSection = () => {
                             control={form.control}
                             name="entryType"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="entryType">
                                     <FormLabel>Tipo de Entrada *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Tipo de entrada" maxLength={20} {...field} />
@@ -97,22 +97,50 @@ export const TechnicalSection = () => {
                         <FormField
                             control={form.control}
                             name="acquisitionDate"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Fecha de Adquisición *</FormLabel>
-                                    <FormControl>
-                                        <Input type="date" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                let dateValue: Date | undefined = undefined;
+                                if (field.value) {
+                                    dateValue = typeof field.value === 'string' ? new Date(field.value) : field.value;
+                                }
+                                return (
+                                    <FormItem data-field="acquisitionDate" className="flex flex-col">
+                                        <FormLabel>Fecha de Adquisición *</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={`w-full pl-3 text-left font-normal ${!dateValue && "text-muted-foreground"}`}
+                                                    >
+                                                        {dateValue ? (
+                                                            format(dateValue, "PPP", { locale: es })
+                                                        ) : (
+                                                            <span>Seleccionar fecha</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={dateValue}
+                                                    onSelect={field.onChange}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                );
+                            }}
                         />
 
                         <FormField
                             control={form.control}
                             name="commitmentNumber"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="commitmentNumber">
                                     <FormLabel>Número de Compromiso *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Número de compromiso" maxLength={20} {...field} />
@@ -129,7 +157,7 @@ export const TechnicalSection = () => {
                             control={form.control}
                             name="modelCharacteristics"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="modelCharacteristics">
                                     <FormLabel>Características del Modelo *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Características del modelo" maxLength={20} {...field} />
@@ -146,7 +174,7 @@ export const TechnicalSection = () => {
                             control={form.control}
                             name="brandBreedOther"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="brandBreedOther">
                                     <FormLabel>Marca/Raza/Otro *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Marca, raza u otro" maxLength={20} {...field} />
@@ -163,7 +191,7 @@ export const TechnicalSection = () => {
                             control={form.control}
                             name="identificationSeries"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem data-field="identificationSeries">
                                     <FormLabel>Serie de Identificación *</FormLabel>
                                     <FormControl>
                                         <Input placeholder="Serie de identificación" maxLength={20} {...field} />
@@ -180,7 +208,7 @@ export const TechnicalSection = () => {
                             control={form.control}
                             name="warrantyDate"
                             render={({ field }) => (
-                                <FormItem className="flex flex-col">
+                                <FormItem data-field="warrantyDate" className="flex flex-col">
                                     <FormLabel>Fecha de Garantía *</FormLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>

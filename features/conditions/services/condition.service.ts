@@ -2,6 +2,24 @@ import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
 import { ICondition, PaginatedConditions } from '../data/interfaces/condition.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
+// Funciones de utilidad para formatear texto
+const capitalizeFirstLetter = (text: string): string => {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+};
+
+const capitalizeWords = (text: string): string => {
+    if (!text) return '';
+    return text.split(' ').map(word => capitalizeFirstLetter(word)).join(' ');
+};
+
+const formatNullValue = (value: any): string => {
+    if (value === null || value === undefined || value === '') {
+        return 'No Aplica';
+    }
+    return value;
+};
+
 interface ConditionServiceProps {
     getConditions: (page?: number, limit?: number) => Promise<PaginatedConditions>;
     getConditionById: (id: string) => Promise<ICondition | undefined>;
@@ -56,9 +74,16 @@ export class ConditionService implements ConditionServiceProps {
 
     public async createCondition(condition: Partial<ICondition>): Promise<ICondition | undefined> {
         try {
+            // Aplicar formato de texto
+            const formattedCondition = {
+                ...condition,
+                name: condition.name ? capitalizeWords(condition.name.trim()) : '',
+                description: condition.description ? capitalizeWords(condition.description.trim()) : ''
+            };
+
             const response = await this.httpClient.post<ICondition>(
                 ConditionService.url,
-                condition
+                formattedCondition
             );
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));
@@ -72,9 +97,16 @@ export class ConditionService implements ConditionServiceProps {
 
     public async updateCondition(id: string, condition: Partial<ICondition>): Promise<ICondition | undefined> {
         try {
+            // Aplicar formato de texto
+            const formattedCondition = {
+                ...condition,
+                name: condition.name ? capitalizeWords(condition.name.trim()) : '',
+                description: condition.description ? capitalizeWords(condition.description.trim()) : ''
+            };
+
             const response = await this.httpClient.patch<ICondition>(
                 `${ConditionService.url}/${id}`,
-                condition
+                formattedCondition
             );
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));

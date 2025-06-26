@@ -73,15 +73,22 @@ export class UserService implements UserServiceProps {
 
   async createUser(user: Partial<IUser>): Promise<IUser> {
     try {
+      let personType = 'DOCENTES';
+      if (user.userType === 'STUDENT') {
+        personType = 'ESTUDIANTES';
+      }
+      const { middleName, secondLastName, birthDate, ...personRest } = user.person || {};
       const userData = {
         userName: user.userName,
         password: user.password,
         career: user.career,
         userType: user.userType,
         status: user.status || 'ACTIVE',
-        person: user.person
+        person: {
+          ...personRest,
+          type: personType
+        }
       };
-
       const response = await this.httpClient.post<IUser>(UserService.url, userData);
       if (!response.success) {
         throw new Error(response.message.content.join(', '));

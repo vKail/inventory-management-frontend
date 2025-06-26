@@ -55,7 +55,7 @@ export function ColorPagination({
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 cursor-pointer"
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage <= 1}
             >
@@ -70,7 +70,7 @@ export function ColorPagination({
                         key={idx}
                         variant={page === currentPage ? "default" : "ghost"}
                         size="icon"
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 cursor-pointer"
                         onClick={() => onPageChange(page)}
                     >
                         {page}
@@ -86,7 +86,7 @@ export function ColorPagination({
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 cursor-pointer"
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage >= totalPages}
             >

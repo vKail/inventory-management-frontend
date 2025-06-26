@@ -1,23 +1,33 @@
 import { z } from 'zod';
-import { MaterialTypes } from '../interfaces/material.interface';
+
+export enum MaterialTypes {
+  CONSUMABLE = "CONSUMABLE",
+  TOOL = "TOOL",
+  EQUIPMENT = "EQUIPMENT",
+  METAL = "METAL",
+  OTHER = "OTHER",
+  DELICATE = "DELICATE"
+}
 
 export const materialSchema = z.object({
   name: z.string()
     .min(1, 'El nombre es requerido')
-    .max(100, 'El nombre no puede tener más de 100 caracteres'),
+    .max(25, 'El nombre no puede exceder 25 caracteres')
+    .refine((value) => {
+      if (!value || value.trim() === "") return false;
+      const textRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s.,;:!?()/-]+$/;
+      return textRegex.test(value.trim());
+    }, 'El nombre debe contener solo letras, espacios y caracteres válidos'),
   description: z.string()
     .min(1, 'La descripción es requerida')
-    .max(500, 'La descripción no puede tener más de 500 caracteres'),
-  materialType: z.enum([
-    MaterialTypes.CONSUMABLE,
-    MaterialTypes.TOOL,
-    MaterialTypes.EQUIPMENT,
-    MaterialTypes.METAL,
-    MaterialTypes.OTHER,
-    MaterialTypes.DELICATE
-  ], {
-    required_error: 'El tipo de material es requerido',
-    invalid_type_error: 'Tipo de material inválido'
+    .max(250, 'La descripción no puede exceder 250 caracteres')
+    .refine((value) => {
+      if (!value || value.trim() === "") return false;
+      const textRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s.,;:!?()-]+$/;
+      return textRegex.test(value.trim());
+    }, 'La descripción debe contener solo letras y espacios válidos'),
+  materialType: z.nativeEnum(MaterialTypes, {
+    errorMap: () => ({ message: 'Debe seleccionar un tipo de material válido' })
   })
 });
 

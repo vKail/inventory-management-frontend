@@ -7,6 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Loan } from "@/features/loans/data/interfaces/loan.interface";
 import { formatDate } from "../../data/utils/date-formatter";
 import { LoanReturnFormValues, loanReturnSchema } from "../../data/schemas/loan-return.schema";
@@ -40,7 +41,6 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                     const person = await userService.getPersonById(loan.requestorId.toString());
                     if (person) {
                         setUserDetails(person);
-                        console.log(person)
                     } else {
                         const user = await getUserById(loan.requestorId.toString());
                         setUserDetails(user);
@@ -79,7 +79,8 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
             returnedItems: loan.loanDetails.map(detail => ({
                 loanDetailId: detail.id,
                 returnConditionId: 0,
-                returnObservations: ""
+                returnObservations: "",
+                quantity: detail.quantity || 1
             })),
             notes: ""
         }
@@ -122,10 +123,20 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                     toast.error(`Debe agregar observaciones para el item ${index + 1}`);
                     return false;
                 }
+                if (item.returnObservations.length > 250) {
+                    toast.error(`Las observaciones del item ${index + 1} no pueden exceder 250 caracteres`);
+                    return false;
+                }
                 return true;
             });
 
             if (!allItemsValid) return;
+
+            // Validate notes length
+            if (data.notes && data.notes.length > 250) {
+                toast.error("Las notas no pueden exceder 250 caracteres");
+                return;
+            }
 
             await onSubmit(data);
             toast.success("Devolución registrada exitosamente");
@@ -211,6 +222,48 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                                         <span className="font-medium">Condición de salida:</span> {exitCondition?.name || 'N/A'}
                                     </p>
                                 </div>
+                                <div className="text-xs text-muted-foreground mb-2">
+                                    Fueron prestados {currentItem?.quantity || 1} artículos de este item.
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name={`returnedItems.${currentItemIndex}.quantity`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm">Cantidad a devolver</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Cantidad"
+                                                    value={field.value || ''}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        // Only allow numbers
+                                                        if (value === '' || /^\d+$/.test(value)) {
+                                                            const numValue = value === '' ? 0 : parseInt(value);
+                                                            // Validate range
+                                                            if (numValue >= 1 && numValue <= (currentItem?.quantity || 1)) {
+                                                                field.onChange(numValue);
+                                                            } else if (value === '') {
+                                                                field.onChange(0);
+                                                            }
+                                                        }
+                                                    }}
+                                                    onBlur={(e) => {
+                                                        // Ensure minimum value on blur
+                                                        const value = parseInt(e.target.value) || 0;
+                                                        if (value < 1) {
+                                                            field.onChange(1);
+                                                        } else if (value > (currentItem?.quantity || 1)) {
+                                                            field.onChange(currentItem?.quantity || 1);
+                                                        }
+                                                    }}
+                                                    className="w-24"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
                                 <FormField
                                     control={form.control}
@@ -253,9 +306,13 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                                                 <Textarea
                                                     placeholder="Observaciones sobre el estado del ítem"
                                                     className="h-16 resize-none"
+                                                    maxLength={250}
                                                     {...field}
                                                 />
                                             </FormControl>
+                                            <div className="text-xs text-muted-foreground text-right">
+                                                {field.value?.length || 0}/250
+                                            </div>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -275,9 +332,13 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                                             <Textarea
                                                 placeholder="Notas adicionales sobre la devolución (opcional)"
                                                 className="h-16 resize-none"
+                                                maxLength={250}
                                                 {...field}
                                             />
                                         </FormControl>
+                                        <div className="text-xs text-muted-foreground text-right">
+                                            {field.value?.length || 0}/250
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}

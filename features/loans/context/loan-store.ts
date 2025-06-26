@@ -15,7 +15,9 @@ export const useLoanStore = create<LoanState>()(
             currentPage: 1,
             selectedLoan: null,
             filters: {
-                status: 'DELIVERED'
+                status: 'DELIVERED',
+                deliveryDateRange: 'all',
+                dueDateRange: 'all'
             },
 
             setPage: (page: number) => {
@@ -31,6 +33,19 @@ export const useLoanStore = create<LoanState>()(
                 get().refreshTable();
             },
 
+            clearFilters: () => {
+                set((state) => ({
+                    filters: {
+                        status: 'DELIVERED',
+                        deliveryDateRange: 'all',
+                        dueDateRange: 'all',
+                        view: state.filters.view
+                    },
+                    currentPage: 1
+                }));
+                get().refreshTable();
+            },
+
             refreshTable: async () => {
                 const { currentPage, filters } = get();
                 await get().getLoans(currentPage, 10);
@@ -41,12 +56,16 @@ export const useLoanStore = create<LoanState>()(
                     set({ loading: true, error: null });
                     const { filters } = get();
 
-                    // Construir query params
+                    // Use backend pagination
                     const queryParams = new URLSearchParams();
-                    if (filters.search) queryParams.append('search', filters.search);
-                    if (filters.status && filters.status !== 'all') queryParams.append('status', filters.status);
                     queryParams.append('page', page.toString());
                     queryParams.append('limit', limit.toString());
+
+                    // Optionally add filters as query params if backend supports them
+                    if (filters.status && filters.status !== 'all') {
+                        queryParams.append('status', filters.status);
+                    }
+                    // (Add deliveryDateRange/dueDateRange if backend supports it)
 
                     const response = await loanService.getAll(queryParams.toString());
 

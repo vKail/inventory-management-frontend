@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UserPagination } from './user-pagination';
+import { formatNullValue, capitalizeWords, formatBooleanValue } from '@/lib/utils';
 
 const getUserTypeLabel = (type: string) => {
   switch (type) {
@@ -86,8 +87,10 @@ export function UserTable() {
     filteredUsers,
     searchTerm,
     statusFilter,
+    userTypeFilter,
     setSearchTerm,
     setStatusFilter,
+    setUserTypeFilter,
     clearFilters,
     loading,
     getUsers,
@@ -136,153 +139,172 @@ export function UserTable() {
   };
 
   return (
-    <Card className="w-full max-w-[1200px]">
-      <CardHeader className="px-4 md:px-8 pb-0">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
-            <Input
-              placeholder="Buscar usuarios..."
-              className="w-full md:w-64"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Select
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value={UserStatus.ACTIVE}>Activo</SelectItem>
-                <SelectItem value={UserStatus.INACTIVE}>Inactivo</SelectItem>
-              </SelectContent>
-            </Select>
-            {(searchTerm || statusFilter !== 'all') && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={clearFilters}
-                className="h-10 w-10"
-                title="Limpiar filtros"
+    <div className="container mx-auto py-6">
+      <Card>
+        <CardHeader className="px-4 md:px-8 pb-0">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto py-2 mb-4">
+              <Input
+                placeholder="Buscar usuarios..."
+                className="w-full md:w-64"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Select
+                value={statusFilter}
+                onValueChange={setStatusFilter}
               >
-                <X className="h-4 w-4" />
-              </Button>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value={UserStatus.ACTIVE}>Activo</SelectItem>
+                  <SelectItem value={UserStatus.INACTIVE}>Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={userTypeFilter}
+                onValueChange={setUserTypeFilter}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Tipo de usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value={UserRole.ADMINISTRATOR}>Administrador</SelectItem>
+                  <SelectItem value={UserRole.TEACHER}>Profesor</SelectItem>
+                  <SelectItem value={UserRole.STUDENT}>Estudiante</SelectItem>
+                  <SelectItem value={UserRole.MANAGER}>Gestor</SelectItem>
+                </SelectContent>
+              </Select>
+              {(searchTerm || statusFilter !== 'all' || userTypeFilter !== 'all') && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={clearFilters}
+                  className="h-10 w-10"
+                  title="Limpiar filtros"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
+            <Button
+              onClick={() => router.push('/users/new')}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Nuevo Usuario
+            </Button>
+          </div>
+          <hr className="border-t border-muted mt-4" />
+        </CardHeader>
+
+        <CardContent className="px-4 md:px-8">
+          <div className="min-h-[400px] flex flex-col justify-between">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[150px]">Usuario</TableHead>
+                    <TableHead className="w-[250px]">Nombre Completo</TableHead>
+                    <TableHead className="w-[200px]">Email</TableHead>
+                    <TableHead className="w-[120px]">Tipo</TableHead>
+                    <TableHead className="w-[100px] text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <LoaderComponent rows={5} columns={5} />
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-20 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Users className="h-10 w-10 opacity-30" />
+                          <span>No hay usuarios para mostrar</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">
+                          {formatNullValue(user.userName, "Sin usuario")}
+                        </TableCell>
+                        <TableCell>
+                          {formatNullValue(capitalizeWords(`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim()), "Sin nombre")}
+                        </TableCell>
+                        <TableCell>
+                          {formatNullValue(user.person?.email, "Sin email")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {getUserTypeLabel(user.userType)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex flex-row justify-end items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(user.id)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
+                                    <span className="font-semibold"> {formatNullValue(capitalizeWords(`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim()), "Sin nombre")}</span>.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(user.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            {!loading && filteredUsers.length > 0 && (
+              <div className="mt-4">
+                <UserPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
             )}
           </div>
-
-          <Button
-            onClick={() => router.push('/users/new')}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Nuevo Usuario
-          </Button>
-        </div>
-        <hr className="border-t border-muted mt-4" />
-      </CardHeader>
-
-      <CardContent className="px-4 md:px-8">
-        <div className="min-h-[400px] flex flex-col justify-between">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuario</TableHead>
-                <TableHead>Nombre Completo</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <LoaderComponent rows={5} columns={6} />
-                  </TableCell>
-                </TableRow>
-              ) : filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-20 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="h-10 w-10 opacity-30" />
-                      <span>No hay usuarios para mostrar</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.userName}</TableCell>
-                    <TableCell>
-                      {`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim() || 'N/A'}
-                    </TableCell>
-                    <TableCell>{user.person?.email || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {getUserTypeLabel(user.userType)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(user.status)}>
-                        {getStatusLabel(user.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(user.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
-                              <span className="font-semibold"> {user.userName}</span> y todos sus datos asociados.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(user.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Eliminar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          {!loading && filteredUsers.length > 0 && (
-            <div className="mt-4">
-              <UserPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

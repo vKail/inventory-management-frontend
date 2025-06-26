@@ -28,6 +28,7 @@ import { itemTypeSchema, type ItemTypeFormValues } from '../../data/schemas/item
 import { useItemTypeStore } from '../../context/item-types-store'
 import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbList, BreadcrumbPage, BreadcrumbLink } from '@/components/ui/breadcrumb';
 import { Boxes } from 'lucide-react';
+
 interface ItemTypeFormProps {
   id?: string
 }
@@ -42,7 +43,7 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
     defaultValues: {
       code: '',
       name: '',
-      description: '',
+      description: ''
     },
   })
 
@@ -53,9 +54,9 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
           const itemType = await getItemTypeById(id)
           if (itemType) {
             form.reset({
-              code: itemType.code,
-              name: itemType.name,
-              description: itemType.description,
+              code: itemType.code || '',
+              name: itemType.name || '',
+              description: itemType.description || ''
             })
           }
         } catch (err) {
@@ -89,7 +90,6 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
   return (
     <div className="container mx-auto py-10">
       {/* Breadcrumbs, título y descripción */}
-      {/* Breadcrumbs, título y descripción */}
       <div className="w-full">
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
@@ -108,26 +108,29 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
+
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-1/3">
-          <h3 className="text-lg font-semibold mb-1">Detalles del tipo de item</h3>
-          <p className="text-muted-foreground text-sm">
-            Ingresa la información general del tipo de item.
+          <h3 className="text-2xl font-semibold mb-2">
+            {id ? "Editar Tipo de Item" : "Nuevo Tipo de Item"}
+          </h3>
+          <p className="text-muted-foreground text-base">
+            {id
+              ? "Modifica los datos del tipo de item"
+              : "Complete los datos para crear un nuevo tipo de item"}
           </p>
         </div>
         <div className="md:w-2/3">
           <Card>
             <CardHeader>
-              <CardTitle>{id ? 'Editar Tipo de Item' : 'Nuevo Tipo de Item'}</CardTitle>
+              <CardTitle>Información del Tipo de Item</CardTitle>
               <CardDescription>
-                {id
-                  ? 'Modifica los datos del tipo de item'
-                  : 'Complete los datos para crear un nuevo tipo de item'}
+                Ingrese los datos requeridos para el tipo de item
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <FormField
                     control={form.control}
                     name="code"
@@ -135,10 +138,10 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                       <FormItem>
                         <FormLabel>Código *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Código del tipo de item" maxLength={50} {...field} />
+                          <Input placeholder="Código del tipo de item" maxLength={10} {...field} />
                         </FormControl>
                         <div className="text-xs text-muted-foreground text-right">
-                          {field.value?.length || 0}/50 caracteres
+                          {field.value?.length || 0}/10 caracteres
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -152,10 +155,16 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                       <FormItem>
                         <FormLabel>Nombre *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nombre del tipo de item" maxLength={100} {...field} />
+                          <Input
+                            placeholder="Nombre del tipo de ítem"
+                            maxLength={25}
+                            textOnly={true}
+                            shouldAutoCapitalize={true}
+                            {...field}
+                          />
                         </FormControl>
                         <div className="text-xs text-muted-foreground text-right">
-                          {field.value?.length || 0}/100 caracteres
+                          {field.value?.length || 0}/25 caracteres
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -170,35 +179,38 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                         <FormLabel>Descripción *</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Descripción del tipo de item"
-                            maxLength={500}
+                            placeholder="Descripción del tipo de ítem"
+                            maxLength={250}
+                            descriptionOnly={true}
+                            shouldAutoCapitalize={true}
                             {...field}
                           />
                         </FormControl>
                         <div className="text-xs text-muted-foreground text-right">
-                          {field.value?.length || 0}/500 caracteres
+                          {field.value?.length || 0}/250 caracteres
                         </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="flex gap-4 justify-end mt-6">
+                  <div className="flex justify-end gap-4">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => router.push('/item-types')}
+                      className="cursor-pointer"
                     >
                       Cancelar
                     </Button>
-                    <Button type="submit" disabled={loading}>
+                    <Button type="submit" disabled={loading} className="cursor-pointer">
                       {loading ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Guardando...
+                          {id ? "Actualizando..." : "Creando..."}
                         </>
                       ) : (
-                        'Guardar'
+                        id ? "Actualizar" : "Crear"
                       )}
                     </Button>
                   </div>

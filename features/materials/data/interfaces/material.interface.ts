@@ -1,3 +1,5 @@
+import { MaterialTypes } from '../schemas/material.schema';
+
 export interface ApiResponse<T> {
   success: boolean;
   message: {
@@ -11,19 +13,22 @@ export interface IMaterial {
   id: number;
   name: string;
   description: string;
-  materialType: MaterialType;
+  materialType: MaterialTypes;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 }
 
-export const MaterialTypes = {
-  CONSUMABLE: 'CONSUMABLE',
-  TOOL: 'TOOL',
-  EQUIPMENT: 'EQUIPMENT',
-  METAL: 'METAL',
-  OTHER: 'OTHER',
-  DELICATE: 'DELICATE'
-} as const;
+export interface IMaterialCreate {
+  name: string;
+  description: string;
+  materialType: MaterialTypes;
+}
 
-export type MaterialType = typeof MaterialTypes[keyof typeof MaterialTypes];
+export interface IMaterialUpdate {
+  name?: string;
+  description?: string;
+  materialType?: MaterialTypes;
+}
 
 export interface PaginatedMaterials {
   records: IMaterial[];
