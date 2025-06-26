@@ -25,31 +25,54 @@ export class AuthService implements AuthServiceProps {
 
   public async login(user: ILogin): Promise<ILoginResponse | undefined> {
     try {
+      console.log('Auth service: Making login request...');
       const { data } = await this.httpClient.post<ILoginResponse>(API_ROUTES.AUTH.LOGIN, user);
+      console.log('Auth service: Login response received:', data);
 
-      await axios.post('/api/auth/set-cookie', JSON.stringify({ token: data.token }), {
+      if (!data || !data.token) {
+        console.error('Auth service: No token in response');
+        throw new Error('No token received from server');
+      }
+
+      console.log('Auth service: Setting cookie...');
+      // Set the cookie
+      const cookieResponse = await axios.post('/api/auth/set-cookie', JSON.stringify({ token: data.token }), {
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      if (!data) return;
+      console.log('Auth service: Cookie response:', cookieResponse.data);
 
-      return data;
+      if (cookieResponse.data.success) {
+        console.log('Auth service: Cookie set successfully');
+        return data;
+      } else {
+        console.error('Auth service: Failed to set cookie');
+        throw new Error('Failed to set authentication cookie');
+      }
     } catch (error) {
-      console.log('Error during login:', error);
+      console.error('Auth service: Login error:', error);
+      throw error;
     }
   }
 
   public async logout(): Promise<void> {
-    await axios.post(
-      '/api/auth/delete-cookie',
-      {},
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    try {
+      console.log('Auth service: Logging out...');
+      await axios.post(
+        '/api/auth/delete-cookie',
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      console.log('Auth service: Logout completed');
+    } catch (error) {
+      console.error('Auth service: Logout error:', error);
+      throw error;
+    }
   }
 }
