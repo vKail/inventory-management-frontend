@@ -71,7 +71,6 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
 
             if (event.key === "Enter") {
                 if (barcodeBuffer.current) {
-                    console.log('Barcode scanned:', barcodeBuffer.current);
                     setScannedCode(barcodeBuffer.current);
                     setIsReadyToSearch(true);
                     barcodeBuffer.current = "";
@@ -88,26 +87,22 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
     const handleScan = async (code: string) => {
         if (!code) return;
 
-        console.log('Starting scan with code:', code);
         setIsScanning(true);
         setError("");
 
         try {
             // Primero intentamos buscar por código
             let item = await getInventoryItemByCode(code);
-            console.log('Item found by code:', item);
 
             // Si no se encuentra por código, intentamos buscar por ID
             if (!item) {
                 const foundById = await getInventoryItem(code);
-                console.log('Item found by ID:', foundById);
                 if (foundById) {
                     item = foundById;
                 }
             }
 
             if (item) {
-                console.log('Final item to display:', item);
                 setFoundItem(item);
                 onScanComplete?.(item);
                 toast.success("Item encontrado");

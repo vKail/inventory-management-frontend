@@ -164,7 +164,6 @@ export function LoanFormView() {
         const loadConditions = async () => {
             try {
                 await getConditions(1, 100); // Load first 100 conditions
-                console.log("Conditions loaded:", conditions);
             } catch (error) {
                 console.error("Error loading conditions:", error);
             }
@@ -174,8 +173,6 @@ export function LoanFormView() {
 
     // Debug useEffect para monitorear el estado del modal
     useEffect(() => {
-        console.log("Modal state changed - showBlacklistDialog:", showBlacklistDialog);
-        console.log("Modal state changed - pendingLoanData:", pendingLoanData);
     }, [showBlacklistDialog, pendingLoanData]);
 
     const handleValidate = async () => {
@@ -296,12 +293,8 @@ export function LoanFormView() {
             stock: item.stock
         };
 
-        console.log("New scanned item:", newItem);
-        console.log("Available conditions:", conditions);
-
         setScannedItems(prev => [...prev, newItem]);
 
-        console.log(newItem)
         // Agregar el detalle al formulario
         const loanDetail = {
             itemId: Number(item.id),
@@ -327,7 +320,6 @@ export function LoanFormView() {
 
     const handleExitConditionChange = (itemCode: string, conditionId: string | number) => {
         const conditionIdStr = conditionId.toString();
-        console.log("Changing exit condition for item:", itemCode, "to:", conditionIdStr);
 
         setScannedItems(prev =>
             prev.map(item =>
@@ -347,7 +339,6 @@ export function LoanFormView() {
     };
 
     const handleQuantityChange = (itemCode: string, quantity: number) => {
-        console.log("Changing quantity for item:", itemCode, "to:", quantity);
 
         // Find the item to get its stock limit
         const item = scannedItems.find(i => i.code === itemCode);
@@ -397,7 +388,6 @@ export function LoanFormView() {
 
         try {
             const formData = form.getValues();
-            console.log("Form data:", formData);
 
             // Validar usando Zod
             const validationResult = formSchema.safeParse(formData);
@@ -454,11 +444,8 @@ export function LoanFormView() {
                 }
             }
 
-            console.log("Processing loan details...");
             const loanDetails = await Promise.all(scannedItems.map(async item => {
-                console.log("Processing item:", item);
                 const inventoryItem = await getInventoryItemByCode(item.code);
-                console.log("Inventory item found:", inventoryItem);
                 return {
                     itemId: Number(inventoryItem?.id) || 0,
                     exitConditionId: Number(inventoryItem?.conditionId) || 0,
@@ -467,7 +454,6 @@ export function LoanFormView() {
                 };
             }));
 
-            console.log("Loan details processed:", loanDetails);
 
             loanCreate = {
                 requestorId: formData.requestorId,
@@ -478,15 +464,9 @@ export function LoanFormView() {
                 loanDetails
             };
 
-            console.log("Sending loan create request:", loanCreate);
             await submitLoanWithBlacklistHandling(loanCreate);
         } catch (error: any) {
-            console.error("Error creating loan:", error);
-            console.log("Error type:", typeof error);
-            console.log("Error message:", error?.message);
-            console.log("Error toString:", error?.toString());
-            console.log("Error response:", error?.response);
-            console.log("Error response data:", error?.response?.data);
+
 
             // Verificar si es un error de blacklist en el catch
             let errorMessage = '';
@@ -494,34 +474,26 @@ export function LoanFormView() {
             // Intentar obtener el mensaje de error del servidor
             if (error?.response?.data?.message?.content) {
                 errorMessage = error.response.data.message.content.join(' ');
-                console.log("Server error message:", errorMessage);
             } else if (error?.response?.data?.message) {
                 errorMessage = error.response.data.message;
-                console.log("Server error message (string):", errorMessage);
             } else if (error?.message) {
                 errorMessage = error.message;
-                console.log("Axios error message:", errorMessage);
             } else {
                 errorMessage = error?.toString() || '';
-                console.log("Fallback error message:", errorMessage);
             }
 
-            console.log("Checking catch error for blacklist keywords...");
 
             if (errorMessage.toLowerCase().includes("lista negra") ||
                 errorMessage.toLowerCase().includes("blacklist") ||
                 errorMessage.toLowerCase().includes("no puede hacer préstamos") ||
                 errorMessage.toLowerCase().includes("morosos")) {
 
-                console.log("Blacklist error detected in catch:", errorMessage);
-                console.log("Setting pending loan data and showing dialog");
                 if (loanCreate) {
                     setPendingLoanData(loanCreate);
                     setShowBlacklistDialog(true);
                 }
             } else {
                 // Otro tipo de error
-                console.log("Other error in catch:", errorMessage);
                 toast.error("Error al crear el préstamo");
             }
         }
@@ -531,9 +503,7 @@ export function LoanFormView() {
         try {
             // Llamar directamente al servicio para tener control total sobre la respuesta
             const response = await loanService.create(loanData);
-            console.log("Loan create response:", response);
-            console.log("Response success:", response.success);
-            console.log("Response message:", response.message);
+
 
             if (response.success) {
                 toast.success("Préstamo creado exitosamente");
@@ -541,31 +511,21 @@ export function LoanFormView() {
             } else {
                 // Verificar si es un error de blacklist
                 const errorMessage = response.message.content.join(' ');
-                console.log("Error message:", errorMessage);
-                console.log("Checking for blacklist keywords...");
+
 
                 if (errorMessage.toLowerCase().includes("lista negra") ||
                     errorMessage.toLowerCase().includes("blacklist") ||
                     errorMessage.toLowerCase().includes("no puede hacer préstamos") ||
                     errorMessage.toLowerCase().includes("morosos")) {
 
-                    console.log("Blacklist error detected:", errorMessage);
-                    console.log("Setting pending loan data and showing dialog");
                     setPendingLoanData(loanData);
                     setShowBlacklistDialog(true);
                 } else {
                     // Otro tipo de error
-                    console.log("Other error detected:", errorMessage);
                     toast.error(errorMessage);
                 }
             }
         } catch (error: any) {
-            console.error("Error creating loan:", error);
-            console.log("Error type:", typeof error);
-            console.log("Error message:", error?.message);
-            console.log("Error toString:", error?.toString());
-            console.log("Error response:", error?.response);
-            console.log("Error response data:", error?.response?.data);
 
             // Verificar si es un error de blacklist en el catch
             let errorMessage = '';
@@ -573,32 +533,23 @@ export function LoanFormView() {
             // Intentar obtener el mensaje de error del servidor
             if (error?.response?.data?.message?.content) {
                 errorMessage = error.response.data.message.content.join(' ');
-                console.log("Server error message:", errorMessage);
             } else if (error?.response?.data?.message) {
                 errorMessage = error.response.data.message;
-                console.log("Server error message (string):", errorMessage);
             } else if (error?.message) {
                 errorMessage = error.message;
-                console.log("Axios error message:", errorMessage);
             } else {
                 errorMessage = error?.toString() || '';
-                console.log("Fallback error message:", errorMessage);
             }
-
-            console.log("Checking catch error for blacklist keywords...");
 
             if (errorMessage.toLowerCase().includes("lista negra") ||
                 errorMessage.toLowerCase().includes("blacklist") ||
                 errorMessage.toLowerCase().includes("no puede hacer préstamos") ||
                 errorMessage.toLowerCase().includes("morosos")) {
 
-                console.log("Blacklist error detected in catch:", errorMessage);
-                console.log("Setting pending loan data and showing dialog");
                 setPendingLoanData(loanData);
                 setShowBlacklistDialog(true);
             } else {
                 // Otro tipo de error
-                console.log("Other error in catch:", errorMessage);
                 toast.error("Error al crear el préstamo");
             }
         }
@@ -615,7 +566,6 @@ export function LoanFormView() {
             };
 
             const response = await loanService.create(loanDataWithoutBlacklist);
-            console.log("Loan create response after blacklist confirmation:", response);
 
             if (response.success) {
                 // Solo mostrar toast de éxito y redirigir después de confirmación exitosa
@@ -977,7 +927,6 @@ export function LoanFormView() {
                                                                     <Select
                                                                         value={String(item.exitConditionId || item.conditionId || "")}
                                                                         onValueChange={(value) => {
-                                                                            console.log("Select onChange called with value:", value, "type:", typeof value);
                                                                             handleExitConditionChange(item.code, value);
                                                                         }}
                                                                     >

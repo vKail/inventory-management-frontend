@@ -50,7 +50,6 @@ export class MaterialService implements MaterialServiceProps {
   public async getMaterialById(id: number): Promise<IMaterial | undefined> {
     try {
       const response = await this.httpClient.get<IMaterial>(`${MaterialService.url}/${id}`);
-      console.log(response.data)
       return response.data;
     } catch (error) {
       console.error('Error fetching material:', error);

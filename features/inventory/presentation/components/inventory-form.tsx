@@ -42,7 +42,6 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
         const firstErrorField = Object.keys(errors).filter(key => key !== 'root')[0];
         if (!firstErrorField) return;
 
-        console.log('Focusing on first error field:', firstErrorField);
 
         setTimeout(() => {
             // First, try to find the field by name attribute
@@ -96,7 +95,6 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
             }
 
             if (errorElement) {
-                console.log('Found error element:', errorElement);
 
                 // Focus on the element
                 errorElement.focus();
@@ -164,7 +162,6 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                     }
                 }, 4000);
             } else {
-                console.log('Could not find error element for field:', firstErrorField);
 
                 // Fallback: try to find the section containing this field and scroll to it
                 const fieldToSectionMap: { [key: string]: string } = {
@@ -268,16 +265,12 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
 
         // Convert warrantyDate string to Date object
         if (converted.warrantyDate && typeof converted.warrantyDate === 'string') {
-            console.log('Converting warrantyDate from string:', converted.warrantyDate);
             converted.warrantyDate = new Date(converted.warrantyDate);
-            console.log('Converted warrantyDate to Date object:', converted.warrantyDate);
         }
 
         // Convert expirationDate string to Date object
         if (converted.expirationDate && typeof converted.expirationDate === 'string') {
-            console.log('Converting expirationDate from string:', converted.expirationDate);
             converted.expirationDate = new Date(converted.expirationDate);
-            console.log('Converted expirationDate to Date object:', converted.expirationDate);
         }
 
         return converted;
@@ -346,19 +339,25 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
     }, [mode, initialData]);
 
     const handleImageChange = (newFiles: File[], newDescriptions: string[], newDates: string[]) => {
+        // Validate file sizes
         const validFiles: File[] = [];
+        const validDescriptions: string[] = [];
+        const validDates: string[] = [];
 
-        for (const file of newFiles) {
+        for (let i = 0; i < newFiles.length; i++) {
+            const file = newFiles[i];
             if (file.size > 10 * 1024 * 1024) {
                 toast.error(`El archivo ${file.name} excede el límite de 10MB`);
                 continue;
             }
             validFiles.push(file);
+            validDescriptions.push(newDescriptions[i] || '');
+            validDates.push(newDates[i] || '');
         }
 
         setSelectedFiles(validFiles);
-        setDescriptions(newDescriptions);
-        setPhotoDates(newDates);
+        setDescriptions(validDescriptions);
+        setPhotoDates(validDates);
     };
 
     // Función para convertir valores a string de manera segura
@@ -377,8 +376,6 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
         if (!isValid) {
             // Log validation errors to console
             const errors = form.formState.errors;
-            console.log('Form validation errors:', errors);
-            console.log('Form values:', form.getValues());
 
             focusOnFirstError(errors);
 
@@ -397,13 +394,8 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
             const formData = new FormData();
             const currentValues = form.getValues();
 
-            // Log form values before submission
-            console.log('Submitting form with values:', currentValues);
-
             // En modo edición, comparamos con los valores iniciales
             if (mode === 'edit' && initialData) {
-                console.log('Edit mode - Initial data:', initialData);
-                console.log('Edit mode - Current values:', currentValues);
 
                 Object.entries(currentValues).forEach(([key, value]) => {
                     // Solo incluimos campos que han cambiado
@@ -415,14 +407,12 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                         const currentNum = Number(value);
                         const initialNum = Number(initialValue);
                         hasChanged = currentNum !== initialNum;
-                        console.log(`Field ${key}: current=${currentNum}, initial=${initialNum}, changed=${hasChanged}`);
                     } else {
                         // Para otros campos, comparación normal
                         hasChanged = JSON.stringify(value) !== JSON.stringify(initialValue);
                     }
 
                     if (hasChanged) {
-                        console.log(`Adding changed field: ${key} = ${value}`);
                         formData.append(key, safeToString(value));
                     }
                 });
@@ -440,15 +430,8 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
                 });
             }
 
-            // Log the FormData being sent
-            console.log('FormData entries:');
-            Array.from(formData.entries()).forEach(([key, value]) => {
-                console.log(`${key}: ${value}`);
-            });
-
             if (mode === 'create') {
                 const response = await createInventoryItem(formData);
-                console.log('Backend response:', response);
 
                 if (response.success) {
                     // Subir las imágenes después de crear el item

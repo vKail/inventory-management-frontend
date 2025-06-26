@@ -41,7 +41,6 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                     const person = await userService.getPersonById(loan.requestorId.toString());
                     if (person) {
                         setUserDetails(person);
-                        console.log(person)
                     } else {
                         const user = await getUserById(loan.requestorId.toString());
                         setUserDetails(user);

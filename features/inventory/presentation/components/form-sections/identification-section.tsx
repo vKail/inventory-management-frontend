@@ -28,14 +28,14 @@ export const IdentificationSection = () => {
                                     <FormLabel>Código del Bien *</FormLabel>
                                     <div className="flex gap-2">
                                         <FormControl>
-                                            <Input placeholder="Código único del bien" maxLength={50} {...field} />
+                                            <Input placeholder="Código único del bien" maxLength={15} {...field} />
                                         </FormControl>
                                         <Button type="button" variant="secondary" size="icon">
                                             <Barcode className="h-4 w-4" />
                                         </Button>
                                     </div>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/50 caracteres
+                                        {field.value?.length || 0}/15 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -49,10 +49,10 @@ export const IdentificationSection = () => {
                                 <FormItem data-field="previousCode">
                                     <FormLabel>Código Anterior</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Código anterior del bien" maxLength={50} {...field} />
+                                        <Input placeholder="Código anterior del bien" maxLength={15} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/50 caracteres
+                                        {field.value?.length || 0}/15 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -66,10 +66,10 @@ export const IdentificationSection = () => {
                                 <FormItem data-field="identifier">
                                     <FormLabel>Identificador *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Identificador único" maxLength={100} {...field} />
+                                        <Input placeholder="Identificador único" maxLength={30} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/100 caracteres
+                                        {field.value?.length || 0}/30 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -83,10 +83,10 @@ export const IdentificationSection = () => {
                                 <FormItem data-field="commitmentNumber">
                                     <FormLabel>Nro de Acta/Matriz *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Número de acta o matriz" maxLength={50} {...field} />
+                                        <Input placeholder="Número de acta o matriz" maxLength={15} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/50 caracteres
+                                        {field.value?.length || 0}/15 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>

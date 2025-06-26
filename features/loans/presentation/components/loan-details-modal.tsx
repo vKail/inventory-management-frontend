@@ -75,7 +75,6 @@ export function LoanDetailsModal({ isOpen, onClose, loanId, onReturn }: LoanDeta
                 try {
                     const person = await userService.getPersonById(loan.requestorId.toString());
 
-                    console.log(person);
                     if (person) {
                         setUserDetails(person);
                     } else {

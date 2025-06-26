@@ -97,15 +97,43 @@ export const TechnicalSection = () => {
                         <FormField
                             control={form.control}
                             name="acquisitionDate"
-                            render={({ field }) => (
-                                <FormItem data-field="acquisitionDate">
-                                    <FormLabel>Fecha de Adquisición *</FormLabel>
-                                    <FormControl>
-                                        <Input type="date" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                let dateValue: Date | undefined = undefined;
+                                if (field.value) {
+                                    dateValue = typeof field.value === 'string' ? new Date(field.value) : field.value;
+                                }
+                                return (
+                                    <FormItem data-field="acquisitionDate" className="flex flex-col">
+                                        <FormLabel>Fecha de Adquisición *</FormLabel>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <FormControl>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={`w-full pl-3 text-left font-normal ${!dateValue && "text-muted-foreground"}`}
+                                                    >
+                                                        {dateValue ? (
+                                                            format(dateValue, "PPP", { locale: es })
+                                                        ) : (
+                                                            <span>Seleccionar fecha</span>
+                                                        )}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </FormControl>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={dateValue}
+                                                    onSelect={field.onChange}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <FormMessage />
+                                    </FormItem>
+                                );
+                            }}
                         />
 
                         <FormField

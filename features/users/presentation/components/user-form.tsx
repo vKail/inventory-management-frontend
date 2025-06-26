@@ -323,7 +323,6 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                         disabled={isLoading}
                                         onClick={() => {
                                             const formData = form.getValues();
-                                            console.log('Manual submit with data:', formData);
                                             handleSubmit(formData);
                                         }}
                                     >

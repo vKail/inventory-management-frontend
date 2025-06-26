@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 export const inventorySchema = z.object({
-    code: z.string().min(1, 'El código es requerido').max(50, 'El código no puede exceder 50 caracteres'),
+    code: z.string().min(1, 'El código es requerido').max(15, 'El código no puede exceder 15 caracteres'),
     stock: z.number().int().min(1, 'El stock es requerido y debe ser mayor a 0').max(999999, 'El stock no puede exceder 999,999'),
-    name: z.string().min(1, 'El nombre es requerido').max(100, 'El nombre no puede exceder 100 caracteres'),
-    description: z.string().min(1, 'La descripción es requerida').max(500, 'La descripción no puede exceder 500 caracteres'),
+    name: z.string().min(1, 'El nombre es requerido').max(30, 'El nombre no puede exceder 30 caracteres'),
+    description: z.string().min(1, 'La descripción es requerida').max(250, 'La descripción no puede exceder 250 caracteres'),
     itemTypeId: z.number().int().min(1, 'El tipo de item es requerido'),
     categoryId: z.number().int().min(1, 'La categoría es requerida'),
     statusId: z.number().int().min(1, 'El estado es requerido'),
@@ -43,7 +43,7 @@ export const inventorySchema = z.object({
     }),
     itemLine: z.number().int().min(1, 'La línea de item es requerida').max(999999, 'La línea de item no puede exceder 999,999'),
     accountingAccount: z.string().min(1, 'La cuenta contable es requerida').max(20, 'La cuenta contable no puede exceder 20 caracteres'),
-    observations: z.string().max(1000, 'Las observaciones no pueden exceder 1000 caracteres').optional(),
+    observations: z.string().max(250, 'Las observaciones no pueden exceder 250 caracteres').optional(),
 });
 
 export type InventoryFormData = z.infer<typeof inventorySchema>; 
