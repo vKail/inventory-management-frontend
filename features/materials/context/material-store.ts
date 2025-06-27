@@ -11,8 +11,8 @@ const normalizeMaterialType = (type: string): string => {
     const typeMapping: { [key: string]: string } = {
         'METAL': 'METAL',
         'OTRO': 'OTHER',
-        'PLÁSTICO': 'PLASTIC',
-        'PLASTICO': 'PLASTIC',
+        'PLÁSTICO': 'OTHER',
+        'PLASTICO': 'OTHER',
         'CONSUMABLE': 'CONSUMABLE',
         'TOOL': 'TOOL',
         'EQUIPMENT': 'EQUIPMENT',
@@ -30,6 +30,7 @@ interface MaterialState {
     totalPages: number;
     searchTerm: string;
     typeFilter: string;
+    refreshTable: () => Promise<void>;
     getMaterials: (page?: number, limit?: number) => Promise<void>;
     getMaterialById: (materialId: number) => Promise<IMaterial | undefined>;
     addMaterial: (material: Partial<IMaterial>) => Promise<void>;
@@ -72,6 +73,11 @@ export const useMaterialStore = create<MaterialState>()(
                 });
                 // Trigger a new API call without filters
                 get().getMaterials(1, 10);
+            },
+
+            refreshTable: async () => {
+                const { currentPage } = get();
+                await get().getMaterials(currentPage, 10);
             },
 
             getMaterials: async (page = 1, limit = 10) => {
@@ -156,7 +162,7 @@ export const useMaterialStore = create<MaterialState>()(
                         await get().getMaterials(currentPage - 1, 10);
                     } else {
                         // Refrescamos la página actual
-                        await get().getMaterials(currentPage, 10);
+                        await get().refreshTable();
                     }
                     set({ loading: false });
                 } catch (error) {
