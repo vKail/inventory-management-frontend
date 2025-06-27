@@ -57,6 +57,18 @@ export function InventoryGridView({ items }: InventoryGridViewProps) {
         }
     };
 
+    if (items.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center text-muted-foreground py-12">
+                <Box className="h-16 w-16 mb-4 text-muted-foreground/50" />
+                <p className="mb-4 text-lg font-medium">No se encontraron items</p>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                    Intenta ajustar los filtros de búsqueda o crear un nuevo item.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

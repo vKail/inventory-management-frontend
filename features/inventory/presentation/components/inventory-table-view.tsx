@@ -53,29 +53,40 @@ export function InventoryTableView({ items }: InventoryTableViewProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {items.map((item) => (
-                            <TableRow
-                                key={`row-${item.id}`}
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => handleItemClick(item)}
-                            >
-                                {columns.map((column) => (
-                                    <TableCell
-                                        key={`cell-${item.id}-${column.id}`}
-                                        style={{ width: (column as any).size ? `${(column as any).size}px` : 'auto' }}
-                                    >
-                                        {column.cell && typeof column.cell === 'function'
-                                            ? column.cell({
-                                                row: {
-                                                    original: item,
-                                                    getValue: (key: string) => item[key as keyof InventoryItem]
-                                                }
-                                            } as CellContext<InventoryItem, unknown>)
-                                            : item[(column as any).accessorKey as keyof InventoryItem]}
-                                    </TableCell>
-                                ))}
+                        {items.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="text-center h-32">
+                                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                        <p>No se encontraron items</p>
+                                        <p className="text-sm">Intenta ajustar los filtros de búsqueda</p>
+                                    </div>
+                                </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            items.map((item) => (
+                                <TableRow
+                                    key={`row-${item.id}`}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => handleItemClick(item)}
+                                >
+                                    {columns.map((column) => (
+                                        <TableCell
+                                            key={`cell-${item.id}-${column.id}`}
+                                            style={{ width: (column as any).size ? `${(column as any).size}px` : 'auto' }}
+                                        >
+                                            {column.cell && typeof column.cell === 'function'
+                                                ? column.cell({
+                                                    row: {
+                                                        original: item,
+                                                        getValue: (key: string) => item[key as keyof InventoryItem]
+                                                    }
+                                                } as CellContext<InventoryItem, unknown>)
+                                                : item[(column as any).accessorKey as keyof InventoryItem]}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>

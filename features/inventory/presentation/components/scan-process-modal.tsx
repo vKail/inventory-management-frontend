@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Box, Copy, Edit, Loader2, QrCode, X } from "lucide-react";
+import { Box, Copy, Edit, Loader2, Barcode, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -212,7 +212,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
             <DialogContent className="sm:max-w-7xl w-[90vw] h-[90vh] max-h-[90vh] transition-all duration-300 flex flex-col">
                 <DialogTitle className="text-xl font-semibold flex items-center justify-between border-b pb-4">
                     <div className="flex items-center gap-2">
-                        <QrCode className="h-5 w-5" />
+                        <Barcode className="h-5 w-5" />
                         <span>Escáner de Inventario</span>
                     </div>
                 </DialogTitle>
@@ -222,7 +222,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                         <div className="flex-1 flex flex-col items-center justify-center p-6">
                             <div className="w-full max-w-md space-y-4">
                                 <div className="text-center space-y-2">
-                                    <QrCode className="h-12 w-12 mx-auto text-primary" />
+                                    <Barcode className="h-12 w-12 mx-auto text-primary" />
                                     <h3 className="text-lg font-medium">Escanea un código de barras</h3>
                                     <p className="text-sm text-muted-foreground">
                                         Coloca el código de barras frente al escáner o ingresa el código manualmente

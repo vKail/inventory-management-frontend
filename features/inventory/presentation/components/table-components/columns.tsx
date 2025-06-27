@@ -31,11 +31,40 @@ export const useColumns = () => {
             id: "code",
             accessorKey: "code",
             header: "Código",
+            size: 120,
+            cell: ({ row }) => {
+                const code = row.getValue("code") as string;
+                return (
+                    <div
+                        className="max-w-[120px] truncate text-sm font-mono"
+                        title={code}
+                    >
+                        {code || "Sin código"}
+                    </div>
+                );
+            },
         },
         {
             id: "name",
             accessorKey: "name",
             header: "Nombre",
+        },
+        {
+            id: "description",
+            accessorKey: "description",
+            header: "Descripción",
+            size: 200,
+            cell: ({ row }) => {
+                const description = row.getValue("description") as string;
+                return (
+                    <div
+                        className="max-w-[200px] truncate text-sm text-muted-foreground"
+                        title={description}
+                    >
+                        {description || "Sin descripción"}
+                    </div>
+                );
+            },
         },
         {
             id: "categoryId",

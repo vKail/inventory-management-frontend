@@ -29,6 +29,7 @@ interface InventoryState {
     deleteInventoryItem: (id: string) => Promise<void>;
     setSelectedItem: (item: InventoryItem | null) => void;
     setFilters: (filters: Partial<InventoryFilters>) => void;
+    clearFilters: () => void;
     setPage: (page: number) => void;
     refreshTable: () => Promise<void>;
 }
@@ -91,7 +92,7 @@ export const useInventoryStore = create<InventoryState>()(
                         totalPages: response.pages,
                         isEmpty: response.records.length === 0,
                         loading: false,
-                        error: response.records.length === 0 ? 'No hay items en el inventario. ¿Deseas crear el primer item?' : null
+                        error: response.records.length === 0 ? ' ' : null
                     });
                 } catch (error) {
                     console.error('Error fetching items:', error);
@@ -204,6 +205,14 @@ export const useInventoryStore = create<InventoryState>()(
 
             setSelectedItem: (item: InventoryItem | null) => {
                 set({ selectedItem: item });
+            },
+
+            clearFilters: () => {
+                set((state) => ({
+                    filters: {},
+                    currentPage: 1
+                }));
+                get().refreshTable();
             }
         }),
         {
