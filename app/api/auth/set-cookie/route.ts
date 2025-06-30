@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
       name: 'auth_token',
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      //Cuando se obtenga en cerrtificado ssl, se debe colocar process.env.NODE_ENV === 'production'
+      secure: false,
       expires: expiresAt,
       path: '/',
       sameSite: 'lax',
