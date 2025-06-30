@@ -61,7 +61,7 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
     };
 
     return (
-        <div className="flex flex-col items-center w-full">
+        <div className="max-w-3xl mx-auto py-8">
             <div className="flex flex-col md:flex-row gap-8 w-full">
                 <div className="md:w-1/3">
                     <h3 className="text-2xl font-semibold mb-2">
@@ -83,7 +83,7 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
                         </CardHeader>
                         <CardContent>
                             <Form {...form}>
-                                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                                     <FormField
                                         control={form.control}
                                         name="name"
@@ -130,7 +130,7 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
                                         )}
                                     />
 
-                                    <div className="flex justify-end gap-4">
+                                    <div className="flex justify-end gap-4 pt-4">
                                         <Button
                                             type="button"
                                             variant="outline"

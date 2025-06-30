@@ -53,20 +53,26 @@ export const InventoryView = () => {
     );
 
     return (
-        <div className="container mx-auto py-8">
+        <div>
             <div className="space-y-1 mb-8">
-                <h1 className="text-2xl font-bold">Inventario</h1>
-                <Breadcrumb>
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbLink href="/">Inicio</BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>Inventario</BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
+                <div className="flex items-center justify-between space-y-2">
+                    <div>
+                        <Breadcrumb className="mb-6">
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <span className="text-muted-foreground font-medium">Operaciones</span>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <Package className="inline mr-1 h-4 w-4 text-red-600 align-middle" />
+                                    <BreadcrumbPage>Inventario</BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
+                        <h2 className="text-2xl font-bold tracking-tight">Lista de Inventario</h2>
+                        <p className="text-muted-foreground">Todos los items registrados en el sistema</p>
+                    </div>
+                </div>
             </div>
 
             <div className="flex flex-col h-full">

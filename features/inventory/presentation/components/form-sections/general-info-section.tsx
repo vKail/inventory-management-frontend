@@ -89,17 +89,30 @@ export const GeneralInfoSection = () => {
                                     <FormLabel>Stock *</FormLabel>
                                     <FormControl>
                                         <Input
-                                            type="number"
                                             placeholder="Cantidad disponible"
-                                            min="1"
-                                            max="999999"
                                             {...field}
+                                            value={field.value?.toString() || ''}
                                             onChange={(e) => {
-                                                const value = parseInt(e.target.value);
-                                                if (value > 999999) {
-                                                    field.onChange(999999);
-                                                } else {
-                                                    field.onChange(value);
+                                                const value = e.target.value;
+                                                // Only allow numeric input
+                                                if (value === '' || /^\d+$/.test(value)) {
+                                                    if (value === '') {
+                                                        // Don't set any value when empty, let validation handle it
+                                                        field.onChange('');
+                                                    } else {
+                                                        const numValue = parseInt(value);
+                                                        if (numValue > 999999) {
+                                                            field.onChange(999999);
+                                                        } else {
+                                                            field.onChange(numValue);
+                                                        }
+                                                    }
+                                                }
+                                            }}
+                                            onKeyPress={(e) => {
+                                                // Prevent non-numeric characters
+                                                if (!/\d/.test(e.key)) {
+                                                    e.preventDefault();
                                                 }
                                             }}
                                         />

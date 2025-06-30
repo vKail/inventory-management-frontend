@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   Tag,
   User,
-  Users,
+  Handshake,
   AlertCircle,
   File,
 } from 'lucide-react';
@@ -40,7 +40,7 @@ export const sidebarItems = [
       },
       {
         title: 'Préstamos',
-        icon: Users,
+        icon: Handshake,
         roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
         subItems: [
           {

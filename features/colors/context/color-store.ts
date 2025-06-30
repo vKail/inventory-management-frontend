@@ -11,7 +11,7 @@ interface ColorStore {
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getColors: (page?: number, limit?: number) => Promise<void>;
+    getColors: (page?: number, limit?: number, options?: { allRecords?: boolean }) => Promise<void>;
     getColorById: (colorId: number) => Promise<IColorResponse | undefined>;
     addColor: (color: IColor) => Promise<void>;
     updateColor: (colorId: number, color: IColor) => Promise<void>;
@@ -59,7 +59,7 @@ export const useColorStore = create<ColorStore>()(
                 await get().getColors(currentPage, 10);
             },
 
-            getColors: async (page = 1, limit = 10) => {
+            getColors: async (page = 1, limit = 10, options?: { allRecords?: boolean }) => {
                 set({ loading: true });
                 try {
                     const data = await ColorService.getInstance().getColors(page, limit);

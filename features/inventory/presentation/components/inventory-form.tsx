@@ -326,6 +326,11 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
     mode: 'all',
   });
 
+  // Ensure form is properly reset with default values
+  useEffect(() => {
+    form.reset(defaultValues);
+  }, []);
+
   useEffect(() => {
     if (mode === 'edit' && initialData?.id) {
       // Cargar materiales existentes
@@ -591,7 +596,7 @@ export const InventoryForm = ({ initialData, mode = 'create' }: InventoryFormPro
           // Handle different types of errors
           if (error instanceof Error) {
             // Check if it's a validation error from the backend
-            if (error.message.includes('validation') || error.message.includes('required')) {
+            if (error.message.includes('validation') || error.message.includes('Campo requerido')) {
               // Try to parse the error message and map to form fields
               const errorMessage = error.message;
               const errorFieldMap: { [key: string]: string } = {

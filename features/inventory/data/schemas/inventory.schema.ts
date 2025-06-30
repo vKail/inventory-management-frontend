@@ -95,7 +95,7 @@ export const inventorySchema = z.object({
     .max(20, 'La cuenta contable no puede exceder 20 caracteres'),
   observations: z
     .string()
-    .max(250, 'Las observaciones no pueden exceder 250 caracteres')
+    .max(200, 'Las observaciones no pueden exceder 200 caracteres')
     .optional(),
 });
 

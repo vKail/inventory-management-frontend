@@ -36,8 +36,8 @@ export function InventoryTableView({ items }: InventoryTableViewProps) {
 
     return (
         <>
-            <div className="rounded-md border">
-                <Table>
+            <div className="rounded-md border w-full max-w-full overflow-x-auto">
+                <Table className="min-w-[700px] md:min-w-[800px]">
                     <TableHeader>
                         <TableRow>
                             {columns.map((column) => (

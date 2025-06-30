@@ -100,7 +100,7 @@ export function LocationTable() {
   };
 
   return (
-    <Card className="w-full max-w-[1400px]">
+    <Card className="w-full max-w-[1200px]">
       <CardHeader className="px-4 md:px-8 pb-0">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">

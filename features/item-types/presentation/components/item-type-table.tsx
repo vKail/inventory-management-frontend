@@ -80,22 +80,6 @@ export default function ItemTypeTable() {
 
     return (
         <div className="container mx-auto py-10">
-            {/* Breadcrumbs, título y descripción */}
-            <div className="w-full">
-                <Breadcrumb className="mb-6">
-                    <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <span className="text-muted-foreground font-medium">Configuración</span>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                        <BreadcrumbItem>
-                            <Wrench className="inline mr-1 h-4 w-4 text-primary align-middle" />
-                            <BreadcrumbLink href="/item-types">Tipos de Item</BreadcrumbLink>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            </div>
-
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">

@@ -9,8 +9,25 @@ export const locationSchema = z.object({
     type: z.enum(['BUILDING', 'FLOOR', 'OFFICE', 'WAREHOUSE', 'SHELF', 'LABORATORY'], {
         errorMap: () => ({ message: 'Tipo de ubicación inválido' })
     }),
-    floor: z.string().max(50, 'El piso no puede exceder 50 caracteres').nullable().optional(),
-    reference: z.string().min(1, 'La referencia es requerida').max(150, 'La referencia no puede exceder 150 caracteres'),
+    floor: z.string()
+        .max(50, 'El piso no puede exceder 50 caracteres')
+        .refine((value) => {
+            if (!value || value.trim() === "") return true;
+            // Allow numbers, letters, dash (-) and underscore (_)
+            const floorRegex = /^[a-zA-Z0-9\-_]+$/;
+            return floorRegex.test(value.trim());
+        }, "El piso debe contener solo letras, números, guiones (-) y guiones bajos (_)")
+        .nullable()
+        .optional(),
+    reference: z.string()
+        .min(1, 'La referencia es requerida')
+        .max(150, 'La referencia no puede exceder 150 caracteres')
+        .refine((value) => {
+            if (!value || value.trim() === "") return false;
+            // Allow numbers, letters, dash (-) and underscore (_)
+            const referenceRegex = /^[a-zA-Z0-9\-_]+$/;
+            return referenceRegex.test(value.trim());
+        }, "La referencia debe contener solo letras, números, guiones (-) y guiones bajos (_)"),
     capacity: z.number().min(0, 'La capacidad debe ser mayor o igual a 0'),
     capacityUnit: z.enum(['UNITS', 'METERS', 'SQUARE_METERS'], {
         errorMap: () => ({ message: 'Unidad de capacidad inválida' })

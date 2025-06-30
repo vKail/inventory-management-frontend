@@ -70,10 +70,10 @@ export const AccountingSection = () => {
                                 <FormItem data-field="observations">
                                     <FormLabel>Observaciones</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Observaciones adicionales" maxLength={250} {...field} />
+                                        <Input placeholder="Observaciones adicionales" maxLength={200} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/250 caracteres
+                                        {field.value?.length || 0}/200 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>

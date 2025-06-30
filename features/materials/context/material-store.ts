@@ -31,7 +31,7 @@ interface MaterialState {
     searchTerm: string;
     typeFilter: string;
     refreshTable: () => Promise<void>;
-    getMaterials: (page?: number, limit?: number) => Promise<void>;
+    getMaterials: (page?: number, limit?: number, options?: { allRecords?: boolean }) => Promise<void>;
     getMaterialById: (materialId: number) => Promise<IMaterial | undefined>;
     addMaterial: (material: Partial<IMaterial>) => Promise<void>;
     updateMaterial: (materialId: number, material: Partial<IMaterial>) => Promise<void>;
@@ -80,13 +80,13 @@ export const useMaterialStore = create<MaterialState>()(
                 await get().getMaterials(currentPage, 10);
             },
 
-            getMaterials: async (page = 1, limit = 10) => {
+            getMaterials: async (page = 1, limit = 10, options?: { allRecords?: boolean }) => {
                 set({ loading: true });
                 try {
                     const { searchTerm, typeFilter } = get();
 
                     // Prepare filters for backend
-                    const filters: { name?: string; materialType?: string } = {};
+                    const filters: { name?: string; materialType?: string; allRecords?: boolean } = {};
 
                     if (searchTerm && searchTerm.trim() !== '') {
                         filters.name = searchTerm.trim();
@@ -94,6 +94,11 @@ export const useMaterialStore = create<MaterialState>()(
 
                     if (typeFilter && typeFilter !== 'all') {
                         filters.materialType = typeFilter;
+                    }
+
+                    // Add allRecords option if provided
+                    if (options?.allRecords) {
+                        filters.allRecords = true;
                     }
 
                     const response = await MaterialService.getInstance().getMaterials(page, limit, filters);

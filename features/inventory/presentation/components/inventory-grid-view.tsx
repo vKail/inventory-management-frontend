@@ -83,10 +83,8 @@ export function InventoryGridView({ items }: InventoryGridViewProps) {
                             <div className="flex flex-col space-y-1.5 p-6 pb-2">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h3 className="font-medium text-lg line-clamp-1">{item.name}</h3>
-                                        <p className="text-muted-foreground text-sm line-clamp-1">
-                                            {item.category?.name} - {item.location?.name}
-                                        </p>
+                                        <h3 className="font-medium text-lg truncate-cell" title={item.name}>{item.name}</h3>
+                                        <p className="text-muted-foreground text-sm truncate-cell" title={`${item.category?.name || ''} - ${item.location?.name || ''}`}>{item.category?.name} - {item.location?.name}</p>
                                     </div>
                                     <Badge className={getStatusColor(item.status?.name)}>
                                         {item.status?.name || "Sin estado"}
@@ -121,7 +119,7 @@ export function InventoryGridView({ items }: InventoryGridViewProps) {
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-sm text-muted-foreground pr-3">Descripción:</span>
-                                        <span className="text-sm font-medium line-clamp-2">{item.description}</span>
+                                        <span className="text-sm font-medium truncate-cell" title={item.description}>{item.description}</span>
                                     </div>
                                 </div>
                             </div>

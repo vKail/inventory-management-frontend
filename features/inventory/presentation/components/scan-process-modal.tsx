@@ -87,35 +87,56 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
     const handleScan = async (code: string) => {
         if (!code) return;
 
+        // Security: Validate input to prevent path injection and malicious inputs
+        const sanitizedCode = code.trim();
+
+        // Reject inputs that could be paths or contain dangerous characters
+        if (sanitizedCode.includes('/') ||
+            sanitizedCode.includes('\\') ||
+            sanitizedCode.includes('..') ||
+            sanitizedCode.includes('http') ||
+            sanitizedCode.includes('://') ||
+            sanitizedCode.length > 50) {
+            setError("Código inválido. Solo se permiten códigos de barras válidos.");
+            onScanComplete?.(null);
+            toast.error("Código inválido");
+            setManualInput(""); // Clear the input field
+            return;
+        }
+
+        // Only allow alphanumeric characters, hyphens, and underscores for barcode codes
+        const validCodePattern = /^[a-zA-Z0-9\-_]+$/;
+        if (!validCodePattern.test(sanitizedCode)) {
+            setError("Código inválido. Solo se permiten letras, números, guiones y guiones bajos.");
+            onScanComplete?.(null);
+            toast.error("Código inválido");
+            setManualInput(""); // Clear the input field
+            return;
+        }
+
         setIsScanning(true);
         setError("");
 
         try {
-            // Primero intentamos buscar por código
-            let item = await getInventoryItemByCode(code);
-
-            // Si no se encuentra por código, intentamos buscar por ID
-            if (!item) {
-                const foundById = await getInventoryItem(code);
-                if (foundById) {
-                    item = foundById;
-                }
-            }
+            // Solo buscar por código de barras - NO buscar por ID como fallback
+            const item = await getInventoryItemByCode(sanitizedCode);
 
             if (item) {
                 setFoundItem(item);
                 onScanComplete?.(item);
                 toast.success("Item encontrado");
             } else {
-                setError(`No se ha encontrado un producto con el código ${code}`);
+                setError(`No se ha encontrado un producto con el código ${sanitizedCode}`);
                 onScanComplete?.(null);
                 toast.error("Item no encontrado");
+                setManualInput(""); // Clear the input field when item not found
             }
         } catch (error) {
             console.error('Scan error:', error);
             setError("Error al buscar el producto");
             onScanComplete?.(null);
             toast.error("Error al buscar el producto");
+            setManualInput(""); // Clear the input field on error
         } finally {
             setIsScanning(false);
         }
@@ -266,217 +287,206 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                             </div>
                         </div>
                     ) : (
-                        <div className="flex-1 flex flex-col min-h-0">
-                            <div className="flex-1 overflow-y-auto p-6 min-h-0">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Columna Izquierda: Imágenes y Detalles Básicos */}
-                                    <div className="space-y-6">
-                                        {/* Imágenes */}
-                                        <div className="space-y-4">
-                                            <h3 className="font-medium text-lg">Imágenes</h3>
-                                            {foundItem.images && foundItem.images.length > 0 ? (
-                                                <Carousel className="w-full">
-                                                    <CarouselContent>
-                                                        {foundItem.images.map((image, index) => (
-                                                            <CarouselItem key={index}>
-                                                                <div className="aspect-square relative">
-                                                                    <img
-                                                                        src={`${API_URL}${image.filePath}`}
-                                                                        alt={`Imagen ${index + 1} de ${foundItem.name}`}
-                                                                        className="object-cover rounded-lg w-full h-full"
-                                                                    />
-                                                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-between px-4 pointer-events-none">
-                                                                        <CarouselPrevious className="pointer-events-auto relative left-0 translate-x-0" />
-                                                                        <CarouselNext className="pointer-events-auto relative right-0 translate-x-0" />
-                                                                    </div>
-                                                                </div>
-                                                            </CarouselItem>
-                                                        ))}
-                                                    </CarouselContent>
-                                                </Carousel>
-                                            ) : (
-                                                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                                                    <Box className="h-8 w-8 text-muted-foreground" />
-                                                </div>
-                                            )}
+                        <div className="flex flex-col md:flex-row gap-6 h-full w-full">
+                            {/* Left Side */}
+                            <div className="flex flex-col gap-4 min-w-[220px] max-w-[340px] w-full md:w-[35%] flex-shrink-0 overflow-y-auto px-2">
+                                {/* Imágenes */}
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-base">Imágenes</h3>
+                                    {foundItem.images && foundItem.images.length > 0 ? (
+                                        <Carousel className="w-full max-w-[320px] mx-auto">
+                                            <CarouselContent>
+                                                {foundItem.images.map((image, index) => (
+                                                    <CarouselItem key={index}>
+                                                        <div className="aspect-square relative w-[320px] h-[320px] mx-auto">
+                                                            <img
+                                                                src={`${API_URL}${image.filePath}`}
+                                                                alt={`Imagen ${index + 1} de ${foundItem.name}`}
+                                                                className="object-cover rounded-lg w-full h-full"
+                                                            />
+                                                            <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-between px-2 pointer-events-none">
+                                                                <CarouselPrevious className="pointer-events-auto relative left-0 translate-x-0" />
+                                                                <CarouselNext className="pointer-events-auto relative right-0 translate-x-0" />
+                                                            </div>
+                                                        </div>
+                                                    </CarouselItem>
+                                                ))}
+                                            </CarouselContent>
+                                        </Carousel>
+                                    ) : (
+                                        <div className="aspect-square bg-muted rounded-lg flex items-center justify-center w-[320px] h-[320px] mx-auto">
+                                            <Box className="h-8 w-8 text-muted-foreground" />
                                         </div>
+                                    )}
+                                </div>
 
-                                        {/* Detalles Básicos */}
-                                        <div className="space-y-4 bg-secondary p-4 rounded-lg">
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="text-lg font-semibold">{foundItem.name}</h3>
-                                                <div className="flex items-center gap-2">
-                                                    <Button variant="outline" size="icon" onClick={handleCopy}>
-                                                        <Copy className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="outline" size="icon" onClick={handleEditItem}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Código</p>
-                                                    <p className="font-medium">{foundItem.code}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Stock</p>
-                                                    <p className="font-medium">{foundItem.stock}</p>
-                                                </div>
-                                            </div>
+                                {/* Detalles Básicos */}
+                                <div className="space-y-4 bg-secondary p-3 rounded-lg text-xs">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-base font-semibold truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.name}>{foundItem.name}</h3>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 items-center">
+                                        <div className="flex items-center gap-2">
                                             <div>
-                                                <p className="text-sm text-muted-foreground">Descripción</p>
-                                                <p className="text-sm">{foundItem.description}</p>
+                                                <p className="text-xs text-muted-foreground">Código</p>
+                                                <p className="font-medium text-xs truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.code}>{foundItem.code}</p>
                                             </div>
+                                            <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(foundItem.code); toast.success('Código copiado') }} className="h-7 w-7" title="Copiar código">
+                                                <Copy className="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Stock</p>
+                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={String(foundItem.stock)}>{foundItem.stock}</p>
                                         </div>
                                     </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Descripción</p>
+                                        <p className="text-xs truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.description}>{foundItem.description}</p>
+                                    </div>
+                                </div>
 
-                                    {/* Columna Derecha: Detalles Adicionales */}
-                                    <div className="space-y-6">
-                                        {/* Clasificación */}
-                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
-                                            <h4 className="font-medium text-lg">Clasificación</h4>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Tipo</p>
-                                                    <p className="font-medium">{foundItem.itemType?.name}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Categoría</p>
-                                                    <p className="font-medium">{foundItem.category?.name}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Estado</p>
-                                                    <p className="font-medium">{foundItem.status?.name}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Condición</p>
-                                                    <p className="font-medium">{foundItem.condition?.name}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Ubicación</p>
-                                                    <p className="font-medium">{foundItem.location?.name}</p>
-                                                </div>
-                                            </div>
+                                {/* Características */}
+                                <div className="bg-secondary p-3 rounded-lg space-y-2 mt-2">
+                                    <h4 className="font-medium text-base">Características</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {foundItem.critical && <Badge className="truncate max-w-full md:max-w-[80px] lg:max-w-[120px]" title="Crítico">Crítico</Badge>}
+                                        {foundItem.dangerous && <Badge className="truncate max-w-full md:max-w-[80px] lg:max-w-[120px]" title="Peligroso">Peligroso</Badge>}
+                                        {foundItem.requiresSpecialHandling && <Badge className="truncate max-w-full md:max-w-[120px] lg:max-w-[160px]" title="Manejo Especial">Manejo Especial</Badge>}
+                                        {foundItem.perishable && <Badge className="truncate max-w-full md:max-w-[80px] lg:max-w-[120px]" title="Perecedero">Perecedero</Badge>}
+                                        {foundItem.availableForLoan && <Badge className="truncate max-w-full md:max-w-[120px] lg:max-w-[160px]" title="Disponible para Préstamo">Disponible para Préstamo</Badge>}
+                                        {!foundItem.critical && !foundItem.dangerous && !foundItem.requiresSpecialHandling &&
+                                            !foundItem.perishable && !foundItem.availableForLoan && (
+                                                <p className="text-xs text-muted-foreground">No hay características especiales</p>
+                                            )}
+                                    </div>
+                                </div>
+
+                                {/* Observaciones */}
+                                {foundItem.observations && (
+                                    <div className="bg-secondary p-3 rounded-lg space-y-2 mt-2">
+                                        <h4 className="font-medium text-base">Observaciones</h4>
+                                        <p className="text-xs text-muted-foreground truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.observations}>{foundItem.observations}</p>
+                                    </div>
+                                )}
+                            </div>
+                            {/* Right Side */}
+                            <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto px-2">
+                                {/* Clasificación */}
+                                <div className="bg-secondary p-3 rounded-lg space-y-4">
+                                    <h4 className="font-medium text-base">Clasificación</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Tipo</p>
+                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.itemType?.name}>{foundItem.itemType?.name}</p>
                                         </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Categoría</p>
+                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.category?.name}>{foundItem.category?.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Estado</p>
+                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.status?.name}>{foundItem.status?.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Condición</p>
+                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.condition?.name}>{foundItem.condition?.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Ubicación</p>
+                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.location?.name}>{foundItem.location?.name}</p>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                        {/* Materiales */}
-                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
-                                            <h4 className="font-medium text-lg">Materiales</h4>
-                                            <div className="space-y-2">
-                                                {foundItem.materials && foundItem.materials.length > 0 ? (
-                                                    foundItem.materials.map((itemMaterial, index) => (
-                                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded-md">
-                                                            <div className="flex items-center gap-2">
-                                                                {itemMaterial.isMainMaterial && (
-                                                                    <Badge variant="secondary">Principal</Badge>
-                                                                )}
-                                                                <span>{itemMaterial.material?.name}</span>
-                                                            </div>
+                                {/* Materiales */}
+                                <div className="bg-secondary p-3 rounded-lg space-y-2">
+                                    <h4 className="font-medium text-base">Materiales</h4>
+                                    <div className="overflow-x-auto">
+                                        <div className="flex gap-2 min-w-[320px]">
+                                            {foundItem.materials && foundItem.materials.length > 0 ? (
+                                                foundItem.materials.map((itemMaterial, index) => (
+                                                    <div key={index} className="flex flex-col items-center bg-white p-2 rounded-md min-w-[120px] max-w-[160px] text-xs">
+                                                        {itemMaterial.isMainMaterial && (
+                                                            <Badge variant="secondary" className="mb-1">Principal</Badge>
+                                                        )}
+                                                        <span className="truncate max-w-full" title={itemMaterial.material?.name}>{itemMaterial.material?.name}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground">No hay materiales asignados</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Colores */}
+                                <div className="bg-secondary p-3 rounded-lg space-y-2">
+                                    <h4 className="font-medium text-base">Colores</h4>
+                                    <div className="overflow-x-auto">
+                                        <div className="flex gap-2 min-w-[320px]">
+                                            {foundItem.colors && foundItem.colors.length > 0 ? (
+                                                foundItem.colors.map((itemColor, index) => (
+                                                    <div key={index} className="flex flex-col items-center bg-white p-2 rounded-md min-w-[120px] max-w-[160px] text-xs">
+                                                        {itemColor.isMainColor && (
+                                                            <Badge variant="secondary" className="mb-1">Principal</Badge>
+                                                        )}
+                                                        <div className="flex items-center gap-1 mb-1">
+                                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: itemColor.color?.hexCode }} />
                                                         </div>
-                                                    ))
-                                                ) : (
-                                                    <p className="text-sm text-muted-foreground">No hay materiales asignados</p>
-                                                )}
-                                            </div>
+                                                        <span className="truncate max-w-full" title={itemColor.color?.name}>{itemColor.color?.name}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground">No hay colores asignados</p>
+                                            )}
                                         </div>
+                                    </div>
+                                </div>
 
-                                        {/* Colores */}
-                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
-                                            <h4 className="font-medium text-lg">Colores</h4>
-                                            <div className="space-y-2">
-                                                {foundItem.colors && foundItem.colors.length > 0 ? (
-                                                    foundItem.colors.map((itemColor, index) => (
-                                                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded-md">
-                                                            <div className="flex items-center gap-2">
-                                                                {itemColor.isMainColor && (
-                                                                    <Badge variant="secondary">Principal</Badge>
-                                                                )}
-                                                                <div className="flex items-center gap-2">
-                                                                    <div
-                                                                        className="w-4 h-4 rounded-full"
-                                                                        style={{ backgroundColor: itemColor.color?.hexCode }}
-                                                                    />
-                                                                    <span>{itemColor.color?.name}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <p className="text-sm text-muted-foreground">No hay colores asignados</p>
-                                                )}
-                                            </div>
+                                {/* Fechas */}
+                                <div className="bg-secondary p-4 rounded-lg space-y-4">
+                                    <h4 className="font-medium text-lg">Fechas</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Adquisición</p>
+                                            <p className="font-medium">
+                                                {foundItem.acquisitionDate ? format(new Date(foundItem.acquisitionDate), "PPP", { locale: es }) : "N/A"}
+                                            </p>
                                         </div>
-
-                                        {/* Fechas */}
-                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
-                                            <h4 className="font-medium text-lg">Fechas</h4>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Adquisición</p>
-                                                    <p className="font-medium">
-                                                        {foundItem.acquisitionDate ? format(new Date(foundItem.acquisitionDate), "PPP", { locale: es }) : "N/A"}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Garantía</p>
-                                                    <p className="font-medium">
-                                                        {foundItem.warrantyDate ? format(new Date(foundItem.warrantyDate), "PPP", { locale: es }) : "N/A"}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">Expiración</p>
-                                                    <p className="font-medium">
-                                                        {foundItem.expirationDate ? format(new Date(foundItem.expirationDate), "PPP", { locale: es }) : "N/A"}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Garantía</p>
+                                            <p className="font-medium">
+                                                {foundItem.warrantyDate ? format(new Date(foundItem.warrantyDate), "PPP", { locale: es }) : "N/A"}
+                                            </p>
                                         </div>
-
-                                        {/* Características */}
-                                        <div className="bg-secondary p-4 rounded-lg space-y-4">
-                                            <h4 className="font-medium text-lg">Características</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {foundItem.critical && <Badge>Crítico</Badge>}
-                                                {foundItem.dangerous && <Badge>Peligroso</Badge>}
-                                                {foundItem.requiresSpecialHandling && <Badge>Manejo Especial</Badge>}
-                                                {foundItem.perishable && <Badge>Perecedero</Badge>}
-                                                {foundItem.availableForLoan && <Badge>Disponible para Préstamo</Badge>}
-                                                {!foundItem.critical && !foundItem.dangerous && !foundItem.requiresSpecialHandling &&
-                                                    !foundItem.perishable && !foundItem.availableForLoan && (
-                                                        <p className="text-sm text-muted-foreground">No hay características especiales</p>
-                                                    )}
-                                            </div>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Expiración</p>
+                                            <p className="font-medium">
+                                                {foundItem.expirationDate ? format(new Date(foundItem.expirationDate), "PPP", { locale: es }) : "N/A"}
+                                            </p>
                                         </div>
-
-                                        {/* Observaciones */}
-                                        {foundItem.observations && (
-                                            <div className="bg-secondary p-4 rounded-lg space-y-2">
-                                                <h4 className="font-medium text-lg">Observaciones</h4>
-                                                <p className="text-sm text-muted-foreground">{foundItem.observations}</p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Botones de Acción */}
-                            <div className="flex justify-end gap-2 p-4 border-t bg-muted/30">
-                                <Button variant="outline" onClick={onClose}>
-                                    <X className="h-4 w-4 mr-2" />
-                                    Cerrar
-                                </Button>
-                                <Button variant="outline" onClick={handleCopy}>
-                                    <Copy className="h-4 w-4 mr-2" />
-                                    Copiar
-                                </Button>
-                                <Button onClick={handleEditItem}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Editar
-                                </Button>
-                            </div>
                         </div>
                     )}
+                </div>
+
+                {/* Botones de Acción */}
+                <div className="flex justify-end gap-2 p-4 border-t bg-muted/30">
+                    <Button variant="outline" onClick={onClose}>
+                        <X className="h-4 w-4 mr-2" />
+                        Cerrar
+                    </Button>
+                    <Button variant="outline" onClick={handleCopy}>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar
+                    </Button>
+                    <Button onClick={handleEditItem}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

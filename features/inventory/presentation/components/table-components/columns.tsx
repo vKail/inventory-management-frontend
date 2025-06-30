@@ -31,12 +31,12 @@ export const useColumns = () => {
             id: "code",
             accessorKey: "code",
             header: "Código",
-            size: 120,
+            size: 40,
             cell: ({ row }) => {
                 const code = row.getValue("code") as string;
                 return (
                     <div
-                        className="max-w-[120px] truncate text-sm font-mono"
+                        className="max-w-[60px] truncate text-sm font-mono"
                         title={code}
                     >
                         {code || "Sin código"}
@@ -48,17 +48,29 @@ export const useColumns = () => {
             id: "name",
             accessorKey: "name",
             header: "Nombre",
+            size: 60,
+            cell: ({ row }) => {
+                const name = row.getValue("name") as string;
+                return (
+                    <div
+                        className="max-w-[80px] truncate text-sm"
+                        title={name}
+                    >
+                        {name || "Sin nombre"}
+                    </div>
+                );
+            },
         },
         {
             id: "description",
             accessorKey: "description",
             header: "Descripción",
-            size: 200,
+            size: 120,
             cell: ({ row }) => {
                 const description = row.getValue("description") as string;
                 return (
                     <div
-                        className="max-w-[200px] truncate text-sm text-muted-foreground"
+                        className="max-w-[120px] truncate text-sm text-muted-foreground"
                         title={description}
                     >
                         {description || "Sin descripción"}
@@ -73,7 +85,11 @@ export const useColumns = () => {
             cell: ({ row }) => {
                 const categoryId = row.getValue("categoryId") as number;
                 const category = categories.find(c => c.id === categoryId);
-                return category?.name || "Sin categoría";
+                return (
+                    <div className="max-w-[80px] truncate text-sm" title={category?.name || "Sin categoría"}>
+                        {category?.name || "Sin categoría"}
+                    </div>
+                );
             },
         },
         {
@@ -82,7 +98,11 @@ export const useColumns = () => {
             header: "Departamento",
             cell: ({ row }) => {
                 const location = row.original.location;
-                return location?.name || "Sin departamento";
+                return (
+                    <div className="max-w-[80px] truncate text-sm" title={location?.name || "Sin departamento"}>
+                        {location?.name || "Sin departamento"}
+                    </div>
+                );
             },
         },
         {

@@ -8,7 +8,7 @@ import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ItemColor } from "../../../data/interfaces/inventory.interface";
 import { IColor } from "@/features/colors/data/interfaces/color.interface";
-import { ColorService } from "@/features/colors/services/color.service";
+import { useColorStore } from "@/features/colors/context/color-store";
 
 interface ColorsSectionProps {
     selectedColors: ItemColor[];
@@ -17,22 +17,21 @@ interface ColorsSectionProps {
 }
 
 export const ColorsSection = ({ selectedColors, onColorsChange, mode }: ColorsSectionProps) => {
-    const [allColors, setAllColors] = useState<IColor[]>([]);
+    const { colors, getColors, loading } = useColorStore();
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredColors, setFilteredColors] = useState<IColor[]>([]);
 
-    // Cargar todos los colores al inicio
+    // Cargar todos los colores al inicio con allRecords=true
     useEffect(() => {
-        ColorService.getInstance().getColors()
-            .then((response) => {
-                const colorsList = response.records || [];
-                setAllColors(colorsList);
-                updateFilteredColors(colorsList, selectedColors, searchTerm);
-            })
-            .catch((error) => {
+        const loadAllColors = async () => {
+            try {
+                await getColors(1, 1000, { allRecords: true });
+            } catch (error) {
                 console.error('Error loading colors:', error);
-            });
-    }, []);
+            }
+        };
+        loadAllColors();
+    }, [getColors]);
 
     // Función para actualizar los colores filtrados
     const updateFilteredColors = (
@@ -50,8 +49,8 @@ export const ColorsSection = ({ selectedColors, onColorsChange, mode }: ColorsSe
 
     // Actualizar colores filtrados cuando cambia la búsqueda o los colores seleccionados
     useEffect(() => {
-        updateFilteredColors(allColors, selectedColors, searchTerm);
-    }, [searchTerm, selectedColors, allColors]);
+        updateFilteredColors(colors, selectedColors, searchTerm);
+    }, [searchTerm, selectedColors, colors]);
 
     const handleDragEnd = (result: any) => {
         if (!result.destination) return;

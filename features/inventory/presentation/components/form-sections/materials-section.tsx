@@ -8,7 +8,7 @@ import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ItemMaterial } from "../../../data/interfaces/inventory.interface";
 import { IMaterial } from "@/features/materials/data/interfaces/material.interface";
-import { MaterialService } from "@/features/materials/services/material.service";
+import { useMaterialStore } from "@/features/materials/context/material-store";
 
 interface MaterialsSectionProps {
     selectedMaterials: ItemMaterial[];
@@ -17,22 +17,23 @@ interface MaterialsSectionProps {
 }
 
 export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode }: MaterialsSectionProps) => {
-    const [allMaterials, setAllMaterials] = useState<IMaterial[]>([]);
+    const { materials, getMaterials, loading } = useMaterialStore();
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredMaterials, setFilteredMaterials] = useState<IMaterial[]>([]);
 
-    // Cargar todos los materiales al inicio
+    // Cargar todos los materiales al inicio con allRecords=true
     useEffect(() => {
-        MaterialService.getInstance().getMaterials()
-            .then((response) => {
-                const materialsList = response.records || [];
-                setAllMaterials(materialsList);
-                updateFilteredMaterials(materialsList, selectedMaterials, searchTerm);
-            })
-            .catch((error) => {
+        const loadAllMaterials = async () => {
+            try {
+                // Fetch all materials with allRecords=true
+                await getMaterials(1, 1000, { allRecords: true });
+            } catch (error) {
                 console.error('Error loading materials:', error);
-            });
-    }, []);
+            }
+        };
+
+        loadAllMaterials();
+    }, [getMaterials]);
 
     // Función para actualizar los materiales filtrados
     const updateFilteredMaterials = (
@@ -50,8 +51,8 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode }:
 
     // Actualizar materiales filtrados cuando cambia la búsqueda o los materiales seleccionados
     useEffect(() => {
-        updateFilteredMaterials(allMaterials, selectedMaterials, searchTerm);
-    }, [searchTerm, selectedMaterials, allMaterials]);
+        updateFilteredMaterials(materials, selectedMaterials, searchTerm);
+    }, [searchTerm, selectedMaterials, materials]);
 
     const handleDragEnd = (result: any) => {
         if (!result.destination) return;
@@ -136,24 +137,36 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode }:
                                         {...provided.droppableProps}
                                         className="border rounded-lg p-4 h-[400px] overflow-y-auto"
                                     >
-                                        {filteredMaterials.map((material, index) => (
-                                            <Draggable
-                                                key={`available-${material.id}`}
-                                                draggableId={`available-${material.id}`}
-                                                index={index}
-                                            >
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        className="bg-red-500/10 p-2 rounded-md shadow-sm mb-2 cursor-move hover:bg-red-500/20 transition-colors"
-                                                    >
-                                                        {material.name}
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
+                                        {loading ? (
+                                            <div className="flex items-center justify-center h-full">
+                                                <div className="text-sm text-muted-foreground">Cargando materiales...</div>
+                                            </div>
+                                        ) : filteredMaterials.length > 0 ? (
+                                            filteredMaterials.map((material, index) => (
+                                                <Draggable
+                                                    key={`available-${material.id}`}
+                                                    draggableId={`available-${material.id}`}
+                                                    index={index}
+                                                >
+                                                    {(provided) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                            className="bg-red-500/10 p-2 rounded-md shadow-sm mb-2 cursor-move hover:bg-red-500/20 transition-colors"
+                                                        >
+                                                            {material.name}
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full">
+                                                <div className="text-sm text-muted-foreground">
+                                                    {searchTerm ? 'No se encontraron materiales' : 'No hay materiales disponibles'}
+                                                </div>
+                                            </div>
+                                        )}
                                         {provided.placeholder}
                                     </div>
                                 )}

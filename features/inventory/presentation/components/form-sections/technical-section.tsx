@@ -25,7 +25,7 @@ export const TechnicalSection = () => {
 
     const certificateOptions = certificates.map(certificate => ({
         value: certificate.id,
-        label: `${certificate.number} - ${certificate.observations}`
+        label: `${certificate.number} - ${certificate.observations?.length > 30 ? certificate.observations.substring(0, 30) + '...' : certificate.observations}`
     }));
 
     return (
@@ -143,10 +143,18 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="commitmentNumber">
                                     <FormLabel>Número de Compromiso *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Número de compromiso" maxLength={20} {...field} />
+                                        <Input
+                                            placeholder="Número de compromiso"
+                                            maxLength={20}
+                                            {...field}
+                                            value={field.value || ''}
+                                            onChange={(e) => {
+                                                field.onChange(e.target.value);
+                                            }}
+                                        />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {(field.value || '').length}/20 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
