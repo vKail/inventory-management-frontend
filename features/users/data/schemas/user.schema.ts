@@ -21,7 +21,7 @@ export const userSchema = z.object({
     .refine((value) => nameRegex.test(value), 'El usuario solo puede contener letras, números, espacios y los caracteres _ / - , .'),
   password: z.string()
     .min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  career: z.string().min(1, 'La carrera es requerida'),
+  career: z.string().optional(),
   userType: z.enum([
     UserRole.ADMINISTRATOR,
     UserRole.STUDENT,
@@ -36,7 +36,10 @@ export const userSchema = z.object({
     firstName: z.string().min(1, { message: 'El nombre es requerido' }).max(30, { message: 'Máximo 30 caracteres' }),
     lastName: z.string().min(1, { message: 'El apellido es requerido' }).max(30, { message: 'Máximo 30 caracteres' }),
     email: z.string().email('Debe ser un email válido'),
-    phone: z.string().length(10, 'El teléfono debe tener 10 dígitos'),
+    phone: z.string().optional().or(z.literal('')).refine(
+      (val) => !val || val.length === 10,
+      { message: 'El teléfono debe tener 10 dígitos' }
+    ),
   })
 });
 

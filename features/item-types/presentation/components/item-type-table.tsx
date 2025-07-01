@@ -79,13 +79,13 @@ export default function ItemTypeTable() {
     };
 
     return (
-        <div className="container mx-auto py-10">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+        <Card className="w-full">
+            <CardHeader className="px-2 sm:px-4 md:px-8 pb-0">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
                         <Input
                             placeholder="Buscar por nombre o descripción..."
-                            className="w-full md:w-64"
+                            className="w-full sm:w-64"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -103,104 +103,114 @@ export default function ItemTypeTable() {
                     </div>
                     <Button
                         onClick={() => router.push('/item-types/new')}
-                        className="cursor-pointer"
+                        className="bg-red-600 hover:bg-red-700 cursor-pointer w-full sm:w-auto"
                     >
                         <Plus className="mr-2 h-4 w-4" /> Nuevo Tipo
                     </Button>
-                </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[120px]">Código</TableHead>
-                                    <TableHead className="w-[200px]">Nombre</TableHead>
-                                    <TableHead className="w-[500px]">Descripción</TableHead>
-                                    <TableHead className="w-[100px] text-right">Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
+                </div>
+                <hr className="border-t border-muted mt-4" />
+            </CardHeader>
+            <CardContent className="px-2 sm:px-4 md:px-8 pb-6">
+                <div className="min-h-[400px] flex flex-col justify-between">
+                    <div className="overflow-x-auto border rounded-md shadow-sm">
+                        <div className="min-w-full inline-block align-middle">
+                            <Table>
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={4}>
-                                            <LoaderComponent rows={5} columns={4} />
-                                        </TableCell>
+                                        <TableHead className="min-w-[120px] w-[15%]">Código</TableHead>
+                                        <TableHead className="min-w-[200px] w-[20%]">Nombre</TableHead>
+                                        <TableHead className="min-w-[300px] w-[45%]">Descripción</TableHead>
+                                        <TableHead className="min-w-[100px] w-[10%] text-right">Acciones</TableHead>
                                     </TableRow>
-                                ) : itemTypes.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="py-20 text-center text-muted-foreground">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <Wrench className="h-10 w-10 opacity-30" />
-                                                <span>No hay tipos de item para mostrar</span>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    itemTypes.map((itemType) => (
-                                        <TableRow key={itemType.id} className="h-16">
-                                            <TableCell className="font-medium py-3">
-                                                {formatNullValue(itemType.code, "Sin código")}
+                                </TableHeader>
+                                <TableBody>
+                                    {loading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24">
+                                                <LoaderComponent rows={5} columns={4} />
                                             </TableCell>
-                                            <TableCell className="font-medium py-3">
-                                                {formatNullValue(capitalizeWords(itemType.name), "Sin nombre")}
-                                            </TableCell>
-                                            <TableCell className="max-w-[500px] py-3">
-                                                <div className="truncate" title={itemType.description}>
-                                                    {formatNullValue(capitalizeWords(itemType.description), "Sin descripción")}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right py-3">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => router.push(`/item-types/edit/${itemType.id}`)}
-                                                        className="cursor-pointer h-8 w-8"
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => setItemTypeToDelete(itemType.id)}
-                                                                className="cursor-pointer h-8 w-8"
-                                                            >
-                                                                <Trash2 className="h-4 w-4 text-red-600" />
-                                                            </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    Esta acción no se puede deshacer. Se eliminará permanentemente el tipo de item
-                                                                    <span className="font-semibold"> {formatNullValue(capitalizeWords(itemType.name), "Sin nombre")}</span>.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel onClick={() => setItemTypeToDelete(null)}>
-                                                                    Cancelar
-                                                                </AlertDialogCancel>
-                                                                <AlertDialogAction
-                                                                    onClick={confirmDelete}
-                                                                    className="bg-red-600 hover:bg-red-700"
-                                                                >
-                                                                    Eliminar
-                                                                </AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
+                                        </TableRow>
+                                    ) : itemTypes.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Wrench className="h-10 w-10 opacity-30" />
+                                                    <span>No hay tipos de item para mostrar</span>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                    ) : (
+                                        itemTypes.map((itemType) => (
+                                            <TableRow key={itemType.id} className="h-16 hover:bg-muted/50">
+                                                <TableCell className="font-medium">
+                                                    {formatNullValue(itemType.code, "Sin código")}
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    {formatNullValue(capitalizeWords(itemType.name), "Sin nombre")}
+                                                </TableCell>
+                                                <TableCell className="max-w-[250px] truncate">
+                                                    {formatNullValue(capitalizeWords(itemType.description), "Sin descripción")}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end space-x-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => router.push(`/item-types/edit/${itemType.id}`)}
+                                                            className="cursor-pointer h-8 w-8"
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </Button>
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => setItemTypeToDelete(itemType.id)}
+                                                                    className="cursor-pointer h-8 w-8"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        Esta acción no se puede deshacer. Se eliminará permanentemente el tipo de item
+                                                                        <span className="font-semibold"> {formatNullValue(capitalizeWords(itemType.name), "Sin nombre")}</span>.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel onClick={() => setItemTypeToDelete(null)}>
+                                                                        Cancelar
+                                                                    </AlertDialogCancel>
+                                                                    <AlertDialogAction
+                                                                        onClick={confirmDelete}
+                                                                        className="bg-red-600 hover:bg-red-700"
+                                                                    >
+                                                                        Eliminar
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </div>
-                </CardContent>
-            </Card>
-        </div>
+                    {/* Pagination section, if present */}
+                    {!loading && itemTypes.length > 0 && (
+                        <div className="mt-4">
+                            {/* Add your pagination component here, styled as in categories */}
+                            {/* Example: <ItemTypePagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} /> */}
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
     )
 }

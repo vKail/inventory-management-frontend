@@ -57,6 +57,27 @@ interface CertificateTableProps {
     onPageChange: (page: number) => void;
 }
 
+type StatusBadgeProps = {
+    value: string | boolean;
+    trueLabel?: string;
+    falseLabel?: string;
+    trueColor?: string;
+    falseColor?: string;
+    custom?: Record<string, { label: string; color: string }>;
+};
+
+function StatusBadge({ value, trueLabel = 'Sí', falseLabel = 'No', trueColor = 'bg-green-100 text-green-800', falseColor = 'bg-gray-100 text-gray-800', custom = {} }: StatusBadgeProps) {
+    let label = value ? trueLabel : falseLabel;
+    let color = value ? trueColor : falseColor;
+    if (typeof value === 'string' && custom && custom[value]) {
+        label = custom[value].label;
+        color = custom[value].color;
+    }
+    return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>{label}</span>
+    );
+}
+
 export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: CertificateTableProps) {
     const router = useRouter();
     const { getUsers, users } = useUserStore();
@@ -297,18 +318,29 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                                                 </TableCell>
                                                 <TableCell>{getTypeLabel(certificate.type)}</TableCell>
                                                 <TableCell>
-                                                    <span
-                                                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                                            certificate.status
-                                                        )}`}
-                                                    >
-                                                        {getStatusLabel(certificate.status)}
-                                                    </span>
+                                                    <StatusBadge
+                                                        value={certificate.status}
+                                                        trueLabel="Aprobado"
+                                                        falseLabel="Cancelado"
+                                                        trueColor="bg-green-100 text-green-800"
+                                                        falseColor="bg-red-100 text-red-800"
+                                                        custom={{
+                                                            'APPROVED': { label: 'Aprobado', color: 'bg-green-100 text-green-800' },
+                                                            'CANCELLED': { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
+                                                            'DRAFT': { label: 'Borrador', color: 'bg-gray-100 text-gray-800' },
+                                                        }}
+                                                    />
                                                 </TableCell>
                                                 <TableCell>{getResponsibleName(certificate.deliveryResponsibleId)}</TableCell>
                                                 <TableCell>{getResponsibleName(certificate.receptionResponsibleId)}</TableCell>
                                                 <TableCell>
-                                                    {certificate.accounted ? 'Sí' : 'No'}
+                                                    <StatusBadge
+                                                        value={certificate.accounted}
+                                                        trueLabel="Sí"
+                                                        falseLabel="No"
+                                                        trueColor="bg-green-100 text-green-800"
+                                                        falseColor="bg-gray-100 text-gray-800"
+                                                    />
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex items-center justify-end space-x-2">

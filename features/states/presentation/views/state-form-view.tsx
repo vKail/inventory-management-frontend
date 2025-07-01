@@ -49,20 +49,31 @@ export default function StateFormView() {
             if (isEdit && id) {
                 await updateState(Number(id), data);
                 toast.success('Estado actualizado exitosamente');
+                router.push('/states');
             } else {
                 await addState(data);
                 toast.success('Estado creado exitosamente');
+                router.push('/states');
             }
-            router.push('/states');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error al guardar el estado:', error);
-            toast.error('Error al guardar el estado');
+            let errorMsg = 'Error al guardar el estado';
+            if (error?.response?.data?.message) {
+                if (Array.isArray(error.response.data.message.content) && error.response.data.message.content.length > 0) {
+                    errorMsg = error.response.data.message.content[0];
+                } else if (typeof error.response.data.message === 'string') {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error?.message) {
+                errorMsg = error.message;
+            }
+            toast.error(errorMsg);
         }
     };
 
     return (
-        <div className="flex flex-col items-center space-y-6 px-6 md:px-12 w-full">
-            <div className="mb-2 w-full max-w-[1200px] mx-auto">
+        <div className="space-y-6">
+            <div className="w-full">
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
                         <BreadcrumbItem>
@@ -83,7 +94,7 @@ export default function StateFormView() {
                 </Breadcrumb>
             </div>
 
-            <div className="w-full max-w-[1200px]">
+            <div className="w-full">
                 <StateForm
                     initialData={initialData}
                     onSubmit={handleSubmit}

@@ -29,7 +29,14 @@ const DATE_RANGES = [
     { value: "1month", label: "Último mes" },
     { value: "6months", label: "Últimos 6 meses" },
     { value: "1year", label: "Último año" }
-] as const;
+];
+
+const FUTURE_DUE_DATE_RANGES = [
+    { value: "next7days", label: "Próximos 7 días" },
+    { value: "next1month", label: "Próximo mes" },
+    { value: "next6months", label: "Próximos 6 meses" },
+    { value: "next1year", label: "Próximo año" }
+];
 
 export function LoanHeader({
     onViewChange,
@@ -61,14 +68,15 @@ export function LoanHeader({
     return (
         <div className="space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4 items-end">
                     <div className="relative">
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Filtrar por Fecha de Entrega</label>
                         <Select
                             onValueChange={handleDeliveryDateRangeChange}
                             defaultValue={filters.deliveryDateRange}
                         >
                             <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Fecha de Entrega" />
+                                <SelectValue placeholder="Filtrar por Fecha de Entrega" />
                             </SelectTrigger>
                             <SelectContent>
                                 {DATE_RANGES.map(({ value, label }) => (
@@ -81,15 +89,23 @@ export function LoanHeader({
                     </div>
 
                     <div className="relative">
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Filtrar por Fecha de Vencimiento</label>
                         <Select
                             onValueChange={handleDueDateRangeChange}
                             defaultValue={filters.dueDateRange}
                         >
                             <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Fecha de Vencimiento" />
+                                <SelectValue placeholder="Filtrar por Fecha de Vencimiento" />
                             </SelectTrigger>
                             <SelectContent>
+                                <div className="px-2 py-1 text-xs text-muted-foreground">Fechas Pasadas</div>
                                 {DATE_RANGES.map(({ value, label }) => (
+                                    <SelectItem key={value} value={value}>
+                                        {label}
+                                    </SelectItem>
+                                ))}
+                                <div className="px-2 py-1 text-xs text-muted-foreground">Fechas Futuras</div>
+                                {FUTURE_DUE_DATE_RANGES.map(({ value, label }) => (
                                     <SelectItem key={value} value={value}>
                                         {label}
                                     </SelectItem>
@@ -98,33 +114,38 @@ export function LoanHeader({
                         </Select>
                     </div>
 
-                    <Select
-                        onValueChange={handleStatusChange}
-                        defaultValue={filters.status}
-                    >
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                            <SelectValue placeholder="Estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los estados</SelectItem>
-                            {Object.entries(LOAN_STATUSES).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                    {label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="relative">
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Estado</label>
+                        <Select
+                            onValueChange={handleStatusChange}
+                            defaultValue={filters.status}
+                        >
+                            <SelectTrigger className="w-full sm:w-[180px]">
+                                <SelectValue placeholder="Estado" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los estados</SelectItem>
+                                {Object.entries(LOAN_STATUSES).map(([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                        {label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
 
                     {hasActiveFilters && (
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={clearFilters}
-                            className="h-10 w-10 cursor-pointer"
-                            title="Limpiar filtros"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
+                        <div className="flex sm:items-end">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={clearFilters}
+                                className="h-10 w-10 cursor-pointer mb-0 sm:mb-1"
+                                title="Limpiar filtros"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
                     )}
                 </div>
 

@@ -13,11 +13,11 @@ interface UserStore {
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getUsers: (page?: number, limit?: number, filters?: { userName?: string; status?: string; userType?: string }) => Promise<void>;
+    getUsers: (page?: number, limit?: number, filters?: { userName?: string; status?: string; userType?: string; allRecords?: boolean }) => Promise<void>;
     getUserById: (userId: string) => Promise<IUser | undefined>;
     addUser: (user: Partial<IUser>) => Promise<void>;
     updateUser: (userId: string, user: Partial<IUser>) => Promise<void>;
-    deleteUser: (userId: string) => Promise<void>;
+    changeUserStatus: (userId: string, status: string) => Promise<void>;
     getPersonById: (id: string) => Promise<PersonApiResponse["data"] | null>;
     refreshTable: () => Promise<void>;
     setSearchTerm: (term: string) => void;
@@ -47,6 +47,7 @@ export const useUserStore = create<UserStore>()(
                     userName: term,
                     status: get().statusFilter !== 'all' ? get().statusFilter : undefined,
                     userType: get().userTypeFilter !== 'all' ? get().userTypeFilter : undefined,
+                    allRecords: true,
                 });
             },
 
@@ -56,6 +57,7 @@ export const useUserStore = create<UserStore>()(
                     userName: get().searchTerm,
                     status: status !== 'all' ? status : undefined,
                     userType: get().userTypeFilter !== 'all' ? get().userTypeFilter : undefined,
+                    allRecords: true,
                 });
             },
 
@@ -65,6 +67,7 @@ export const useUserStore = create<UserStore>()(
                     userName: get().searchTerm,
                     status: get().statusFilter !== 'all' ? get().statusFilter : undefined,
                     userType: userType !== 'all' ? userType : undefined,
+                    allRecords: true,
                 });
             },
 
@@ -74,6 +77,7 @@ export const useUserStore = create<UserStore>()(
                     userName: get().searchTerm,
                     status: get().statusFilter !== 'all' ? get().statusFilter : undefined,
                     userType: get().userTypeFilter !== 'all' ? get().userTypeFilter : undefined,
+                    allRecords: true,
                 });
             },
 
@@ -147,21 +151,15 @@ export const useUserStore = create<UserStore>()(
                 }
             },
 
-            deleteUser: async (userId: string) => {
+            changeUserStatus: async (userId: string, status: string) => {
                 try {
                     set({ loading: true, error: null });
-                    await UserService.getInstance().deleteUser(userId);
-
-                    const { currentPage, users } = get();
-                    if (users.length === 1 && currentPage > 1) {
-                        await get().getUsers(currentPage - 1, 10);
-                    } else {
-                        await get().refreshTable();
-                    }
+                    await UserService.getInstance().changeUserStatus(userId, status);
+                    await get().refreshTable();
                 } catch (error) {
-                    console.error('Error deleting user:', error);
+                    console.error('Error changing user status:', error);
                     set({
-                        error: 'Error al eliminar el usuario',
+                        error: 'Error al cambiar el estado del usuario',
                         loading: false
                     });
                     throw error;

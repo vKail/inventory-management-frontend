@@ -6,6 +6,7 @@ import LocationFormView from '@/features/locations/presentation/views/location-f
 import { useLocationStore } from '@/features/locations/context/location-store';
 import { LocationFormValues } from '@/features/locations/data/schemas/location.schema';
 import { ILocation } from '@/features/locations/data/interfaces/location.interface';
+import { toast } from 'sonner';
 
 export default function EditLocationPage() {
     const params = useParams()
@@ -34,7 +35,12 @@ export default function EditLocationPage() {
         try {
             if (id && !isNaN(Number(id))) {
                 await updateLocation(Number(id), data)
+                toast.success('Ubicación actualizada exitosamente')
+                router.push('/locations')
             }
+        } catch (error) {
+            console.error('Error al actualizar la ubicación:', error);
+            toast.error('Error al actualizar la ubicación');
         } finally {
             setIsLoading(false)
         }

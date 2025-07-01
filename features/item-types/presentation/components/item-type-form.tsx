@@ -23,11 +23,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { ItemType } from '../../data/interfaces/item-type.interface'
 import { itemTypeSchema, type ItemTypeFormValues } from '../../data/schemas/item-type.schema'
 import { useItemTypeStore } from '../../context/item-types-store'
-import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbList, BreadcrumbPage, BreadcrumbLink } from '@/components/ui/breadcrumb';
-import { Boxes } from 'lucide-react';
 
 interface ItemTypeFormProps {
   id?: string
@@ -105,7 +102,16 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                 <FormItem>
                   <FormLabel>Código *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Código del tipo de item" maxLength={10} {...field} />
+                    <Input
+                      placeholder="Código del tipo de item"
+                      maxLength={10}
+                      {...field}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        value = value.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\-\s]/g, '');
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <div className="text-xs text-muted-foreground text-right">
                     {field.value?.length || 0}/10 caracteres
@@ -125,9 +131,13 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                     <Input
                       placeholder="Nombre del tipo de ítem"
                       maxLength={25}
-                      textOnly={true}
                       shouldAutoCapitalize={true}
                       {...field}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        value = value.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s]/g, '');
+                        field.onChange(value);
+                      }}
                     />
                   </FormControl>
                   <div className="text-xs text-muted-foreground text-right">
@@ -148,9 +158,13 @@ export default function ItemTypeForm({ id }: ItemTypeFormProps) {
                     <Textarea
                       placeholder="Descripción del tipo de ítem"
                       maxLength={250}
-                      descriptionOnly={true}
                       shouldAutoCapitalize={true}
                       {...field}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        value = value.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s\(\);:,\.?!]/g, '');
+                        field.onChange(value);
+                      }}
                     />
                   </FormControl>
                   <div className="text-xs text-muted-foreground text-right">

@@ -8,8 +8,8 @@ interface ItemTypeFormViewProps {
 
 export default function ItemTypeFormView({ id }: ItemTypeFormViewProps) {
     return (
-        <div className="container mx-auto py-10">
-            <div className="w-full">
+        <div className="flex-1 space-y-4 overflow-hidden">
+            <div className="w-full max-w-[1200px] space-y-2">
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
                         <BreadcrumbItem>

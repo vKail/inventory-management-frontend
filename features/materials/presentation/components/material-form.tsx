@@ -59,7 +59,7 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
                         <BreadcrumbItem>
-                            <span className="text-muted-foreground font-medium">Inventario</span>
+                            <span className="text-muted-foreground font-medium">Configuración</span>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>

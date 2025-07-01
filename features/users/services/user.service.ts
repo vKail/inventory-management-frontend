@@ -3,11 +3,11 @@ import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 interface UserServiceProps {
-  getUsers: (page?: number, limit?: number, filters?: { userName?: string; dni?: string; status?: string }) => Promise<PaginatedResponse>;
+  getUsers: (page?: number, limit?: number, filters?: { userName?: string; dni?: string; status?: string; userType?: string; allRecords?: boolean }) => Promise<PaginatedResponse>;
   getUserById: (id: string) => Promise<IUser>;
   createUser: (user: Partial<IUser>) => Promise<IUser>;
   updateUser: (id: string, user: Partial<IUser>) => Promise<IUser>;
-  deleteUser: (id: string) => Promise<void>;
+  changeUserStatus: (id: string, status: string) => Promise<void>;
   getPersonByDni: (dni: string) => Promise<PersonApiResponse["data"] | null>;
   getPersonById: (id: string) => Promise<PersonApiResponse["data"] | null>;
 }
@@ -28,7 +28,7 @@ export class UserService implements UserServiceProps {
     return UserService.instance;
   }
 
-  async getUsers(page = 1, limit = 10, filters?: { userName?: string; dni?: string; status?: string }): Promise<PaginatedResponse> {
+  async getUsers(page = 1, limit = 10, filters?: { userName?: string; dni?: string; status?: string; userType?: string; allRecords?: boolean }): Promise<PaginatedResponse> {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -38,13 +38,17 @@ export class UserService implements UserServiceProps {
       if (filters?.userName) {
         params.append('userName', filters.userName);
       }
-
       if (filters?.dni) {
         params.append('dni', filters.dni);
       }
-
       if (filters?.status) {
         params.append('status', filters.status);
+      }
+      if (filters?.userType) {
+        params.append('userType', filters.userType);
+      }
+      if (filters?.allRecords) {
+        params.append('allRecords', 'true');
       }
 
       const response = await this.httpClient.get<PaginatedResponse>(`${UserService.url}?${params.toString()}`);
@@ -122,14 +126,14 @@ export class UserService implements UserServiceProps {
     }
   }
 
-  async deleteUser(id: string): Promise<void> {
+  async changeUserStatus(id: string, status: string): Promise<void> {
     try {
-      const response = await this.httpClient.patch<void>(`${UserService.url}/change-status/${id}`, { status: 'INACTIVE' });
+      const response = await this.httpClient.patch<void>(`${UserService.url}/change-status/${id}`, { status });
       if (!response.success) {
         throw new Error(response.message.content.join(', '));
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error('Error changing user status:', error);
       throw error;
     }
   }

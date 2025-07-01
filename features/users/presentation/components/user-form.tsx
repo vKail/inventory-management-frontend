@@ -82,8 +82,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
     }
 
     return (
-        <div className="flex flex-col items-center w-full px-6 md:px-12">
-            <div className="w-full max-w-[1200px]">
+        <div className="flex flex-col items-center w-full">
+            <div className="w-full">
                 {/* Breadcrumb */}
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
@@ -99,7 +99,6 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <Users className="inline mr-1 h-4 w-4 text-primary align-middle" />
                             <BreadcrumbPage>{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
@@ -173,12 +172,6 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                                         <SelectContent>
                                                             <SelectItem value={UserRole.ADMINISTRATOR}>
                                                                 Administrador
-                                                            </SelectItem>
-                                                            <SelectItem value={UserRole.TEACHER}>
-                                                                Profesor
-                                                            </SelectItem>
-                                                            <SelectItem value={UserRole.STUDENT}>
-                                                                Estudiante
                                                             </SelectItem>
                                                             <SelectItem value={UserRole.MANAGER}>
                                                                 Gestor
@@ -319,12 +312,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                         Cancelar
                                     </Button>
                                     <Button
-                                        type="button"
+                                        type="submit"
                                         disabled={isLoading}
-                                        onClick={() => {
-                                            const formData = form.getValues();
-                                            handleSubmit(formData);
-                                        }}
                                     >
                                         {isLoading ? (
                                             <>

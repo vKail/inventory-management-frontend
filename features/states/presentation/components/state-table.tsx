@@ -93,7 +93,7 @@ export function StateTable({ currentPage, itemsPerPage }: StateTableProps) {
   };
 
   return (
-    <Card className="w-full max-w-[1200px] mx-auto">
+    <Card className="w-full mx-auto">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
           <Input

@@ -28,6 +28,7 @@ interface ComboboxProps {
     emptyMessage?: string;
     searchPlaceholder?: string;
     className?: string;
+    loading?: boolean;
 }
 
 export function Combobox({

@@ -1,10 +1,16 @@
 import { z } from "zod";
 
-const textRegex = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:!?()\-_/@]+$/;
+const simpleTextRegex = /^[a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s]+$/;
 
 export const locationSchema = z.object({
-    name: z.string().min(1, 'El nombre es requerido').max(100, 'El nombre no puede exceder 100 caracteres'),
-    description: z.string().min(1, 'La descripción es requerida').max(500, 'La descripción no puede exceder 500 caracteres'),
+    name: z.string()
+        .min(1, 'El nombre es requerido')
+        .max(30, 'El nombre no puede exceder 30 caracteres')
+        .refine((value) => simpleTextRegex.test(value.trim()), 'El nombre solo puede contener letras, números, espacios, guion (-) y guion bajo (_)'),
+    description: z.string()
+        .min(1, 'La descripción es requerida')
+        .max(250, 'La descripción no puede exceder 250 caracteres')
+        .refine((value) => simpleTextRegex.test(value.trim()), 'La descripción solo puede contener letras, números, espacios, guion (-) y guion bajo (_)'),
     parentLocationId: z.number().nullable(),
     type: z.enum(['BUILDING', 'FLOOR', 'OFFICE', 'WAREHOUSE', 'SHELF', 'LABORATORY'], {
         errorMap: () => ({ message: 'Tipo de ubicación inválido' })
@@ -24,11 +30,11 @@ export const locationSchema = z.object({
         .max(150, 'La referencia no puede exceder 150 caracteres')
         .refine((value) => {
             if (!value || value.trim() === "") return false;
-            // Allow numbers, letters, dash (-) and underscore (_)
-            const referenceRegex = /^[a-zA-Z0-9\-_]+$/;
+            // Allow numbers, letters, dash (-), underscore (_) and spaces
+            const referenceRegex = /^[a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s]+$/;
             return referenceRegex.test(value.trim());
-        }, "La referencia debe contener solo letras, números, guiones (-) y guiones bajos (_)"),
-    capacity: z.number().min(0, 'La capacidad debe ser mayor o igual a 0'),
+        }, "La referencia debe contener solo letras, números, guiones (-), guiones bajos (_) y espacios"),
+    capacity: z.number().min(1, 'La capacidad debe ser mayor o igual a 1'),
     capacityUnit: z.enum(['UNITS', 'METERS', 'SQUARE_METERS'], {
         errorMap: () => ({ message: 'Unidad de capacidad inválida' })
     }),
@@ -39,8 +45,8 @@ export const locationSchema = z.object({
         .max(250, "Las notas no pueden exceder 250 caracteres")
         .refine((value) => {
             if (!value || value.trim() === "") return true;
-            return textRegex.test(value.trim());
-        }, "Las notas deben contener solo letras, números, espacios y caracteres válidos (.,;:!?()_-@/)"),
+            return simpleTextRegex.test(value.trim());
+        }, "Las notas solo pueden contener letras, números, espacios, guion (-) y guion bajo (_)")
 }).refine((data) => data.capacity >= data.occupancy, {
     message: "La capacidad debe ser mayor o igual a la ocupación",
     path: ["capacity"],

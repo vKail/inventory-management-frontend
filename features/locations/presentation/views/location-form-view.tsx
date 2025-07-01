@@ -1,5 +1,5 @@
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator, BreadcrumbLink, BreadcrumbPage } from '@/components/ui/breadcrumb';
-import { Wrench } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { LocationForm } from '../components/location-form';
 import { ILocation } from '../../data/interfaces/location.interface';
 import { LocationFormValues } from '../../data/schemas/location.schema';
@@ -22,7 +22,7 @@ export default function LocationFormView({ initialData, onSubmit, isLoading, isE
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <Wrench className="inline mr-1 h-4 w-4 text-primary align-middle" />
+                            <MapPin className="inline mr-1 h-4 w-4 text-primary align-middle" />
                             <BreadcrumbLink href="/locations">Ubicaciones</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
