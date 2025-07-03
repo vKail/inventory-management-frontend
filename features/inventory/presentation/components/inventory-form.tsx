@@ -257,6 +257,59 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
     loadStores();
   }, []);
 
+  // Identificadores de cache
+  const getCacheKey = () => {
+    if (mode === 'edit' && selectedItem && selectedItem.id) {
+      return `inventory-form-cache-edit-${selectedItem.id}`;
+    }
+    return 'inventory-form-cache';
+  };
+
+  // Restaurar cache al montar
+  useEffect(() => {
+    const cacheKey = getCacheKey();
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < 5 * 60 * 1000) {
+          // Restaurar valores del formulario
+          form.reset(data.formValues);
+          // Restaurar materiales y colores
+          if (data.currentMaterials) setCurrentMaterials(data.currentMaterials);
+          if (data.currentColors) setCurrentColors(data.currentColors);
+        } else {
+          localStorage.removeItem(cacheKey);
+        }
+      } catch (e) {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+    // No limpiar cache al desmontar, para que persista si el usuario navega y regresa
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, selectedItem ? selectedItem.id : null]);
+
+  // Guardar cache en cada cambio relevante (excepto imágenes)
+  useEffect(() => {
+    const cacheKey = getCacheKey();
+    const subscription = form.watch((formValues) => {
+      const cacheData = {
+        formValues,
+        currentMaterials,
+        currentColors,
+      };
+      localStorage.setItem(cacheKey, JSON.stringify({ data: cacheData, timestamp: Date.now() }));
+    });
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMaterials, currentColors, mode, selectedItem ? selectedItem.id : null]);
+
+  // Limpiar cache al guardar o cancelar
+  const clearCache = () => {
+    const cacheKey = getCacheKey();
+    localStorage.removeItem(cacheKey);
+  };
+
   // Al iniciar edición, inicializar los stores de materiales y colores con la data real del backend
   useEffect(() => {
     if (mode === 'edit' && selectedItem) {
@@ -568,6 +621,7 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           }
         }
         toast.success('Item creado exitosamente');
+        clearCache();
         router.push('/inventory');
       } else {
         // --- MODO EDICIÓN ---
@@ -627,6 +681,7 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
         }
 
         toast.success('Item actualizado exitosamente');
+        clearCache();
         router.push('/inventory');
       }
     } catch (error) {
@@ -703,7 +758,7 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/inventory')}
+            onClick={() => { clearCache(); router.push('/inventory'); }}
             disabled={loading}
           >
             Cancelar
