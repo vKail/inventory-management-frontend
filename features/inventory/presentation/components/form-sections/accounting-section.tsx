@@ -53,10 +53,10 @@ export const AccountingSection = () => {
                                 <FormItem data-field="accountingAccount">
                                     <FormLabel>Cuenta Contable *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Cuenta contable" maxLength={20} {...field} />
+                                        <Input placeholder="Cuenta contable" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>

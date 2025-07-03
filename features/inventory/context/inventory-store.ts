@@ -32,6 +32,8 @@ interface InventoryState {
     clearFilters: () => void;
     setPage: (page: number) => void;
     refreshTable: () => Promise<void>;
+    addMultipleImagesToId: (itemId: number, images: any[]) => Promise<void>;
+    deleteImageById: (imageId: string) => Promise<void>;
 }
 
 const STORE_NAME = 'inventory-storage';
@@ -213,6 +215,14 @@ export const useInventoryStore = create<InventoryState>()(
                     currentPage: 1
                 }));
                 get().refreshTable();
+            },
+
+            addMultipleImagesToId: async (itemId: number, images: any[]) => {
+                await inventoryService.addMultipleImagesToId(itemId, images);
+            },
+
+            deleteImageById: async (imageId: string) => {
+                await inventoryService.deleteImageById(Number(imageId));
             }
         }),
         {

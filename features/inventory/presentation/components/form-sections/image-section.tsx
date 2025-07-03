@@ -10,7 +10,17 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 
-interface ImageData {
+interface ExistingImage {
+  id: number;
+  filePath: string;
+  isPrimary: boolean;
+  type?: string | null;
+  description?: string | null;
+  photoDate?: string | null;
+  active?: boolean;
+}
+
+export interface InventoryImageData {
   id: string;
   file: File;
   preview: string;
@@ -20,59 +30,60 @@ interface ImageData {
 }
 
 interface ImageSectionProps {
-  onImageChange: (files: File[], descriptions: string[], dates: string[]) => void;
-  selectedFiles: File[];
-  descriptions: string[];
-  setDescriptions: (descriptions: string[]) => void;
-  photoDates: string[];
-  setPhotoDates: (dates: string[]) => void;
+  images: InventoryImageData[];
+  setImages: (images: InventoryImageData[]) => void;
+  existingImages?: ExistingImage[];
+  onDeleteExistingImage?: (imageId: number) => void;
+  mode: 'create' | 'edit';
+  imagesToDelete: number[];
+  setImagesToDelete: (ids: number[]) => void;
 }
 
 export const ImageSection = ({
-  onImageChange,
-  selectedFiles,
-  descriptions,
-  setDescriptions,
-  photoDates,
-  setPhotoDates,
+  images,
+  setImages,
+  existingImages = [],
+  onDeleteExistingImage,
+  mode,
+  imagesToDelete,
+  setImagesToDelete,
 }: ImageSectionProps) => {
-  const [imageData, setImageData] = useState<ImageData[]>([]);
+  const [imageData, setImageData] = useState<InventoryImageData[]>(images || []);
+  const [imageErrors, setImageErrors] = useState<Record<string, { description?: string; photoDate?: string }>>({});
   const MAX_IMAGES = 5;
 
-  // Sync with parent state
-  const syncWithParent = useCallback(() => {
-    const newImageData = selectedFiles.map((file, index) => ({
-      id: `img-${Date.now()}-${index}`,
-      file,
-      preview: URL.createObjectURL(file),
-      description: descriptions[index] || '',
-      photoDate: photoDates[index] || '',
-      isPrimary: index === 0,
-    }));
-    setImageData(newImageData);
-  }, [selectedFiles]);
+  // Obtener la URL base para imágenes
+  const API_URL = process.env.NEXT_PUBLIC_API_URLIMAGE || 'https://gitt-api-3tw6.onrender.com/';
 
-  // Initialize on mount and when props change
   useEffect(() => {
-    syncWithParent();
-  }, [syncWithParent]);
+    setImageData(images);
+  }, [images]);
+
+  // Validar metadatos de imágenes
+  const validateImageFields = (imgs: InventoryImageData[]) => {
+    const errors: Record<string, { description?: string; photoDate?: string }> = {};
+    imgs.forEach(img => {
+      if (!img.description || img.description.trim() === '') {
+        errors[img.id] = { ...(errors[img.id] || {}), description: 'La descripción es requerida' };
+      }
+      if (!img.photoDate || img.photoDate.trim() === '') {
+        errors[img.id] = { ...(errors[img.id] || {}), photoDate: 'La fecha es requerida' };
+      }
+    });
+    setImageErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
-
     const newFiles = Array.from(files);
-
-    // Check limit
-    if (selectedFiles.length + newFiles.length > MAX_IMAGES) {
+    if (imageData.length + newFiles.length > MAX_IMAGES) {
       toast.error(`Máximo ${MAX_IMAGES} imágenes permitidas`);
       return;
     }
-
-    // Validate files
     const validFiles: File[] = [];
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-
     for (const file of newFiles) {
       if (!allowedTypes.includes(file.type)) {
         toast.error(`${file.name}: Formato no soportado`);
@@ -84,80 +95,79 @@ export const ImageSection = ({
       }
       validFiles.push(file);
     }
-
     if (validFiles.length === 0) return;
-
-    // Create new image data
-    const newImageData: ImageData[] = validFiles.map((file, index) => ({
-      id: `img-${Date.now()}-${selectedFiles.length + index}`,
+    // Solo una imagen principal entre nuevas y existentes
+    const hasPrimary = imageData.some(img => img.isPrimary) || (existingImages?.some(img => img.isPrimary) ?? false);
+    const newImageData: InventoryImageData[] = validFiles.map((file, index) => ({
+      id: `img-${Date.now()}-${imageData.length + index}`,
       file,
       preview: URL.createObjectURL(file),
       description: '',
       photoDate: '',
-      isPrimary: selectedFiles.length === 0 && index === 0,
+      isPrimary: !hasPrimary && index === 0,
     }));
-
-    // Update state
-    const updatedFiles = [...selectedFiles, ...validFiles];
-    const updatedDescriptions = [...descriptions, ...Array(validFiles.length).fill('')];
-    const updatedDates = [...photoDates, ...Array(validFiles.length).fill('')];
-
-    setImageData(prev => [...prev, ...newImageData]);
-    onImageChange(updatedFiles, updatedDescriptions, updatedDates);
-
-    // Clear input
+    const updated = [...imageData, ...newImageData];
+    setImageData(updated);
+    setImages(updated);
     event.target.value = '';
   };
 
   const removeImage = (imageId: string) => {
     const imageIndex = imageData.findIndex(img => img.id === imageId);
     if (imageIndex === -1) return;
-
-    // Revoke object URL
     URL.revokeObjectURL(imageData[imageIndex].preview);
-
-    // Remove from arrays
-    const newFiles = selectedFiles.filter((_, i) => i !== imageIndex);
-    const newDescriptions = descriptions.filter((_, i) => i !== imageIndex);
-    const newDates = photoDates.filter((_, i) => i !== imageIndex);
-
-    // Update image data
     const newImageData = imageData.filter(img => img.id !== imageId);
     setImageData(newImageData);
-
-    // Update parent
-    onImageChange(newFiles, newDescriptions, newDates);
+    setImages(newImageData);
+    // Limpiar errores de esa imagen
+    setImageErrors(prev => {
+      const copy = { ...prev };
+      delete copy[imageId];
+      return copy;
+    });
   };
 
-  const updateDescription = (imageId: string, value: string) => {
-    const imageIndex = imageData.findIndex(img => img.id === imageId);
-    if (imageIndex === -1) return;
+  // Solo una imagen principal entre nuevas y existentes
+  const setAsPrimary = (imageId: string) => {
+    const newImageData = imageData.map(img => ({ ...img, isPrimary: img.id === imageId }));
+    setImageData(newImageData);
+    setImages(newImageData);
+  };
 
-    const newDescriptions = [...descriptions];
-    newDescriptions[imageIndex] = value;
-    setDescriptions(newDescriptions);
-
-    // Update local state
-    setImageData(prev =>
-      prev.map(img => (img.id === imageId ? { ...img, description: value } : img))
+  const handleInputChange = (imageId: string, field: 'description' | 'photoDate', value: string) => {
+    const newImageData = imageData.map(img =>
+      img.id === imageId ? { ...img, [field]: value } : img
     );
-  };
-
-  const updatePhotoDate = (imageId: string, date: string) => {
-    const imageIndex = imageData.findIndex(img => img.id === imageId);
-    if (imageIndex === -1) return;
-
-    const newDates = [...photoDates];
-    newDates[imageIndex] = date;
-    setPhotoDates(newDates);
-
-    // Update local state
-    setImageData(prev => prev.map(img => (img.id === imageId ? { ...img, photoDate: date } : img)));
+    setImageData(newImageData);
+    setImages(newImageData);
+    // Validar campo individual
+    setImageErrors(prev => ({
+      ...prev,
+      [imageId]: {
+        ...prev[imageId],
+        [field]: value.trim() === '' ? (field === 'description' ? 'La descripción es requerida' : 'La fecha es requerida') : undefined,
+      },
+    }));
   };
 
   const triggerFileInput = () => {
     const input = document.getElementById('image-upload') as HTMLInputElement;
     if (input) input.click();
+  };
+
+  // Validar imágenes al cambiar
+  useEffect(() => {
+    validateImageFields(imageData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageData]);
+
+  // Nueva función para marcar/desmarcar imágenes existentes para eliminar
+  const toggleDeleteExistingImage = (imageId: number) => {
+    if (imagesToDelete.includes(imageId)) {
+      setImagesToDelete(imagesToDelete.filter(id => id !== imageId));
+    } else {
+      setImagesToDelete([...imagesToDelete, imageId]);
+    }
   };
 
   return (
@@ -172,7 +182,7 @@ export const ImageSection = ({
             <div>
               <h3 className="text-lg font-semibold">Imágenes</h3>
               <p className="text-sm text-muted-foreground">
-                {imageData.length}/{MAX_IMAGES} imágenes
+                {imageData.length + (existingImages?.length || 0)}/{MAX_IMAGES} imágenes
               </p>
             </div>
           </div>
@@ -185,7 +195,7 @@ export const ImageSection = ({
         <div className="lg:col-span-3 p-6">
           <div className="space-y-6">
             {/* Upload Area */}
-            {imageData.length < MAX_IMAGES && (
+            {(imageData.length + (existingImages?.length || 0)) < MAX_IMAGES && (
               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
                 <input
                   id="image-upload"
@@ -218,27 +228,67 @@ export const ImageSection = ({
               </div>
             )}
 
-            {/* Image Grid */}
+            {/* Existing Images Grid (solo eliminar) */}
+            {mode === 'edit' && existingImages && existingImages.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {existingImages.map((img) => {
+                  const isMarkedForDelete = imagesToDelete.includes(img.id);
+                  return (
+                    <Card key={img.id} className="overflow-hidden">
+                      <div className="flex flex-col">
+                        <div className="relative w-[180px] h-[180px] bg-muted mx-auto mt-4 mb-2 rounded-lg overflow-hidden">
+                          <img
+                            src={`${API_URL}${img.filePath}`}
+                            alt={`Imagen ${img.id}`}
+                            className={`w-full h-full object-cover transition-opacity duration-300 ${isMarkedForDelete ? 'opacity-40 grayscale' : ''}`}
+                            style={{ width: '180px', height: '180px' }}
+                          />
+                          <div className="absolute top-2 left-2 flex gap-2">
+                            <span
+                              className={`px-2 py-1 text-xs font-medium rounded-full ${img.isPrimary ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'}`}
+                            >
+                              {img.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleDeleteExistingImage(img.id)}
+                            className={`absolute top-2 right-2 p-1 rounded-full transition-colors ${isMarkedForDelete ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}`}
+                          >
+                            {isMarkedForDelete ? <span>Restaurar</span> : <X className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* New Images Grid (añadir/eliminar, marcar principal) */}
             {imageData.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {imageData.map((image, index) => (
                   <Card key={image.id} className="overflow-hidden">
                     <div className="flex flex-col">
-                      {/* Image Preview */}
-                      <div className="relative aspect-video bg-muted">
+                      <div className="relative w-[180px] h-[180px] bg-muted mx-auto mt-4 mb-2 rounded-lg overflow-hidden">
                         <img
                           src={image.preview}
                           alt={`Imagen ${index + 1}`}
                           className="w-full h-full object-cover"
+                          style={{ width: '180px', height: '180px' }}
                         />
-                        <div className="absolute top-2 left-2">
+                        <div className="absolute top-2 left-2 flex gap-2">
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              image.isPrimary ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'
-                            }`}
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${image.isPrimary ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'}`}
                           >
                             {image.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
                           </span>
+                          {!image.isPrimary && (
+                            <Button size="sm" variant="outline" onClick={() => setAsPrimary(image.id)}>
+                              Hacer principal
+                            </Button>
+                          )}
                         </div>
                         <button
                           type="button"
@@ -248,52 +298,26 @@ export const ImageSection = ({
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-
-                      {/* Form Fields */}
-                      <div className="p-4 space-y-4">
-                        <div>
-                          <label className="text-sm font-medium block mb-2">Descripción</label>
-                          <Input
-                            value={image.description}
-                            onChange={e => updateDescription(image.id, e.target.value)}
-                            placeholder="Describe esta imagen..."
-                            maxLength={250}
-                            className="text-sm"
-                          />
-                          <div className="text-xs text-muted-foreground text-right mt-1">
-                            {image.description.length}/250
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium block mb-2">Fecha de la foto</label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={`w-full justify-start text-left font-normal ${
-                                  !image.photoDate && 'text-muted-foreground'
-                                }`}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {image.photoDate
-                                  ? format(new Date(image.photoDate), 'PPP', { locale: es })
-                                  : 'Seleccionar fecha'}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={image.photoDate ? new Date(image.photoDate) : undefined}
-                                onSelect={date =>
-                                  updatePhotoDate(image.id, date?.toISOString() || '')
-                                }
-                                disabled={date => date > new Date()}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
+                      <div className="p-4 space-y-2">
+                        <Input
+                          placeholder="Descripción de la imagen"
+                          value={image.description}
+                          onChange={e => handleInputChange(image.id, 'description', e.target.value)}
+                          className={imageErrors[image.id]?.description ? 'border-red-500' : ''}
+                        />
+                        {imageErrors[image.id]?.description && (
+                          <p className="text-xs text-red-500 mt-1">{imageErrors[image.id]?.description}</p>
+                        )}
+                        <Input
+                          type="date"
+                          placeholder="Fecha de la foto"
+                          value={image.photoDate}
+                          onChange={e => handleInputChange(image.id, 'photoDate', e.target.value)}
+                          className={imageErrors[image.id]?.photoDate ? 'border-red-500' : ''}
+                        />
+                        {imageErrors[image.id]?.photoDate && (
+                          <p className="text-xs text-red-500 mt-1">{imageErrors[image.id]?.photoDate}</p>
+                        )}
                       </div>
                     </div>
                   </Card>
@@ -302,7 +326,7 @@ export const ImageSection = ({
             )}
 
             {/* Empty State */}
-            {imageData.length === 0 && (
+            {imageData.length === 0 && (!existingImages || existingImages.length === 0) && (
               <div className="text-center py-12">
                 <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                   <ImageIcon className="w-8 h-8 text-muted-foreground" />

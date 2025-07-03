@@ -21,13 +21,59 @@ export class ItemColorService {
 
     public async getItemColors(itemId: number): Promise<ItemColor[]> {
         try {
-            const response = await this.httpClient.get<InventoryItem>(`${ItemColorService.urlItem}/${itemId}`);
+            // Use the specific item-colors endpoint with allRecords=true
+            const response = await this.httpClient.get<IHttpResponse<{ records: ItemColor[], total: number, limit: number, page: number, pages: number }>>(
+                `${ItemColorService.url}?allRecords=true&itemId=${itemId}`
+            );
+
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));
             }
-            return response.data?.colors || [];
+
+            const colors = response.data?.data?.records || [];
+            console.log('Colors from item-colors endpoint:', colors);
+
+            // The data already has the correct structure, just ensure itemId is set
+            const mappedColors = colors.map((color: any) => ({
+                id: color.id || 0,
+                itemId: color.itemId || itemId,
+                colorId: color.color?.id || 0,
+                isMainColor: color.isMainColor || false,
+                color: color.color
+            }));
+
+            console.log('Mapped colors:', mappedColors);
+            return mappedColors;
         } catch (error) {
             console.error('Error fetching item colors:', error);
+            throw error;
+        }
+    }
+
+    public async removeAllColorsFromItem(itemId: number): Promise<void> {
+        try {
+            console.log(`Removing all colors for item ID: ${itemId}`);
+
+            // First, get all colors for this item
+            const colors = await this.getItemColors(itemId);
+            console.log(`Found ${colors.length} colors to remove`);
+
+            // Remove each color individually
+            const removePromises = colors.map(color => {
+                if (color.id && color.id > 0) {
+                    console.log(`Removing color with ID: ${color.id} (${color.color?.name})`);
+                    return this.removeColorFromItem(color.id);
+                } else {
+                    console.warn('Color has no valid ID:', color);
+                    return Promise.resolve();
+                }
+            });
+
+            // Execute all removals in parallel
+            await Promise.all(removePromises);
+            console.log(`Successfully removed ${colors.length} colors`);
+        } catch (error) {
+            console.error('Error removing all colors from item:', error);
             throw error;
         }
     }
@@ -47,6 +93,7 @@ export class ItemColorService {
 
     public async removeColorFromItem(id: number): Promise<void> {
         try {
+            console.log('Removing color with ID:', id);
             const response = await this.httpClient.delete<IHttpResponse<void>>(`${ItemColorService.url}/${id}`);
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));
@@ -59,6 +106,7 @@ export class ItemColorService {
 
     public async updateItemColor(id: number, data: { isMainColor: boolean }): Promise<ItemColor> {
         try {
+            console.log('[ItemColor] Actualizando relación:', { id, data });
             const response = await this.httpClient.patch<IHttpResponse<ItemColor>>(`${ItemColorService.url}/${id}`, data);
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));

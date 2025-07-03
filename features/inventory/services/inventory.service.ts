@@ -17,8 +17,9 @@ interface InventoryServiceProps {
     deleteInventoryItem: (id: string) => Promise<void>;
     addImageToId: (itemId: number, file: File, imageData?: ImageUploadData) => Promise<void>;
     getInventoryItemByCode: (code: string) => Promise<InventoryItem | null>;
-    addMultipleImagesToId: (itemId: number, files: File[], imageData?: ImageUploadData) => Promise<void>;
+    addMultipleImagesToId: (itemId: number, images: Array<{ file: File; description: string; photoDate: string; isPrimary: boolean; type: 'PRIMARY' | 'SECONDARY' | 'DETAIL' }>) => Promise<void>;
     getInventoryItemByName: (name: string) => Promise<InventoryItem[]>;
+    deleteImageById: (imageId: number) => Promise<void>;
 }
 
 export class InventoryService implements InventoryServiceProps {
@@ -211,12 +212,16 @@ export class InventoryService implements InventoryServiceProps {
         }
     }
 
-    public async addMultipleImagesToId(itemId: number, files: File[], imageData?: ImageUploadData): Promise<void> {
+    public async addMultipleImagesToId(itemId: number, images: Array<{ file: File; description: string; photoDate: string; isPrimary: boolean; type: 'PRIMARY' | 'SECONDARY' | 'DETAIL' }>): Promise<void> {
         try {
-            // Procesar cada imagen en paralelo
-            await Promise.all(
-                files.map(file => this.addImageToId(itemId, file, imageData))
-            );
+            for (const img of images) {
+                await this.addImageToId(itemId, img.file, {
+                    description: img.description,
+                    photoDate: img.photoDate,
+                    isPrimary: img.isPrimary,
+                    type: img.type,
+                });
+            }
         } catch (error) {
             console.error('Error uploading multiple images:', error);
             throw error;
@@ -248,6 +253,20 @@ export class InventoryService implements InventoryServiceProps {
         } catch (error) {
             console.error('Error fetching inventory items by name:', error);
             return [];
+        }
+    }
+
+    public async deleteImageById(imageId: number): Promise<void> {
+        try {
+            const response = await this.httpClient.delete<void>(
+                `${process.env.NEXT_PUBLIC_API_URL}item-images/${imageId}`
+            );
+            if (!response.success) {
+                throw new Error(response.message.content.join(', '));
+            }
+        } catch (error) {
+            console.error('Error deleting image:', error);
+            throw error;
         }
     }
 }

@@ -54,10 +54,10 @@ export const GeneralInfoSection = () => {
                                 <FormItem data-field="name">
                                     <FormLabel>Nombre *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Nombre del bien" maxLength={30} {...field} />
+                                        <Input placeholder="Nombre del bien" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/30 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>

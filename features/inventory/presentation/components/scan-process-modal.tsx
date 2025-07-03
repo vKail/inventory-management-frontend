@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+            import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Box, Copy, Edit, Loader2, Barcode, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
