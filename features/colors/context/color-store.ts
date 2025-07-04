@@ -43,17 +43,18 @@ export const useColorStore = create<ColorStore>()(
                 }
             },
 
-            clearFilters: () => {
-                const { colors } = get();
-                set({
-                    searchTerm: '',
-                    filteredColors: colors
-                });
+            clearFilters: async () => {
+                set({ searchTerm: '', loading: true });
+                try {
+                    await get().getColors(1, 100); // Recargar sin filtros
+                } finally {
+                    set({ loading: false });
+                }
             },
 
             refreshTable: async () => {
                 const { currentPage } = get();
-                await get().getColors(currentPage, 10);
+                await get().getColors(currentPage, 100);
             },
 
             getColors: async (page = 1, limit = 10, options?: { allRecords?: boolean, search?: string }) => {
