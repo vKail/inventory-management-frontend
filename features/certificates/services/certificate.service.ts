@@ -21,7 +21,7 @@ const formatNullValue = (value: any): string => {
 };
 
 interface CertificateServiceProps {
-    getCertificates: (page?: number, limit?: number) => Promise<PaginatedCertificates>;
+    getCertificates: (page?: number, limit?: number, queryParams?: string) => Promise<PaginatedCertificates>;
     getCertificateById: (id: string) => Promise<ICertificate | undefined>;
     createCertificate: (certificate: Partial<ICertificate>) => Promise<ICertificate | undefined>;
     updateCertificate: (id: string, certificate: Partial<ICertificate>) => Promise<ICertificate | undefined>;
@@ -44,11 +44,10 @@ export class CertificateService implements CertificateServiceProps {
         return CertificateService.instance;
     }
 
-    public async getCertificates(page = 1, limit = 10): Promise<PaginatedCertificates> {
+    public async getCertificates(page = 1, limit = 10, queryParams = ''): Promise<PaginatedCertificates> {
         try {
-            const response = await this.httpClient.get<PaginatedCertificates>(
-                `${CertificateService.url}?page=${page}&limit=${limit}`
-            );
+            const url = `${CertificateService.url}?page=${page}&limit=${limit}${queryParams ? `&${queryParams}` : ''}`;
+            const response = await this.httpClient.get<PaginatedCertificates>(url);
             if (response.success && response.data) {
                 return response.data;
             }

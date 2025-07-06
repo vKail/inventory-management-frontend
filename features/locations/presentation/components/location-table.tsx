@@ -104,7 +104,7 @@ export function LocationTable() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
             <Input
-              placeholder="Buscar por nombre, descripción, piso o referencia..."
+              placeholder="Buscar por nombre..."
               className="w-full sm:w-64"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

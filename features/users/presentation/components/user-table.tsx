@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Pencil, Trash2, Users, X } from 'lucide-react';
+import { PlusCircle, Pencil, Users, X, UserMinus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
 import { UserRole, UserStatus } from '../../data/schemas/user.schema';
@@ -84,7 +84,7 @@ const USER_STATUSES = [
   { value: 'ACTIVE', label: 'Activo' },
   { value: 'INACTIVE', label: 'Inactivo' },
   { value: 'SUSPENDED', label: 'Suspendido' },
-  { value: 'DEFAULTED', label: 'Moroso' },
+  { value: 'DEFAULTER', label: 'Moroso' },
 ];
 
 export function UserTable() {
@@ -181,8 +181,10 @@ export function UserTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value={UserStatus.ACTIVE}>Activo</SelectItem>
-                  <SelectItem value={UserStatus.INACTIVE}>Inactivo</SelectItem>
+                  <SelectItem value="ACTIVE">Activo</SelectItem>
+                  <SelectItem value="INACTIVE">Inactivo</SelectItem>
+                  <SelectItem value="SUSPENDED">Suspendido</SelectItem>
+                  <SelectItem value="DEFAULTER">Moroso</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -232,20 +234,20 @@ export function UserTable() {
                     <TableHead className="w-[250px]">Nombre Completo</TableHead>
                     <TableHead className="w-[200px]">Email</TableHead>
                     <TableHead className="w-[120px]">Tipo</TableHead>
-                    <TableHead className="w-[40px">Estado</TableHead>
-                    <TableHead className="w-[100px] text-right">Acciones</TableHead>
+                    <TableHead className="w-[100px]">Estado</TableHead>
+                    <TableHead className="w-[120px] text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5}>
-                        <LoaderComponent rows={5} columns={5} />
+                      <TableCell colSpan={6}>
+                        <LoaderComponent rows={5} columns={6} />
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-20 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="py-20 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <Users className="h-10 w-10 opacity-30" />
                           <span>No hay usuarios para mostrar</span>
@@ -279,6 +281,8 @@ export function UserTable() {
                             custom={{
                               'ACTIVE': { label: 'Activo', color: 'bg-green-100 text-green-800' },
                               'INACTIVE': { label: 'Inactivo', color: 'bg-red-100 text-red-800' },
+                              'SUSPENDED': { label: 'Suspendido', color: 'bg-yellow-100 text-yellow-800' },
+                              'DEFAULTER': { label: 'Moroso', color: 'bg-purple-100 text-purple-800' },
                             }}
                           />
                         </TableCell>
@@ -288,6 +292,7 @@ export function UserTable() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(user.id)}
+                              title="Editar usuario"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -298,7 +303,7 @@ export function UserTable() {
                               className="cursor-pointer"
                               title="Cambiar estado"
                             >
-                              <Trash2 className="h-4 w-4 text-red-600" />
+                              <UserMinus className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>
                         </TableCell>

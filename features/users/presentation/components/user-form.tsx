@@ -20,33 +20,48 @@ interface UserFormProps {
     isLoading: boolean;
 }
 
+// Remove createUserSchema and editUserSchema, use userSchema for both create and edit
 export default function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
     const router = useRouter()
     const isEdit = !!initialData
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
-        defaultValues: {
-            userName: '',
-            password: '',
-            career: '',
-            userType: UserRole.ADMINISTRATOR,
-            status: UserStatus.ACTIVE,
-            person: {
-                dni: '',
-                firstName: '',
-                lastName: '',
-                email: '',
-                phone: ''
+        defaultValues: isEdit
+            ? {
+                userName: '',
+                career: '',
+                userType: UserRole.ADMINISTRATOR,
+                status: UserStatus.ACTIVE,
+                person: {
+                    dni: '',
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: ''
+                }
+                // Do NOT include password on edit
             }
-        },
+            : {
+                userName: '',
+                password: '',
+                career: '',
+                userType: UserRole.ADMINISTRATOR,
+                status: UserStatus.ACTIVE,
+                person: {
+                    dni: '',
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: ''
+                }
+            },
     })
 
     useEffect(() => {
         if (initialData) {
             form.reset({
                 userName: initialData.userName,
-                password: '',
                 career: initialData.career || '',
                 userType: initialData.userType as UserRole,
                 status: initialData.status as UserStatus,
@@ -57,7 +72,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                     email: initialData.person?.email || '',
                     phone: initialData.person?.phone || ''
                 }
-            })
+                // Do NOT include password on edit
+            });
         }
     }, [initialData, form])
 
@@ -134,6 +150,7 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                             )}
                                         />
 
+                                        {/* Password field is only rendered on create. Validation (length and special char) is handled in Zod schema. */}
                                         {!isEdit && (
                                             <FormField
                                                 control={form.control}

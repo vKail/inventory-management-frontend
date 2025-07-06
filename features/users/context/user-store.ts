@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { IUser, PaginatedResponse, PersonApiResponse } from '../data/interfaces/user.interface';
+import { IUser, PersonApiResponse } from '../data/interfaces/user.interface';
 import { UserService } from '../services/user.service';
 
 interface UserStore {
@@ -24,6 +24,7 @@ interface UserStore {
     setStatusFilter: (status: string) => void;
     setUserTypeFilter: (userType: string) => void;
     clearFilters: () => void;
+    setUsers: (users: IUser[]) => void;
 }
 
 const STORE_NAME = 'user-storage';
@@ -185,11 +186,18 @@ export const useUserStore = create<UserStore>()(
                     userTypeFilter: 'all',
                 });
                 get().getUsers(1, 10, {});
-            }
+            },
+
+            setUsers: (users: IUser[]) => set({ users, filteredUsers: users }),
         }),
         {
             name: STORE_NAME,
             storage: createJSONStorage(() => sessionStorage),
         }
     )
-); 
+);
+
+// Al final del archivo, exporta una función para obtener solo usuarios activos para certificados
+export const getActiveUsersForCertificates = async () => {
+    return await UserService.getInstance().getUsers(1, 100, { allRecords: true, status: 'ACTIVE' });
+}; 

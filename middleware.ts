@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { userRoutes } from './shared/data/user-routes';
 import { JWTPayload } from './shared/data/interfaces/JWTPayload';
 
-const publicPaths = ['/login', '/register', '/forgot-password', '/forbidden-page'];
+const publicPaths = ['/login', '/register', '/forgot-password', '/forbidden-page', '/'];
 const authExclusivePaths = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {

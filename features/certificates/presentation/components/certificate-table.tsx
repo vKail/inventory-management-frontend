@@ -5,7 +5,7 @@ import { useCertificateStore } from '@/features/certificates/context/certificate
 import { useUserStore } from '@/features/users/context/user-store';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, X, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, FilterX, FileText } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -43,12 +43,22 @@ import { format, subDays, subMonths, subYears, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
 import LoaderComponent from '@/shared/components/ui/Loader';
 import { CertificatePagination } from './certificate-pagination';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
 
 // Definimos los tipos de Actas disponibles
 const CertificateTypes = {
     ENTRY: "Entrada",
     EXIT: "Salida",
     TRANSFER: "Transferencia",
+} as const;
+
+// Definimos los estados disponibles
+const CertificateStatuses = {
+    DRAFT: "Borrador",
+    APPROVED: "Aprobado",
+    CANCELLED: "Cancelado",
 } as const;
 
 interface CertificateTableProps {
@@ -86,6 +96,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
         filteredCertificates: storeFilteredCertificates,
         searchTerm,
         typeFilter,
+        statusFilter,
         dateFilter,
         loading,
         error,
@@ -94,24 +105,65 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
         deleteCertificate,
         setSearchTerm,
         setTypeFilter,
+        setStatusFilter,
         setDateFilter,
         clearFilters,
     } = useCertificateStore();
 
     // Nuevo filtro de rango de fechas
-    type DateRangeType = 'all' | 'last7' | 'lastMonth' | 'lastYear';
-    const [dateRange, setDateRange] = useState<DateRangeType>('all');
+    type DateRangeType = 'all' | 'last7' | 'lastMonth' | 'lastYear' | 'custom';
+    const [customDateFrom, setCustomDateFrom] = useState<string>('');
+    const [customDateTo, setCustomDateTo] = useState<string>('');
+    const [showDateFromPopover, setShowDateFromPopover] = useState(false);
+    const [showDateToPopover, setShowDateToPopover] = useState(false);
 
-    // Filtrar actas según el rango de fechas seleccionado
-    const filteredCertificates = storeFilteredCertificates.filter(cert => {
-        if (dateRange === 'all') return true;
-        const certDate = new Date(cert.date);
+    // Función para obtener fechas según el rango seleccionado
+    const getDateRange = (range: DateRangeType) => {
         const now = new Date();
-        if (dateRange === 'last7') return isAfter(certDate, subDays(now, 7));
-        if (dateRange === 'lastMonth') return isAfter(certDate, subMonths(now, 1));
-        if (dateRange === 'lastYear') return isAfter(certDate, subYears(now, 1));
-        return true;
-    });
+        switch (range) {
+            case 'last7':
+                return {
+                    dateFrom: format(subDays(now, 7), 'yyyy-MM-dd'),
+                    dateTo: format(now, 'yyyy-MM-dd')
+                };
+            case 'lastMonth':
+                return {
+                    dateFrom: format(subMonths(now, 1), 'yyyy-MM-dd'),
+                    dateTo: format(now, 'yyyy-MM-dd')
+                };
+            case 'lastYear':
+                return {
+                    dateFrom: format(subYears(now, 1), 'yyyy-MM-dd'),
+                    dateTo: format(now, 'yyyy-MM-dd')
+                };
+            case 'custom':
+                return {
+                    dateFrom: customDateFrom,
+                    dateTo: customDateTo
+                };
+            default:
+                return { dateFrom: '', dateTo: '' };
+        }
+    };
+
+    // Aplicar filtros al backend
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                await getCertificates(currentPage, itemsPerPage, {
+                    search: searchTerm,
+                    type: typeFilter,
+                    status: statusFilter,
+                    dateFrom: customDateFrom,
+                    dateTo: customDateTo
+                });
+            } catch (error) {
+                console.error('Error loading data:', error);
+                toast.error('Error al cargar los datos');
+            }
+        };
+        loadData();
+    }, [getCertificates, currentPage, itemsPerPage, searchTerm, typeFilter, statusFilter, customDateFrom, customDateTo]);
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -124,21 +176,15 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
         loadUsers();
     }, [getUsers]);
 
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                await getCertificates(currentPage, itemsPerPage);
-            } catch (error) {
-                console.error('Error loading data:', error);
-                toast.error('Error al cargar los datos');
-            }
-        };
-        loadData();
-    }, [getCertificates, currentPage, itemsPerPage]);
-
     const handlePageChange = async (page: number) => {
         try {
-            await getCertificates(page, itemsPerPage);
+            await getCertificates(page, itemsPerPage, {
+                search: searchTerm,
+                type: typeFilter,
+                status: statusFilter,
+                dateFrom: customDateFrom,
+                dateTo: customDateTo
+            });
             onPageChange(page);
         } catch (error) {
             console.error('Error changing page:', error);
@@ -214,11 +260,11 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
     return (
         <Card className="w-full">
             <CardHeader className="px-2 sm:px-4 md:px-8 pb-0">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
+                <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto items-end">
                         <Input
                             placeholder="Buscar por número..."
-                            className="w-full sm:w-48"
+                            className="w-full sm:w-60"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -226,7 +272,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                             value={typeFilter}
                             onValueChange={setTypeFilter}
                         >
-                            <SelectTrigger className="w-full sm:w-48">
+                            <SelectTrigger className="w-full sm:w-32">
                                 <SelectValue placeholder="Todos los tipos" />
                             </SelectTrigger>
                             <SelectContent>
@@ -238,40 +284,95 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Select value={dateRange} onValueChange={(v: string) => setDateRange(v as DateRangeType)}>
-                            <SelectTrigger className="w-full sm:w-40">
-                                <SelectValue placeholder="Rango de fechas" />
+                        <Select
+                            value={statusFilter}
+                            onValueChange={setStatusFilter}
+                        >
+                            <SelectTrigger className="w-full sm:w-32">
+                                <SelectValue placeholder="Todos los estados" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Todas las fechas</SelectItem>
-                                <SelectItem value="last7">Últimos 7 días</SelectItem>
-                                <SelectItem value="lastMonth">Último mes</SelectItem>
-                                <SelectItem value="lastYear">Último año</SelectItem>
+                                <SelectItem value="all">Todos los estados</SelectItem>
+                                {Object.entries(CertificateStatuses).map(([key, value]) => (
+                                    <SelectItem key={key} value={key}>
+                                        {value}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
-                        {(searchTerm || typeFilter !== 'all' || dateRange !== 'all') && (
+                        {/* ComboBox para fecha Desde */}
+                        <Popover open={showDateFromPopover} onOpenChange={setShowDateFromPopover}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 w-full sm:w-32"
+                                    onClick={() => setShowDateFromPopover(true)}
+                                >
+                                    <CalendarIcon className="h-4 w-4" />
+                                    {customDateFrom ? customDateFrom : 'Desde'}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-4 z-50" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={customDateFrom ? new Date(customDateFrom) : undefined}
+                                    onSelect={date => {
+                                        setCustomDateFrom(date ? format(date, 'yyyy-MM-dd') : '');
+                                        setShowDateFromPopover(false);
+                                    }}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        {/* ComboBox para fecha Hasta */}
+                        <Popover open={showDateToPopover} onOpenChange={setShowDateToPopover}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 w-full sm:w-32"
+                                    onClick={() => setShowDateToPopover(true)}
+                                >
+                                    <CalendarIcon className="h-4 w-4" />
+                                    {customDateTo ? customDateTo : 'Hasta'}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-4 z-50" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={customDateTo ? new Date(customDateTo) : undefined}
+                                    onSelect={date => {
+                                        setCustomDateTo(date ? format(date, 'yyyy-MM-dd') : '');
+                                        setShowDateToPopover(false);
+                                    }}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        {(searchTerm || typeFilter !== 'all' || statusFilter !== 'all' || customDateFrom || customDateTo) && (
                             <Button
                                 variant="outline"
                                 size="icon"
                                 className="h-10 w-10 cursor-pointer"
                                 onClick={() => {
                                     clearFilters();
-                                    setDateRange('all');
+                                    setCustomDateFrom('');
+                                    setCustomDateTo('');
                                 }}
                                 title="Limpiar todos los filtros"
                             >
-                                <X className="h-4 w-4" />
+                                <FilterX className="h-4 w-4" />
                             </Button>
                         )}
                     </div>
-
-                    <Button
-                        onClick={() => router.push('/certificates/new')}
-                        className="bg-red-600 hover:bg-red-700 cursor-pointer w-full sm:w-auto"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nueva Acta
-                    </Button>
+                    <div className="flex items-end lg:items-end">
+                        <Button
+                            onClick={() => router.push('/certificates/new')}
+                            className="bg-red-600 hover:bg-red-700 cursor-pointer w-full sm:w-auto"
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nueva Acta
+                        </Button>
+                    </div>
                 </div>
                 <hr className="border-t border-muted mt-4" />
             </CardHeader>
@@ -300,7 +401,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                                                 <LoaderComponent rows={5} columns={8} />
                                             </TableCell>
                                         </TableRow>
-                                    ) : filteredCertificates.length === 0 ? (
+                                    ) : storeFilteredCertificates.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                                                 <div className="flex flex-col items-center gap-2">
@@ -310,7 +411,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredCertificates.map((certificate) => (
+                                        storeFilteredCertificates.map((certificate) => (
                                             <TableRow key={certificate.id} className="hover:bg-muted/50">
                                                 <TableCell>{certificate.number}</TableCell>
                                                 <TableCell>
@@ -390,7 +491,7 @@ export function CertificateTable({ currentPage, itemsPerPage, onPageChange }: Ce
                             </Table>
                         </div>
                     </div>
-                    {!loading && filteredCertificates.length > 0 && (
+                    {!loading && storeFilteredCertificates.length > 0 && (
                         <div className="mt-4">
                             <CertificatePagination
                                 currentPage={currentPage}

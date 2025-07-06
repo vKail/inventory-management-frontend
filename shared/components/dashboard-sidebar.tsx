@@ -1,4 +1,5 @@
-'use client';
+'use client'
+
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +23,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, LogOut } from 'lucide-react';
 
 export const DashboardSidebar = () => {
-  const { logout } = useAuthStore();
+  const { logout, role } = useAuthStore();
   const router = useRouter();
   const { state, setOpen } = useSidebar();
 
@@ -42,52 +43,57 @@ export const DashboardSidebar = () => {
       <SidebarContent className="py-2">
         <SidebarGroup>
           <SidebarGroupContent>
-            {sidebarItems.map(item => (
-              <div key={item.group} className="mb-2">
-                <SidebarGroupLabel className="px-4 py-2 font-medium">
-                  {item.group}
-                </SidebarGroupLabel>
+            {sidebarItems
+              // Show 'Administración' group only if the user's role is 'ADMINISTRATOR' (backend value)
+              .filter(item =>
+                item.group !== 'Administración' || role === 'ADMINISTRATOR'
+              )
+              .map(item => (
+                <div key={item.group} className="mb-2">
+                  <SidebarGroupLabel className="px-4 py-2 font-medium">
+                    {item.group}
+                  </SidebarGroupLabel>
 
-                <SidebarMenu className="w-full flex justify-between">
-                  {item.items.map(subItem => (
-                    <Collapsible key={subItem.title} className="w-full">
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton
-                          className="flex w-full items-center justify-between p-4 my-1 hover:bg-primary/10 text-muted-foreground hover:text-primary"
-                          onClick={() => {
-                            setOpen(true);
-                          }}
-                        >
-                          <div className="flex items-center justify-between h-full">
-                            {subItem.icon && <subItem.icon size={20} className="mr-5 h-5 w-5" />}
-                            <span>{subItem.title}</span>
-                          </div>
-                          <ChevronDown className="h-4 w-4" />
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
+                  <SidebarMenu className="w-full flex justify-between">
+                    {item.items.map(subItem => (
+                      <Collapsible key={subItem.title} className="w-full">
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton
+                            className="flex w-full items-center justify-between p-4 my-1 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                            onClick={() => {
+                              setOpen(true);
+                            }}
+                          >
+                            <div className="flex items-center justify-between h-full">
+                              {subItem.icon && <subItem.icon size={20} className="mr-5 h-5 w-5" />}
+                              <span>{subItem.title}</span>
+                            </div>
+                            <ChevronDown className="h-4 w-4" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
 
-                      <CollapsibleContent>
-                        {subItem.subItems.map(subSubItem => (
-                          <SidebarMenuSub key={subSubItem.title}>
-                            <SidebarMenuSubItem key={subSubItem.title}>
-                              <SidebarMenuButton
-                                onClick={() => {
-                                  router.push(subSubItem.href);
-                                }}
-                                className="flex w-full items-center px-6 py-2 hover:bg-primary/10 text-muted-foreground hover:text-primary"
-                              >
-                                {subSubItem.icon && <subSubItem.icon className="mr-2 h-4 w-4" />}
-                                <span>{subSubItem.title}</span>
-                              </SidebarMenuButton>
-                            </SidebarMenuSubItem>
-                          </SidebarMenuSub>
-                        ))}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
-                </SidebarMenu>
-              </div>
-            ))}
+                        <CollapsibleContent>
+                          {subItem.subItems.map(subSubItem => (
+                            <SidebarMenuSub key={subSubItem.title}>
+                              <SidebarMenuSubItem key={subSubItem.title}>
+                                <SidebarMenuButton
+                                  onClick={() => {
+                                    router.push(subSubItem.href);
+                                  }}
+                                  className="flex w-full items-center px-6 py-2 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                >
+                                  {subSubItem.icon && <subSubItem.icon className="mr-2 h-4 w-4" />}
+                                  <span>{subSubItem.title}</span>
+                                </SidebarMenuButton>
+                              </SidebarMenuSubItem>
+                            </SidebarMenuSub>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                  </SidebarMenu>
+                </div>
+              ))}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
