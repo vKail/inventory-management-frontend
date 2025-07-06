@@ -234,32 +234,32 @@ export const ImageSection = ({
                 {existingImages.map((img) => {
                   const isMarkedForDelete = imagesToDelete.includes(img.id);
                   return (
-                    <Card key={img.id} className="overflow-hidden">
-                      <div className="flex flex-col">
+                  <Card key={img.id} className="overflow-hidden">
+                    <div className="flex flex-col">
                         <div className="relative w-[180px] h-[180px] bg-muted mx-auto mt-4 mb-2 rounded-lg overflow-hidden">
-                          <img
-                            src={`${API_URL}${img.filePath}`}
-                            alt={`Imagen ${img.id}`}
+                        <img
+                          src={`${API_URL}${img.filePath}`}
+                          alt={`Imagen ${img.id}`}
                             className={`w-full h-full object-cover transition-opacity duration-300 ${isMarkedForDelete ? 'opacity-40 grayscale' : ''}`}
                             style={{ width: '180px', height: '180px' }}
-                          />
-                          <div className="absolute top-2 left-2 flex gap-2">
-                            <span
+                        />
+                        <div className="absolute top-2 left-2 flex gap-2">
+                          <span
                               className={`px-2 py-1 text-xs font-medium rounded-full ${img.isPrimary ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'}`}
-                            >
-                              {img.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
+                          >
+                            {img.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
                             onClick={() => toggleDeleteExistingImage(img.id)}
                             className={`absolute top-2 right-2 p-1 rounded-full transition-colors ${isMarkedForDelete ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}`}
-                          >
+                        >
                             {isMarkedForDelete ? <span>Restaurar</span> : <X className="w-4 h-4" />}
-                          </button>
-                        </div>
+                        </button>
                       </div>
-                    </Card>
+                    </div>
+                  </Card>
                   );
                 })}
               </div>

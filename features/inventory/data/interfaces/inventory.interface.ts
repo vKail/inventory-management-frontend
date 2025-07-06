@@ -51,6 +51,7 @@ export interface InventoryItem extends BaseInventoryItem {
   category?: Category;
   itemType?: ItemType;
   condition?: ICondition;
+  custodian?: Custodian;
   images?: Images[];
   materials?: ItemMaterial[];
   colors?: ItemColor[];
@@ -183,4 +184,23 @@ export interface ItemColor {
   colorId: number;
   isMainColor: boolean;
   color?: IColor;
+}
+
+export interface Custodian {
+  id: number;
+  personId: number;
+  userName: string;
+  career: string;
+  userType: string;
+  status: string;
+  person: {
+    id: number;
+    dni: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string | null;
+    type: string;
+    status: string;
+  };
 }

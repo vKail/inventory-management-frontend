@@ -1,5 +1,5 @@
-            import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Box, Copy, Edit, Loader2, Barcode, X } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Box, Copy, Edit, Loader2, Barcode, X, User, Calendar, MapPin, Tag, AlertTriangle, Shield, Clock, FileText } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ScanProcessModalProps {
     isOpen: boolean;
@@ -177,6 +178,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
             "Estado": foundItem.status?.name,
             "Condición": foundItem.condition?.name,
             "Ubicación": foundItem.location?.name,
+            "Custodio": foundItem.custodian ? `${foundItem.custodian.person.firstName} ${foundItem.custodian.person.lastName}` : "N/A",
             "Fecha de Adquisición": foundItem.acquisitionDate ? format(new Date(foundItem.acquisitionDate), "PPP", { locale: es }) : "N/A",
             "Fecha de Garantía": foundItem.warrantyDate ? format(new Date(foundItem.warrantyDate), "PPP", { locale: es }) : "N/A",
             "Fecha de Expiración": foundItem.expirationDate ? format(new Date(foundItem.expirationDate), "PPP", { locale: es }) : "N/A",
@@ -230,7 +232,7 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-7xl w-[90vw] h-[90vh] max-h-[90vh] transition-all duration-300 flex flex-col">
+            <DialogContent className="sm:max-w-6xl w-[95vw] h-[95vh] max-h-[95vh] transition-all duration-300 flex flex-col">
                 <DialogTitle className="text-xl font-semibold flex items-center justify-between border-b pb-4">
                     <div className="flex items-center gap-2">
                         <Barcode className="h-5 w-5" />
@@ -287,193 +289,296 @@ export function ScanProcessModal({ isOpen, onClose, onScanComplete, initialItem 
                             </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col md:flex-row gap-6 h-full w-full">
-                            {/* Left Side */}
-                            <div className="flex flex-col gap-4 min-w-[220px] max-w-[340px] w-full md:w-[35%] flex-shrink-0 overflow-y-auto px-2">
-                                {/* Imágenes */}
-                                <div className="space-y-4">
-                                    <h3 className="font-medium text-base">Imágenes</h3>
-                                    {foundItem.images && foundItem.images.length > 0 ? (
-                                        <Carousel className="w-full max-w-[320px] mx-auto">
-                                            <CarouselContent>
-                                                {foundItem.images.map((image, index) => (
-                                                    <CarouselItem key={index}>
-                                                        <div className="aspect-square relative w-[320px] h-[320px] mx-auto">
-                                                            <img
-                                                                src={`${API_URL}${image.filePath}`}
-                                                                alt={`Imagen ${index + 1} de ${foundItem.name}`}
-                                                                className="object-cover rounded-lg w-full h-full"
-                                                            />
-                                                            <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-between px-2 pointer-events-none">
-                                                                <CarouselPrevious className="pointer-events-auto relative left-0 translate-x-0" />
-                                                                <CarouselNext className="pointer-events-auto relative right-0 translate-x-0" />
-                                                            </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* Header Card with Basic Info */}
+                            <Card className="border-2 border-primary/20">
+                                <CardContent className="p-6">
+                                    <div className="flex gap-6">
+                                        {/* Left side - Basic Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-lg font-bold text-gray-900">
+                                                                {foundItem.code}
+                                                            </span>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                onClick={() => { navigator.clipboard.writeText(foundItem.code); toast.success('Código copiado') }}
+                                                                className="h-6 w-6"
+                                                                title="Copiar código"
+                                                            >
+                                                                <Copy className="h-3 w-3" />
+                                                            </Button>
                                                         </div>
-                                                    </CarouselItem>
-                                                ))}
-                                            </CarouselContent>
-                                        </Carousel>
-                                    ) : (
-                                        <div className="aspect-square bg-muted rounded-lg flex items-center justify-center w-[320px] h-[320px] mx-auto">
-                                            <Box className="h-8 w-8 text-muted-foreground" />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Detalles Básicos */}
-                                <div className="space-y-4 bg-secondary p-3 rounded-lg text-xs">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-base font-semibold truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.name}>{foundItem.name}</h3>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 items-center">
-                                        <div className="flex items-center gap-2">
-                                            <div>
-                                                <p className="text-xs text-muted-foreground">Código</p>
-                                                <p className="font-medium text-xs truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.code}>{foundItem.code}</p>
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            Stock: {foundItem.stock}
+                                                        </Badge>
+                                                        {foundItem.availableForLoan && (
+                                                            <Badge className="bg-green-100 text-green-800 text-xs">
+                                                                Disponible para Préstamo
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <CardTitle className="text-xl font-bold text-gray-900 leading-tight">
+                                                        {foundItem.name}
+                                                    </CardTitle>
+                                                </div>
+                                                <p className="text-gray-700 leading-relaxed">
+                                                    {foundItem.description}
+                                                </p>
                                             </div>
-                                            <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(foundItem.code); toast.success('Código copiado') }} className="h-7 w-7" title="Copiar código">
-                                                <Copy className="h-3 w-3" />
-                                            </Button>
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Stock</p>
-                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={String(foundItem.stock)}>{foundItem.stock}</p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-muted-foreground">Descripción</p>
-                                        <p className="text-xs truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.description}>{foundItem.description}</p>
-                                    </div>
-                                </div>
 
-                                {/* Características */}
-                                <div className="bg-secondary p-3 rounded-lg space-y-2 mt-2">
-                                    <h4 className="font-medium text-base">Características</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {foundItem.critical && <Badge className="truncate max-w-full md:max-w-[80px] lg:max-w-[120px]" title="Crítico">Crítico</Badge>}
-                                        {foundItem.dangerous && <Badge className="truncate max-w-full md:max-w-[80px] lg:max-w-[120px]" title="Peligroso">Peligroso</Badge>}
-                                        {foundItem.requiresSpecialHandling && <Badge className="truncate max-w-full md:max-w-[120px] lg:max-w-[160px]" title="Manejo Especial">Manejo Especial</Badge>}
-                                        {foundItem.perishable && <Badge className="truncate max-w-full md:max-w-[80px] lg:max-w-[120px]" title="Perecedero">Perecedero</Badge>}
-                                        {foundItem.availableForLoan && <Badge className="truncate max-w-full md:max-w-[120px] lg:max-w-[160px]" title="Disponible para Préstamo">Disponible para Préstamo</Badge>}
-                                        {!foundItem.critical && !foundItem.dangerous && !foundItem.requiresSpecialHandling &&
-                                            !foundItem.perishable && !foundItem.availableForLoan && (
-                                                <p className="text-xs text-muted-foreground">No hay características especiales</p>
+                                        {/* Right side - Images */}
+                                        <div className="flex-shrink-0">
+                                            {foundItem.images && foundItem.images.length > 0 ? (
+                                                <Carousel className="w-[320px]">
+                                                    <CarouselContent>
+                                                        {foundItem.images.map((image, index) => (
+                                                            <CarouselItem key={index}>
+                                                                <div className="aspect-square relative w-[320px] h-[320px]">
+                                                                    <img
+                                                                        src={`${API_URL}${image.filePath}`}
+                                                                        alt={`Imagen ${index + 1} de ${foundItem.name}`}
+                                                                        className="object-cover rounded-lg w-full h-full"
+                                                                    />
+                                                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex items-center justify-between px-2 pointer-events-none">
+                                                                        <CarouselPrevious className="pointer-events-auto relative left-0 translate-x-0" />
+                                                                        <CarouselNext className="pointer-events-auto relative right-0 translate-x-0" />
+                                                                    </div>
+                                                                </div>
+                                                            </CarouselItem>
+                                                        ))}
+                                                    </CarouselContent>
+                                                </Carousel>
+                                            ) : (
+                                                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center w-[320px] h-[320px]">
+                                                    <Box className="h-8 w-8 text-muted-foreground" />
+                                                </div>
                                             )}
+                                        </div>
                                     </div>
-                                </div>
+                                </CardContent>
+                            </Card>
 
-                                {/* Observaciones */}
-                                {foundItem.observations && (
-                                    <div className="bg-secondary p-3 rounded-lg space-y-2 mt-2">
-                                        <h4 className="font-medium text-base">Observaciones</h4>
-                                        <p className="text-xs text-muted-foreground truncate max-w-full md:max-w-[200px] lg:max-w-[320px]" title={foundItem.observations}>{foundItem.observations}</p>
-                                    </div>
-                                )}
+                            {/* Classification and Location */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Tag className="h-5 w-5" />
+                                            Clasificación
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Tipo</p>
+                                                <p className="text-sm font-semibold">{foundItem.itemType?.name || "N/A"}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Categoría</p>
+                                                <p className="text-sm font-semibold">{foundItem.category?.name || "N/A"}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Estado</p>
+                                                <p className="text-sm font-semibold">{foundItem.status?.name || "N/A"}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Condición</p>
+                                                <p className="text-sm font-semibold">{foundItem.condition?.name || "N/A"}</p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <MapPin className="h-5 w-5" />
+                                            Ubicación y Custodio
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-500">Ubicación</p>
+                                            <p className="text-sm font-semibold">{foundItem.location?.name || "N/A"}</p>
+                                        </div>
+                                        {foundItem.custodian && (
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-500">Custodio Responsable</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <User className="h-4 w-4 text-gray-400" />
+                                                    <div>
+                                                        <p className="text-sm font-semibold">
+                                                            {foundItem.custodian.person.firstName} {foundItem.custodian.person.lastName}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            DNI: {foundItem.custodian.person.dni} | {foundItem.custodian.person.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
                             </div>
-                            {/* Right Side */}
-                            <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-y-auto px-2">
-                                {/* Clasificación */}
-                                <div className="bg-secondary p-3 rounded-lg space-y-4">
-                                    <h4 className="font-medium text-base">Clasificación</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Tipo</p>
-                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.itemType?.name}>{foundItem.itemType?.name}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Categoría</p>
-                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.category?.name}>{foundItem.category?.name}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Estado</p>
-                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.status?.name}>{foundItem.status?.name}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Condición</p>
-                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.condition?.name}>{foundItem.condition?.name}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Ubicación</p>
-                                            <p className="font-medium text-xs truncate max-w-full md:max-w-[100px] lg:max-w-[150px]" title={foundItem.location?.name}>{foundItem.location?.name}</p>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                {/* Materiales */}
-                                <div className="bg-secondary p-3 rounded-lg space-y-2">
-                                    <h4 className="font-medium text-base">Materiales</h4>
-                                    <div className="overflow-x-auto">
-                                        <div className="flex gap-2 min-w-[320px]">
-                                            {foundItem.materials && foundItem.materials.length > 0 ? (
-                                                foundItem.materials.map((itemMaterial, index) => (
-                                                    <div key={index} className="flex flex-col items-center bg-white p-2 rounded-md min-w-[120px] max-w-[160px] text-xs">
+                            {/* Materials and Colors */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Box className="h-5 w-5" />
+                                            Materiales
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {foundItem.materials && foundItem.materials.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {foundItem.materials.map((itemMaterial, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                        <span className="text-sm font-medium">{itemMaterial.material?.name}</span>
                                                         {itemMaterial.isMainMaterial && (
-                                                            <Badge variant="secondary" className="mb-1">Principal</Badge>
+                                                            <Badge variant="secondary" className="text-xs">Principal</Badge>
                                                         )}
-                                                        <span className="truncate max-w-full" title={itemMaterial.material?.name}>{itemMaterial.material?.name}</span>
                                                     </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-xs text-muted-foreground">No hay materiales asignados</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No hay materiales asignados</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
 
-                                {/* Colores */}
-                                <div className="bg-secondary p-3 rounded-lg space-y-2">
-                                    <h4 className="font-medium text-base">Colores</h4>
-                                    <div className="overflow-x-auto">
-                                        <div className="flex gap-2 min-w-[320px]">
-                                            {foundItem.colors && foundItem.colors.length > 0 ? (
-                                                foundItem.colors.map((itemColor, index) => (
-                                                    <div key={index} className="flex flex-col items-center bg-white p-2 rounded-md min-w-[120px] max-w-[160px] text-xs">
-                                                        {itemColor.isMainColor && (
-                                                            <Badge variant="secondary" className="mb-1">Principal</Badge>
-                                                        )}
-                                                        <div className="flex items-center gap-1 mb-1">
-                                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: itemColor.color?.hexCode }} />
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <div className="w-5 h-5 rounded-full bg-gradient-to-r from-red-400 to-blue-500" />
+                                            Colores
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {foundItem.colors && foundItem.colors.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {foundItem.colors.map((itemColor, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                        <div className="flex items-center gap-2">
+                                                            <div
+                                                                className="w-4 h-4 rounded-full border border-gray-300"
+                                                                style={{ backgroundColor: itemColor.color?.hexCode }}
+                                                            />
+                                                            <span className="text-sm font-medium">{itemColor.color?.name}</span>
                                                         </div>
-                                                        <span className="truncate max-w-full" title={itemColor.color?.name}>{itemColor.color?.name}</span>
+                                                        {itemColor.isMainColor && (
+                                                            <Badge variant="secondary" className="text-xs">Principal</Badge>
+                                                        )}
                                                     </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-xs text-muted-foreground">No hay colores asignados</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No hay colores asignados</p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </div>
 
-                                {/* Fechas */}
-                                <div className="bg-secondary p-4 rounded-lg space-y-4">
-                                    <h4 className="font-medium text-lg">Fechas</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Adquisición</p>
-                                            <p className="font-medium">
+                            {/* Dates */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Calendar className="h-5 w-5" />
+                                        Fechas Importantes
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="p-4 bg-blue-50 rounded-lg">
+                                            <p className="text-sm font-medium text-blue-700">Fecha de Adquisición</p>
+                                            <p className="text-sm font-semibold text-blue-900">
                                                 {foundItem.acquisitionDate ? format(new Date(foundItem.acquisitionDate), "PPP", { locale: es }) : "N/A"}
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Garantía</p>
-                                            <p className="font-medium">
+                                        <div className="p-4 bg-green-50 rounded-lg">
+                                            <p className="text-sm font-medium text-green-700">Fecha de Garantía</p>
+                                            <p className="text-sm font-semibold text-green-900">
                                                 {foundItem.warrantyDate ? format(new Date(foundItem.warrantyDate), "PPP", { locale: es }) : "N/A"}
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Expiración</p>
-                                            <p className="font-medium">
+                                        <div className="p-4 bg-orange-50 rounded-lg">
+                                            <p className="text-sm font-medium text-orange-700">Fecha de Expiración</p>
+                                            <p className="text-sm font-semibold text-orange-900">
                                                 {foundItem.expirationDate ? format(new Date(foundItem.expirationDate), "PPP", { locale: es }) : "N/A"}
                                             </p>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Special Characteristics */}
+                            {(foundItem.critical || foundItem.dangerous || foundItem.requiresSpecialHandling || foundItem.perishable) && (
+                                <Card className="border-orange-200 bg-orange-50/30">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-orange-800">
+                                            <AlertTriangle className="h-5 w-5" />
+                                            Características Especiales
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex flex-wrap gap-2">
+                                            {foundItem.critical && (
+                                                <Badge variant="destructive" className="text-xs">
+                                                    <Shield className="h-3 w-3 mr-1" />
+                                                    Crítico
+                                                </Badge>
+                                            )}
+                                            {foundItem.dangerous && (
+                                                <Badge variant="destructive" className="text-xs">
+                                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                                    Peligroso
+                                                </Badge>
+                                            )}
+                                            {foundItem.requiresSpecialHandling && (
+                                                <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                                                    <Shield className="h-3 w-3 mr-1" />
+                                                    Manejo Especial
+                                                </Badge>
+                                            )}
+                                            {foundItem.perishable && (
+                                                <Badge className="bg-red-100 text-red-800 text-xs">
+                                                    <Clock className="h-3 w-3 mr-1" />
+                                                    Perecedero
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Observations */}
+                            {foundItem.observations && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <FileText className="h-5 w-5" />
+                                            Observaciones
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                            {foundItem.observations}
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                     )}
                 </div>
 
-                {/* Botones de Acción */}
+                {/* Action Buttons */}
                 <div className="flex justify-end gap-2 p-4 border-t bg-muted/30">
                     <Button variant="outline" onClick={onClose}>
                         <X className="h-4 w-4 mr-2" />
