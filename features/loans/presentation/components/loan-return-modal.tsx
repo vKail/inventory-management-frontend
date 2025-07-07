@@ -44,11 +44,11 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                     const person = await userService.getPersonById(loan.requestorId.toString());
                     if (person) {
                         setUserDetails(person);
-                        setDefaulter(!!(person as any)?.defaulter);
+                        setDefaulter((person as any)?.status === "DEFAULTER");
                     } else {
                         const user = await getUserById(loan.requestorId.toString());
                         setUserDetails(user);
-                        setDefaulter(!!(user as any)?.defaulter);
+                        setDefaulter((user as any)?.status === "DEFAULTER");
                     }
                 } catch (error) {
                     setUserDetails(null);
@@ -57,6 +57,8 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
             }
         };
         fetchUserDetails();
+        // Guardar referencia para refrescar luego
+        (window as any).fetchUserDetails = fetchUserDetails;
     }, [loan.requestorId, getUserById, userService]);
 
     useEffect(() => {
@@ -159,7 +161,8 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
         setDefaulterLoading(true);
         try {
             await userService.markAsDefaulter(userDetails.id, userDetails.dni);
-            setDefaulter(true);
+            // Refrescar datos de la persona para obtener el nuevo status
+            if ((window as any).fetchUserDetails) await (window as any).fetchUserDetails();
             toast.success("Persona marcada como morosa");
         } catch (error) {
             toast.error("Error al marcar como moroso");
@@ -172,7 +175,8 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
         setDefaulterLoading(true);
         try {
             await userService.removeDefaulterStatus(userDetails.id, userDetails.dni);
-            setDefaulter(false);
+            // Refrescar datos de la persona para obtener el nuevo status
+            if ((window as any).fetchUserDetails) await (window as any).fetchUserDetails();
             toast.success("Estado de moroso removido");
         } catch (error) {
             toast.error("Error al quitar estado de moroso");
@@ -197,8 +201,8 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
             <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
                 <DialogHeader className="border-b px-6 pt-6 pb-3">
                     <DialogTitle className="text-lg font-semibold flex items-center gap-2">
-                        Devolución de Préstamo # {loan.loanCode}
-                        {defaulter && <Badge variant="destructive">Moroso</Badge>}
+                        Devolución de Préstamo # {loan.id}
+                        {defaulter && <Badge variant="default">Moroso</Badge>}
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground">
                         Complete la información para registrar la devolución de los items prestados.
@@ -215,7 +219,7 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                                         <span className="font-medium text-sm">
                                             {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : 'Cargando...'}
                                         </span>
-                                        {defaulter && <Badge variant="destructive" className="ml-1">Moroso</Badge>}
+                                        {defaulter && <Badge variant="default" className="ml-1">Moroso</Badge>}
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         {userDetails?.type || 'Cargando...'}
