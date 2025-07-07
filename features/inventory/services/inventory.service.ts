@@ -1,6 +1,7 @@
 import { HttpHandler, IHttpResponse } from '@/core/data/interfaces/HttpHandler';
 import { InventoryItem, PaginatedInventoryResponse } from '../data/interfaces/inventory.interface';
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
+import axios from "axios";
 
 interface ImageUploadData {
     type?: 'PRIMARY' | 'SECONDARY' | 'DETAIL';
@@ -20,6 +21,7 @@ interface InventoryServiceProps {
     addMultipleImagesToId: (itemId: number, images: Array<{ file: File; description: string; photoDate: string; isPrimary: boolean; type: 'PRIMARY' | 'SECONDARY' | 'DETAIL' }>) => Promise<void>;
     getInventoryItemByName: (name: string) => Promise<InventoryItem[]>;
     deleteImageById: (imageId: number) => Promise<void>;
+    updateCondition: (itemId: number, conditionId: number, stock?: number) => Promise<IHttpResponse<InventoryItem>>;
 }
 
 export class InventoryService implements InventoryServiceProps {
@@ -267,6 +269,32 @@ export class InventoryService implements InventoryServiceProps {
         } catch (error) {
             console.error('Error deleting image:', error);
             throw error;
+        }
+    }
+
+    public async updateCondition(itemId: number, conditionId: number, stock?: number): Promise<IHttpResponse<InventoryItem>> {
+        try {
+            const body: any = { conditionId };
+            if (typeof stock === 'number') {
+                body.stock = stock;
+            }
+            const response = await this.httpClient.patch<InventoryItem>(
+                `${InventoryService.url}/${itemId}`,
+                body
+            );
+            return response;
+        } catch (error) {
+            console.error('Error updating item condition:', error);
+            return {
+                success: false,
+                message: {
+                    content: error instanceof Error ? [error.message] : ['Error desconocido al actualizar la condición'],
+                    dispayable: true
+                },
+                data: null as any,
+                statusCode: 500,
+                metadata: null
+            };
         }
     }
 }

@@ -1,5 +1,6 @@
-import { ArrowDownUp, List, Grid2X2, Plus, Calendar, X } from "lucide-react";
+import { ArrowDownUp, List, Grid2X2, Plus, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -8,7 +9,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useLoanStore } from "../../context/loan-store";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface LoanHeaderProps {
@@ -44,6 +45,7 @@ export function LoanHeader({
 }: LoanHeaderProps) {
     const router = useRouter();
     const { setFilters, filters, clearFilters } = useLoanStore();
+    const [dniInput, setDniInput] = useState(filters.requestorDni || '');
 
     const handleDeliveryDateRangeChange = useCallback((value: string) => {
         setFilters({ deliveryDateRange: value });
@@ -61,21 +63,41 @@ export function LoanHeader({
         router.push('/loans/new');
     };
 
+    const handleDniSearch = useCallback(() => {
+        setFilters({ requestorDni: dniInput.trim() });
+    }, [setFilters, dniInput]);
+
+    const handleClearDni = useCallback(() => {
+        setDniInput('');
+        setFilters({ requestorDni: '' });
+    }, [setFilters]);
+
     const hasActiveFilters = filters.deliveryDateRange !== 'all' ||
         filters.dueDateRange !== 'all' ||
-        (filters.status && filters.status !== 'all');
+        (filters.status && filters.status !== 'all') ||
+        (filters.requestorDni && filters.requestorDni.trim());
 
     return (
         <div className="space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4 items-end">
-                    <div className="relative">
+                {filters.requestorDni && filters.requestorDni.trim() && (
+                    <div className="w-full bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                            <span className="text-sm font-medium text-red-900">
+                                Mostrando historial de préstamos para DNI: <span className="font-bold">{filters.requestorDni}</span>
+                            </span>
+                        </div>
+                    </div>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto py-1 mb-2 items-end overflow-x-auto">
+                    <div className="relative max-w-xs w-full">
                         <label className="block text-xs font-medium text-muted-foreground mb-1">Filtrar por Fecha de Entrega</label>
                         <Select
                             onValueChange={handleDeliveryDateRangeChange}
                             defaultValue={filters.deliveryDateRange}
                         >
-                            <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectTrigger className="w-full max-w-xs">
                                 <SelectValue placeholder="Filtrar por Fecha de Entrega" />
                             </SelectTrigger>
                             <SelectContent>
@@ -88,13 +110,13 @@ export function LoanHeader({
                         </Select>
                     </div>
 
-                    <div className="relative">
+                    <div className="relative max-w-xs w-full">
                         <label className="block text-xs font-medium text-muted-foreground mb-1">Filtrar por Fecha de Vencimiento</label>
                         <Select
                             onValueChange={handleDueDateRangeChange}
                             defaultValue={filters.dueDateRange}
                         >
-                            <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectTrigger className="w-full max-w-xs">
                                 <SelectValue placeholder="Filtrar por Fecha de Vencimiento" />
                             </SelectTrigger>
                             <SelectContent>
@@ -114,13 +136,13 @@ export function LoanHeader({
                         </Select>
                     </div>
 
-                    <div className="relative">
+                    <div className="relative max-w-xs w-full">
                         <label className="block text-xs font-medium text-muted-foreground mb-1">Estado</label>
                         <Select
                             onValueChange={handleStatusChange}
                             defaultValue={filters.status}
                         >
-                            <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectTrigger className="w-full max-w-xs">
                                 <SelectValue placeholder="Estado" />
                             </SelectTrigger>
                             <SelectContent>
@@ -132,6 +154,52 @@ export function LoanHeader({
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    <div className="relative max-w-xs w-full">
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Buscar por DNI</label>
+                        <div className="flex gap-2">
+                            <Input
+                                type="text"
+                                placeholder="Ej: 1804908471"
+                                value={dniInput}
+                                onChange={(e) => {
+                                    // Only allow numbers
+                                    const value = e.target.value.replace(/[^0-9]/g, '');
+                                    setDniInput(value);
+                                }}
+                                className="w-full max-w-[120px]"
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleDniSearch();
+                                    }
+                                }}
+                                maxLength={10}
+                            />
+                            <Button
+                                onClick={handleDniSearch}
+                                size="sm"
+                                className="bg-red-600 hover:bg-red-700"
+                                disabled={!dniInput.trim() || dniInput.length < 10}
+                                title={dniInput.length < 10 ? "DNI debe tener al menos 10 dígitos" : "Buscar préstamos"}
+                            >
+                                <Search className="h-4 w-4" />
+                            </Button>
+                            {filters.requestorDni && filters.requestorDni.trim() && (
+                                <Button
+                                    onClick={handleClearDni}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-700"
+                                    title="Limpiar filtro DNI"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                        {dniInput && dniInput.length < 8 && (
+                            <p className="text-xs text-orange-600 mt-1">DNI debe tener al menos 10 dígitos</p>
+                        )}
                     </div>
 
                     {hasActiveFilters && (
@@ -185,7 +253,7 @@ export function LoanHeader({
                     </Button>
                 </div>
             </div>
-            <hr className="border-t border-muted mt-4" />
+            <hr className="border-t border-muted mt-2" />
         </div>
     );
 } 

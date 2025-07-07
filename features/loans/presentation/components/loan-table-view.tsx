@@ -89,7 +89,7 @@ export function LoanTableView({
                     <TableHeader>
                         <TableRow>
                             <TableHead>Solicitante</TableHead>
-                            <TableHead>Fecha de Entrega</TableHead>
+                            <TableHead>Fecha del Préstamo</TableHead>
                             <TableHead>Fecha de Vencimiento</TableHead>
                             <TableHead>Número de Items</TableHead>
                             <TableHead>Estado</TableHead>

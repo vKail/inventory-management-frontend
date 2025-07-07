@@ -137,50 +137,50 @@ export const ColorsSection = ({ selectedColors, onColorsChange, mode, error }: C
                     )}
 
                     <div id="colors-section" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <DragDropContext onDragEnd={handleDragEnd}>
+                <DragDropContext onDragEnd={handleDragEnd}>
                             <div className="space-y-3">
-                                <Input
-                                    placeholder="Buscar colores..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                            <Input
+                                placeholder="Buscar colores..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full text-sm"
-                                />
-                                <Droppable droppableId="available-colors">
-                                    {(provided) => (
-                                        <div
+                            />
+                            <Droppable droppableId="available-colors">
+                                {(provided) => (
+                                    <div
                                             {...provided.droppableProps}
-                                            ref={provided.innerRef}
+                                        ref={provided.innerRef}
                                             className="space-y-2 h-[350px] overflow-y-auto border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50/50"
-                                        >
-                                            {filteredColors.map((color, index) => (
-                                                <Draggable
+                                    >
+                                        {filteredColors.map((color, index) => (
+                                            <Draggable
                                                     key={color.id}
-                                                    draggableId={`available-${color.id}`}
-                                                    index={index}
-                                                >
-                                                    {(provided) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
+                                                draggableId={`available-${color.id}`}
+                                                index={index}
+                                            >
+                                                {(provided) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
                                                             className="bg-white p-2.5 rounded-md border border-gray-200 cursor-move hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-sm"
-                                                        >
+                                                    >
                                                             <div className="flex items-center gap-2.5">
-                                                                <div
+                                                            <div
                                                                     className="w-3 h-3 rounded-full border border-gray-300 shadow-sm flex-shrink-0"
-                                                                    style={{ backgroundColor: color.hexCode }}
-                                                                />
+                                                                style={{ backgroundColor: color.hexCode }}
+                                                            />
                                                                 <span className="text-sm font-medium text-gray-700 truncate">{color.name}</span>
-                                                            </div>
                                                         </div>
-                                                    )}
-                                                </Draggable>
-                                            ))}
-                                            {provided.placeholder}
-                                        </div>
-                                    )}
-                                </Droppable>
-                            </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
+                        </div>
 
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
@@ -190,66 +190,66 @@ export const ColorsSection = ({ selectedColors, onColorsChange, mode, error }: C
                                         className="w-32 text-xs"
                                     />
                                 </div>
-                                <Droppable droppableId="selected-colors">
-                                    {(provided) => (
-                                        <div
+                            <Droppable droppableId="selected-colors">
+                                {(provided) => (
+                                    <div
                                             {...provided.droppableProps}
-                                            ref={provided.innerRef}
+                                        ref={provided.innerRef}
                                             className="space-y-2 h-[350px] overflow-y-auto border-2 border-dashed border-red-300 rounded-lg p-4 bg-red-50/30"
-                                        >
+                                    >
                                             {selectedColors.map((item, index) => (
-                                                <Draggable
+                                            <Draggable
                                                     key={`selected-color-${item.id}-${item.colorId}`}
                                                     draggableId={`selected-${item.id}-${item.colorId}`}
-                                                    index={index}
-                                                >
-                                                    {(provided) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
+                                                index={index}
+                                            >
+                                                {(provided) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
                                                             className="bg-white p-2.5 rounded-md shadow-sm border border-gray-200 cursor-move hover:shadow-md transition-all duration-200"
-                                                        >
+                                                    >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                                                    <Checkbox
+                                                            <Checkbox
                                                                         checked={item.isMainColor}
                                                                         onCheckedChange={(checked) => handleMainColorChange(index, checked as boolean)}
                                                                         className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 flex-shrink-0"
-                                                                    />
+                                                            />
                                                                     <div className="flex items-center gap-2 min-w-0">
-                                                                        <div
+                                                                <div
                                                                             className="w-3 h-3 rounded-full border border-gray-300 shadow-sm flex-shrink-0"
                                                                             style={{ backgroundColor: item.color?.hexCode || '#ccc' }}
-                                                                        />
+                                                                />
                                                                         <span className="text-sm font-medium text-gray-900 truncate">
                                                                             {item.color?.name || 'Color sin nombre'}
                                                                         </span>
-                                                                    </div>
+                                                            </div>
                                                                     {item.isMainColor && (
                                                                         <Badge variant="default" className="bg-red-50 text-red-800 border-red-200 text-xs px-2 py-0.5 flex-shrink-0">
                                                                             Principal
                                                                         </Badge>
-                                                                    )}
-                                                                </div>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    onClick={() => handleRemoveColor(index)}
-                                                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors p-1 h-auto flex-shrink-0"
-                                                                >
-                                                                    <X className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                            </div>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </Draggable>
-                                            ))}
-                                            {provided.placeholder}
-                                        </div>
-                                    )}
-                                </Droppable>
-                            </div>
+                                                        <Button
+                                                            variant="ghost"
+                                                                    size="sm"
+                                                            onClick={() => handleRemoveColor(index)}
+                                                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors p-1 h-auto flex-shrink-0"
+                                                        >
+                                                                    <X className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                            </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
+                        </div>
                         </DragDropContext>
                     </div>
                 </div>

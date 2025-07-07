@@ -163,4 +163,36 @@ export class UserService implements UserServiceProps {
       return null;
     }
   }
+
+  async markAsDefaulter(personId: number, dni: string): Promise<IHttpResponse<any>> {
+    try {
+      const response = await this.httpClient.post<IHttpResponse<any>>(
+        `${process.env.NEXT_PUBLIC_API_URL}people/mark-as-defaulter`,
+        { personId, dni }
+      );
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+      return response;
+    } catch (error) {
+      console.error('Error marking as defaulter:', error);
+      throw error;
+    }
+  }
+
+  async removeDefaulterStatus(personId: number, dni: string): Promise<IHttpResponse<any>> {
+    try {
+      const response = await this.httpClient.post<IHttpResponse<any>>(
+        `${process.env.NEXT_PUBLIC_API_URL}people/remove-defaulter-status`,
+        { personId, dni }
+      );
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
+      }
+      return response;
+    } catch (error) {
+      console.error('Error removing defaulter status:', error);
+      throw error;
+    }
+  }
 }

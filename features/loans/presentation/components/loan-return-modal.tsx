@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -17,6 +17,7 @@ import { UserService } from "@/features/users/services/user.service";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useConditionStore } from "@/features/conditions/context/condition-store";
+import { Badge } from "@/components/ui/badge";
 
 interface LoanReturnModalProps {
     isOpen: boolean;
@@ -33,6 +34,8 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
     const { getInventoryItem } = useInventoryStore();
     const userService = UserService.getInstance();
     const { conditions, getConditions } = useConditionStore();
+    const [defaulter, setDefaulter] = useState(false);
+    const [defaulterLoading, setDefaulterLoading] = useState(false);
 
     useEffect(() => {
         const fetchUserDetails = async () => {
@@ -41,12 +44,15 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                     const person = await userService.getPersonById(loan.requestorId.toString());
                     if (person) {
                         setUserDetails(person);
+                        setDefaulter(!!(person as any)?.defaulter);
                     } else {
                         const user = await getUserById(loan.requestorId.toString());
                         setUserDetails(user);
+                        setDefaulter(!!(user as any)?.defaulter);
                     }
                 } catch (error) {
                     setUserDetails(null);
+                    setDefaulter(false);
                 }
             }
         };
@@ -147,164 +153,257 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
         }
     };
 
+    // Defaulter actions
+    const handleMarkDefaulter = async () => {
+        if (!userDetails) return;
+        setDefaulterLoading(true);
+        try {
+            await userService.markAsDefaulter(userDetails.id, userDetails.dni);
+            setDefaulter(true);
+            toast.success("Persona marcada como morosa");
+        } catch (error) {
+            toast.error("Error al marcar como moroso");
+        } finally {
+            setDefaulterLoading(false);
+        }
+    };
+    const handleRemoveDefaulter = async () => {
+        if (!userDetails) return;
+        setDefaulterLoading(true);
+        try {
+            await userService.removeDefaulterStatus(userDetails.id, userDetails.dni);
+            setDefaulter(false);
+            toast.success("Estado de moroso removido");
+        } catch (error) {
+            toast.error("Error al quitar estado de moroso");
+        } finally {
+            setDefaulterLoading(false);
+        }
+    };
+
+    // Helper to get condition name by ID
+    const getConditionName = (id: number | string | undefined) => {
+        if (!id) return 'N/A';
+        const found = conditions.find(c => c.id === id.toString());
+        return found ? found.name : id;
+    };
+
     const currentItem = loan.loanDetails[currentItemIndex];
     const item = itemDetails[currentItem?.itemId];
     const exitCondition = conditions.find(c => c.id === String(currentItem?.exitConditionId));
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl w-[90vw] max-h-[85vh] overflow-y-auto">
-                <DialogTitle className="text-lg font-semibold flex items-center justify-between border-b pb-3">
-                    <span>Devolución de Préstamo # {loan.loanCode}</span>
-                </DialogTitle>
-
+            <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto p-0">
+                <DialogHeader className="border-b px-6 pt-6 pb-3">
+                    <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+                        Devolución de Préstamo # {loan.loanCode}
+                        {defaulter && <Badge variant="destructive">Moroso</Badge>}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground">
+                        Complete la información para registrar la devolución de los items prestados.
+                    </DialogDescription>
+                </DialogHeader>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                        {/* Información del Préstamo */}
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div>
-                                <p className="text-muted-foreground">Solicitante</p>
-                                <p className="font-medium">
-                                    {userDetails ?
-                                        `${userDetails.firstName} ${userDetails.lastName}` :
-                                        'Cargando...'}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    {userDetails?.type || 'Cargando...'}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-muted-foreground">Fecha de Devolución</p>
-                                <p className="font-medium">{formatDate(loan.scheduledReturnDate)}</p>
-                            </div>
-                        </div>
-
-                        {/* Navigation Controls */}
-                        <div className="flex items-center justify-between">
-                            <h3 className="font-medium text-sm">Items a Devolver</h3>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handlePrevious}
-                                    disabled={currentItemIndex === 0}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                                    {currentItemIndex + 1} de {loan.loanDetails.length}
-                                </span>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleNext}
-                                    disabled={currentItemIndex === loan.loanDetails.length - 1}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Item Card */}
-                        <Card className="p-4 max-h-[300px] overflow-y-auto">
-                            <div className="space-y-3">
+                    <form onSubmit={form.handleSubmit(handleSubmit)}>
+                        <div className="px-6 pt-4 pb-2">
+                            {/* Información del Préstamo y Persona */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <h4 className="font-medium text-sm">{item?.name || 'Cargando...'}</h4>
+                                    <p className="text-muted-foreground text-xs">Solicitante</p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-medium text-sm">
+                                            {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : 'Cargando...'}
+                                        </span>
+                                        {defaulter && <Badge variant="destructive" className="ml-1">Moroso</Badge>}
+                                    </div>
                                     <p className="text-xs text-muted-foreground">
-                                        Código: {item?.code || 'N/A'} | Identificador: {item?.identifier || 'N/A'}
+                                        {userDetails?.type || 'Cargando...'}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        <span className="font-medium">Cantidad prestada:</span> {currentItem?.quantity || 'N/A'}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        <span className="font-medium">Condición de salida:</span> {exitCondition?.name || 'N/A'}
-                                    </p>
+                                    <div className="flex gap-2 mt-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleMarkDefaulter}
+                                            disabled={defaulter || defaulterLoading}
+                                        >
+                                            Marcar como moroso
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="secondary"
+                                            onClick={handleRemoveDefaulter}
+                                            disabled={!defaulter || defaulterLoading}
+                                        >
+                                            Quitar estado de moroso
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="text-xs text-muted-foreground mb-2">
-                                    Fueron prestados {currentItem?.quantity || 1} artículos de este item.
+                                <div>
+                                    <p className="text-muted-foreground text-xs">Fecha de Devolución</p>
+                                    <p className="font-medium text-sm">{formatDate(loan.scheduledReturnDate)}</p>
                                 </div>
-                                <FormField
-                                    control={form.control}
-                                    name={`returnedItems.${currentItemIndex}.quantity`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-sm">Cantidad a devolver</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="Cantidad"
-                                                    value={field.value || ''}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value;
-                                                        // Only allow numbers
-                                                        if (value === '' || /^\d+$/.test(value)) {
-                                                            const numValue = value === '' ? 0 : parseInt(value);
-                                                            // Validate range
-                                                            if (numValue >= 1 && numValue <= (currentItem?.quantity || 1)) {
-                                                                field.onChange(numValue);
-                                                            } else if (value === '') {
-                                                                field.onChange(0);
-                                                            }
-                                                        }
-                                                    }}
-                                                    onBlur={(e) => {
-                                                        // Ensure minimum value on blur
-                                                        const value = parseInt(e.target.value) || 0;
-                                                        if (value < 1) {
-                                                            field.onChange(1);
-                                                        } else if (value > (currentItem?.quantity || 1)) {
-                                                            field.onChange(currentItem?.quantity || 1);
-                                                        }
-                                                    }}
-                                                    className="w-24"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name={`returnedItems.${currentItemIndex}.returnConditionId`}
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="text-sm">Condición de Retorno</FormLabel>
-                                            <Select
-                                                onValueChange={(value) => field.onChange(Number(value))}
-                                                value={field.value ? field.value.toString() : ""}
-                                            >
+                            </div>
+                        </div>
+                        <div className="px-6 pb-2">
+                            {/* Navigation Controls */}
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-medium text-sm">Items a Devolver</h3>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handlePrevious}
+                                        disabled={currentItemIndex === 0}
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                    </Button>
+                                    <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                                        {currentItemIndex + 1} de {loan.loanDetails.length}
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleNext}
+                                        disabled={currentItemIndex === loan.loanDetails.length - 1}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            {/* Item Card */}
+                            <Card className="p-4 max-h-[300px] overflow-y-auto mb-4">
+                                <div className="space-y-3">
+                                    <div>
+                                        <h4 className="font-medium text-sm">{item?.name || 'Cargando...'}</h4>
+                                        <p className="text-xs text-muted-foreground">
+                                            Código: {item?.code || 'N/A'} | Identificador: {item?.identifier || 'N/A'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-medium">Cantidad prestada:</span> {currentItem?.quantity || 'N/A'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-medium">Condición de salida:</span> {getConditionName(currentItem?.exitConditionId)}
+                                        </p>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mb-2">
+                                        Fueron prestados {currentItem?.quantity || 1} artículos de este item.
+                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name={`returnedItems.${currentItemIndex}.quantity`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm">Cantidad a devolver</FormLabel>
                                                 <FormControl>
-                                                    <SelectTrigger className="h-9">
-                                                        <SelectValue placeholder="Seleccionar condición" />
-                                                    </SelectTrigger>
+                                                    <Input
+                                                        placeholder="Cantidad"
+                                                        value={field.value || ''}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value;
+                                                            // Only allow numbers
+                                                            if (value === '' || /^\d+$/.test(value)) {
+                                                                const numValue = value === '' ? 0 : parseInt(value);
+                                                                // Validate range
+                                                                if (numValue >= 1 && numValue <= (currentItem?.quantity || 1)) {
+                                                                    field.onChange(numValue);
+                                                                } else if (value === '') {
+                                                                    field.onChange(0);
+                                                                }
+                                                            }
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            // Ensure minimum value on blur
+                                                            const value = parseInt(e.target.value) || 0;
+                                                            if (value < 1) {
+                                                                field.onChange(1);
+                                                            } else if (value > (currentItem?.quantity || 1)) {
+                                                                field.onChange(currentItem?.quantity || 1);
+                                                            }
+                                                        }}
+                                                        className="w-24"
+                                                    />
                                                 </FormControl>
-                                                <SelectContent>
-                                                    {conditions.map((condition) => (
-                                                        <SelectItem
-                                                            key={condition.id}
-                                                            value={condition.id.toString()}
-                                                        >
-                                                            {condition.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`returnedItems.${currentItemIndex}.returnConditionId`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm">Condición de Retorno</FormLabel>
+                                                <Select
+                                                    onValueChange={(value) => field.onChange(Number(value))}
+                                                    value={field.value ? field.value.toString() : ""}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-9">
+                                                            <SelectValue placeholder="Seleccionar condición" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {conditions.map((condition) => (
+                                                            <SelectItem
+                                                                key={condition.id}
+                                                                value={condition.id.toString()}
+                                                            >
+                                                                {condition.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {/* Show selected condition name if selected */}
+                                                {field.value ? (
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                        Seleccionado: <span className="font-medium">{getConditionName(field.value)}</span>
+                                                    </div>
+                                                ) : null}
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`returnedItems.${currentItemIndex}.returnObservations`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm">Observaciones</FormLabel>
+                                                <FormControl>
+                                                    <Textarea
+                                                        placeholder="Observaciones sobre el estado del ítem"
+                                                        className="h-16 resize-none"
+                                                        maxLength={250}
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <div className="text-xs text-muted-foreground text-right">
+                                                    {field.value?.length || 0}/250
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </Card>
+                        </div>
+                        <div className="px-6 pb-2">
+                            {/* Notas de Devolución */}
+                            <div className="space-y-2 mb-2">
+                                <h3 className="font-medium text-sm">Notas de Devolución</h3>
                                 <FormField
                                     control={form.control}
-                                    name={`returnedItems.${currentItemIndex}.returnObservations`}
+                                    name="notes"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-sm">Observaciones</FormLabel>
                                             <FormControl>
                                                 <Textarea
-                                                    placeholder="Observaciones sobre el estado del ítem"
+                                                    placeholder="Notas adicionales sobre la devolución (opcional)"
                                                     className="h-16 resize-none"
                                                     maxLength={250}
                                                     {...field}
@@ -318,44 +417,18 @@ export function LoanReturnModal({ isOpen, onClose, loan, onSubmit }: LoanReturnM
                                     )}
                                 />
                             </div>
-                        </Card>
-
-                        {/* Notas de Devolución */}
-                        <div className="space-y-2">
-                            <h3 className="font-medium text-sm">Notas de Devolución</h3>
-                            <FormField
-                                control={form.control}
-                                name="notes"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <Textarea
-                                                placeholder="Notas adicionales sobre la devolución (opcional)"
-                                                className="h-16 resize-none"
-                                                maxLength={250}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <div className="text-xs text-muted-foreground text-right">
-                                            {field.value?.length || 0}/250
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-2">
-                            <Button type="button" variant="outline" size="sm" onClick={onClose}>
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                size="sm"
-                                disabled={!form.formState.isValid}
-                            >
-                                Confirmar Devolución
-                            </Button>
+                            <DialogFooter className="gap-2 pt-2">
+                                <Button type="button" variant="outline" size="sm" onClick={onClose}>
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={!form.formState.isValid}
+                                >
+                                    Confirmar Devolución
+                                </Button>
+                            </DialogFooter>
                         </div>
                     </form>
                 </Form>
