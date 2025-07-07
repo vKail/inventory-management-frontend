@@ -1,4 +1,4 @@
-import { Search, ArrowDownUp, List, Grid2X2, Plus, QrCode } from "lucide-react";
+import { Search, ArrowDownUp, List, Grid2X2, Plus, Barcode, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,7 +30,7 @@ export function InventoryHeader({
     const { categories, getCategories } = useCategoryStore();
     const { itemTypes, getItemTypes } = useItemTypeStore();
     const { states, getStates } = useStateStore();
-    const { setFilters, getInventoryItemByCode } = useInventoryStore();
+    const { setFilters, getInventoryItemByCode, clearFilters, filters } = useInventoryStore();
     const [isScanModalOpen, setIsScanModalOpen] = useState(false);
     const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
 
@@ -66,6 +66,11 @@ export function InventoryHeader({
         }
     };
 
+    const hasActiveFilters = filters.search ||
+        (filters.categoryId && filters.categoryId !== 'all') ||
+        (filters.statusId && filters.statusId !== 'all') ||
+        (filters.itemTypeId && filters.itemTypeId !== 'all');
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -76,10 +81,11 @@ export function InventoryHeader({
                             placeholder="Buscar items..."
                             className="pl-8"
                             onChange={(e) => handleSearch(e.target.value)}
+                            value={filters.search || ''}
                         />
                     </div>
 
-                    <Select onValueChange={handleCategoryChange}>
+                    <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Categoría" />
                         </SelectTrigger>
@@ -93,7 +99,7 @@ export function InventoryHeader({
                         </SelectContent>
                     </Select>
 
-                    <Select onValueChange={handleStateChange}>
+                    <Select onValueChange={handleStateChange} value={filters.statusId || 'all'}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Estado" />
                         </SelectTrigger>
@@ -107,7 +113,7 @@ export function InventoryHeader({
                         </SelectContent>
                     </Select>
 
-                    <Select onValueChange={handleTypeChange}>
+                    <Select onValueChange={handleTypeChange} value={filters.itemTypeId || 'all'}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Tipo" />
                         </SelectTrigger>
@@ -120,6 +126,18 @@ export function InventoryHeader({
                             ))}
                         </SelectContent>
                     </Select>
+
+                    {hasActiveFilters && (
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={clearFilters}
+                            className="h-10 w-10 cursor-pointer"
+                            title="Limpiar filtros"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -155,8 +173,7 @@ export function InventoryHeader({
                         onClick={handleScan}
                         className="flex items-center gap-2"
                     >
-                        <QrCode className="h-4 w-4" />
-                        <span>Escanear Código</span>
+                        <Barcode className="h-4 w-4" />
                     </Button>
 
                     <Button

@@ -59,7 +59,7 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
                         <BreadcrumbItem>
-                            <span className="text-muted-foreground font-medium">Inventario</span>
+                            <span className="text-muted-foreground font-medium">Configuración</span>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
@@ -161,7 +161,7 @@ export function MaterialForm({ initialData, onSubmit, isLoading, id }: MaterialF
                                                         <SelectItem value={MaterialTypes.EQUIPMENT}>Equipo</SelectItem>
                                                         <SelectItem value={MaterialTypes.METAL}>Metal</SelectItem>
                                                         <SelectItem value={MaterialTypes.OTHER}>Otro</SelectItem>
-                                                        <SelectItem value={MaterialTypes.DELICATE}>Delicados</SelectItem>
+                                                        <SelectItem value={MaterialTypes.DELICATE}>Delicado</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormDescription>

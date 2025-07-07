@@ -40,7 +40,10 @@ export class MaterialService implements MaterialServiceProps {
       }
 
       const response = await this.httpClient.get<PaginatedMaterials>(url);
-      return response.data;
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error fetching materials:', error);
       throw error;
@@ -50,7 +53,10 @@ export class MaterialService implements MaterialServiceProps {
   public async getMaterialById(id: number): Promise<IMaterial | undefined> {
     try {
       const response = await this.httpClient.get<IMaterial>(`${MaterialService.url}/${id}`);
-      return response.data;
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error fetching material:', error);
       return undefined;
@@ -63,7 +69,10 @@ export class MaterialService implements MaterialServiceProps {
         MaterialService.url,
         material
       );
-      return response.data;
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error creating material:', error);
       throw error;
@@ -76,7 +85,10 @@ export class MaterialService implements MaterialServiceProps {
         `${MaterialService.url}/${id}`,
         material
       );
-      return response.data;
+      if (response.success) {
+        return response.data;
+      }
+      throw new Error(response.message.content.join(', '));
     } catch (error) {
       console.error('Error updating material:', error);
       throw error;
@@ -86,8 +98,8 @@ export class MaterialService implements MaterialServiceProps {
   public async deleteMaterial(id: number): Promise<void> {
     try {
       const response = await this.httpClient.delete<ApiResponse<void>>(`${MaterialService.url}/${id}`);
-      if (!response.data.success) {
-        throw new Error(response.data.message.content.join(', '));
+      if (!response.success) {
+        throw new Error(response.message.content.join(', '));
       }
     } catch (error) {
       console.error('Error deleting material:', error);

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ScanProcessModal } from "./scan-process-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, List } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useInventoryStore } from "../../context/inventory-store";
 import { toast } from "sonner";
@@ -54,6 +54,18 @@ export function InventoryListView({ items }: InventoryListViewProps) {
                 return 'bg-blue-100 text-blue-800';
         }
     };
+
+    if (items.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center text-muted-foreground py-12">
+                <List className="h-16 w-16 mb-4 text-muted-foreground/50" />
+                <p className="mb-4 text-lg font-medium">No se encontraron items</p>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                    Intenta ajustar los filtros de búsqueda o crear un nuevo item.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <>

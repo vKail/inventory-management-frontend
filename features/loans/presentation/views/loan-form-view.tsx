@@ -50,6 +50,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { loanService } from "../../services/loan.service";
+import { inventoryService } from "@/features/inventory/services/inventory.service";
 
 interface RequestorInfo {
     firstName: string;
@@ -229,56 +230,21 @@ export function LoanFormView() {
             return;
         }
 
-        // Obtener el nombre de la condición
-        let conditionName = "No especificada";
         let conditionId = item.conditionId?.toString();
+        let conditionName = "No especificada";
 
         if (item.conditionId) {
-            try {
-                const condition = await getConditionById(item.conditionId.toString());
-                if (condition) {
-                    conditionName = condition.name;
-                    setConditionNames(prev => ({
-                        ...prev,
-                        [item.conditionId!.toString()]: condition.name
-                    }));
-                } else {
-                    // Si no se encuentra la condición, usar la primera disponible
-                    if (conditions.length > 0) {
-                        conditionId = conditions[0].id.toString();
-                        conditionName = conditions[0].name;
-                        toast.warning(`La condición con id ${item.conditionId} no fue encontrada. Se ha establecido la condición "${conditionName}" por defecto.`);
-                    } else {
-                        toast.error("No se encontraron condiciones disponibles");
-                        return;
-                    }
-                }
-            } catch (error: any) {
-                // Solo mostrar toast si es el error específico de condición no encontrada
-                if (error?.message?.content?.includes("Condición con id") && error?.message?.content?.includes("no encontrada")) {
-                    if (conditions.length > 0) {
-                        conditionId = conditions[0].id.toString();
-                        conditionName = conditions[0].name;
-                        toast.warning(`La condición con id ${item.conditionId} no fue encontrada. Se ha establecido la condición "${conditionName}" por defecto.`);
-                    } else {
-                        toast.error("No se encontraron condiciones disponibles");
-                        return;
-                    }
-                } else if (conditions.length === 0) {
-                    toast.error("No se encontraron condiciones disponibles");
-                    return;
-                } else {
-                    // Para otros errores, usar la primera condición sin mostrar toast
-                    conditionId = conditions[0].id.toString();
-                    conditionName = conditions[0].name;
-                }
-            }
-        } else {
-            // Si no hay conditionId, usar la primera condición disponible
-            if (conditions.length > 0) {
+            const condition = await getConditionById(item.conditionId.toString());
+            if (condition) {
+                conditionName = condition.name;
+            } else if (conditions.length > 0) {
                 conditionId = conditions[0].id.toString();
                 conditionName = conditions[0].name;
+                toast.warning(`La condición con id ${item.conditionId} no fue encontrada. Se ha establecido la condición "${conditionName}" por defecto.`);
             }
+        } else if (conditions.length > 0) {
+            conditionId = conditions[0].id.toString();
+            conditionName = conditions[0].name;
         }
 
         const newItem: ScannedItem = {
@@ -329,8 +295,9 @@ export function LoanFormView() {
 
         // Update form values
         const currentDetails = form.getValues("loanDetails");
+        const inventoryItem = scannedItems.find(i => i.code === itemCode);
         const updatedDetails = currentDetails.map(detail => {
-            if (detail.itemId === Number(itemCode)) {
+            if (inventoryItem && detail.itemId === Number(inventoryItem.code)) {
                 return { ...detail, exitConditionId: Number(conditionId) };
             }
             return detail;
@@ -383,127 +350,10 @@ export function LoanFormView() {
         form.setValue("loanDetails", form.getValues("loanDetails").filter(detail => detail.itemId !== Number(code)));
     };
 
-    const handleSubmit = async () => {
-        let loanCreate: LoanCreateType | undefined;
-
-        try {
-            const formData = form.getValues();
-
-            // Validar usando Zod
-            const validationResult = formSchema.safeParse(formData);
-
-            if (!validationResult.success) {
-                // Mostrar errores de validación en el formulario
-                const errors = validationResult.error.errors;
-                errors.forEach(error => {
-                    const fieldPath = error.path.join('.');
-                    form.setError(fieldPath as any, {
-                        type: "manual",
-                        message: error.message
-                    });
-                });
-
-                // Focus on the first error field
-                const firstError = errors[0];
-                if (firstError) {
-                    const fieldPath = firstError.path.join('.');
-
-                    // Focus on specific fields based on the error path
-                    if (fieldPath.includes('requestorId')) {
-                        // Focus on requestor validation section
-                        const requestorSection = document.querySelector('[data-section="requestor"]');
-                        requestorSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (fieldPath.includes('scheduledReturnDate')) {
-                        // Focus on date picker
-                        const dateInput = document.querySelector('[data-field="scheduledReturnDate"]');
-                        dateInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (fieldPath.includes('reason')) {
-                        // Focus on reason field
-                        const reasonInput = document.querySelector('[data-field="reason"]');
-                        reasonInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (fieldPath.includes('loanDetails')) {
-                        // Focus on loan details section
-                        const detailsSection = document.querySelector('[data-section="loan-details"]');
-                        detailsSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
-
-                toast.error("Por favor, complete todos los campos requeridos");
-                return;
-            }
-
-            // Validate stock limits for all items
-            for (const item of scannedItems) {
-                if (item.quantity > item.stock) {
-                    toast.error(`La cantidad del item "${item.name}" excede el stock disponible (${item.stock})`);
-                    return;
-                }
-                if (item.quantity > 9999999) {
-                    toast.error(`La cantidad del item "${item.name}" no puede exceder 9,999,999`);
-                    return;
-                }
-            }
-
-            const loanDetails = await Promise.all(scannedItems.map(async item => {
-                const inventoryItem = await getInventoryItemByCode(item.code);
-                return {
-                    itemId: Number(inventoryItem?.id) || 0,
-                    exitConditionId: Number(inventoryItem?.conditionId) || 0,
-                    exitObservations: item.exitObservations,
-                    quantity: item.quantity
-                };
-            }));
-
-
-            loanCreate = {
-                requestorId: formData.requestorId,
-                scheduledReturnDate: format(formData.scheduledReturnDate, "yyyy-MM-dd'T'HH:mm"),
-                reason: formData.reason,
-                notes: formData.notes || "",
-                blockBlackListed: true,
-                loanDetails
-            };
-
-            await submitLoanWithBlacklistHandling(loanCreate);
-        } catch (error: any) {
-
-
-            // Verificar si es un error de blacklist en el catch
-            let errorMessage = '';
-
-            // Intentar obtener el mensaje de error del servidor
-            if (error?.response?.data?.message?.content) {
-                errorMessage = error.response.data.message.content.join(' ');
-            } else if (error?.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error?.message) {
-                errorMessage = error.message;
-            } else {
-                errorMessage = error?.toString() || '';
-            }
-
-
-            if (errorMessage.toLowerCase().includes("lista negra") ||
-                errorMessage.toLowerCase().includes("blacklist") ||
-                errorMessage.toLowerCase().includes("no puede hacer préstamos") ||
-                errorMessage.toLowerCase().includes("morosos")) {
-
-                if (loanCreate) {
-                    setPendingLoanData(loanCreate);
-                    setShowBlacklistDialog(true);
-                }
-            } else {
-                // Otro tipo de error
-                toast.error("Error al crear el préstamo");
-            }
-        }
-    };
-
     const submitLoanWithBlacklistHandling = async (loanData: LoanCreateType) => {
         try {
             // Llamar directamente al servicio para tener control total sobre la respuesta
             const response = await loanService.create(loanData);
-
 
             if (response.success) {
                 toast.success("Préstamo creado exitosamente");
@@ -511,7 +361,6 @@ export function LoanFormView() {
             } else {
                 // Verificar si es un error de blacklist
                 const errorMessage = response.message.content.join(' ');
-
 
                 if (errorMessage.toLowerCase().includes("lista negra") ||
                     errorMessage.toLowerCase().includes("blacklist") ||
@@ -526,7 +375,6 @@ export function LoanFormView() {
                 }
             }
         } catch (error: any) {
-
             // Verificar si es un error de blacklist en el catch
             let errorMessage = '';
 
@@ -552,6 +400,126 @@ export function LoanFormView() {
                 // Otro tipo de error
                 toast.error("Error al crear el préstamo");
             }
+        }
+    };
+
+    const handleSubmit = async () => {
+        let loanCreate: LoanCreateType | undefined;
+
+        try {
+            const formData = form.getValues();
+
+            // Refrescar stock de todos los items antes de validar
+            const refreshedItems = await Promise.all(
+                scannedItems.map(async (item) => {
+                    const inventoryItem = await getInventoryItemByCode(item.code);
+                    return {
+                        ...item,
+                        stock: inventoryItem?.stock ?? item.stock,
+                    };
+                })
+            );
+
+            // Validar usando Zod
+            const validationResult = formSchema.safeParse(formData);
+
+            if (!validationResult.success) {
+                // Mostrar errores de validación en el formulario
+                const errors = validationResult.error.errors;
+                errors.forEach(error => {
+                    const fieldPath = error.path.join('.');
+                    form.setError(fieldPath as any, {
+                        type: "manual",
+                        message: error.message
+                    });
+                });
+
+                // Focus on the first error field
+                const firstError = errors[0];
+                if (firstError) {
+                    const fieldPath = firstError.path.join('.');
+
+                    // Focus on specific fields based on the error path
+                    if (fieldPath.includes('requestorId')) {
+                        const requestorSection = document.querySelector('[data-section="requestor"]');
+                        requestorSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (fieldPath.includes('scheduledReturnDate')) {
+                        const dateInput = document.querySelector('[data-field="scheduledReturnDate"]');
+                        dateInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (fieldPath.includes('reason')) {
+                        const reasonInput = document.querySelector('[data-field="reason"]');
+                        reasonInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (fieldPath.includes('loanDetails')) {
+                        const detailsSection = document.querySelector('[data-section="loan-details"]');
+                        detailsSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+
+                toast.error("Por favor, complete todos los campos requeridos");
+                return;
+            }
+
+            // Validar stock actualizado
+            for (const item of refreshedItems) {
+                if (item.quantity > item.stock) {
+                    toast.error(`La cantidad del item "${item.name}" excede el stock disponible (${item.stock})`);
+                    return;
+                }
+                if (item.quantity > 9999999) {
+                    toast.error(`La cantidad del item "${item.name}" no puede exceder 9,999,999`);
+                    return;
+                }
+            }
+
+            // Primero actualiza la condición y el stock de cada item
+            for (const item of refreshedItems) {
+                const inventoryItem = await getInventoryItemByCode(item.code);
+                if (!inventoryItem) {
+                    toast.error(`No se pudo encontrar el item "${item.name}" para actualizar su condición.`);
+                    return;
+                }
+                const updateRes = await inventoryService.updateCondition(inventoryItem.id, Number(item.exitConditionId), item.stock);
+                if (!updateRes.success) {
+                    toast.error(`Error al actualizar la condición del item "${item.name}"`);
+                    return;
+                }
+            }
+
+            // Construir loanDetails con la condición seleccionada y stock actualizado
+            const loanDetails = await Promise.all(refreshedItems.map(async item => {
+                const inventoryItem = await getInventoryItemByCode(item.code);
+                return {
+                    itemId: Number(inventoryItem?.id) || 0,
+                    exitConditionId: Number(item.exitConditionId),
+                    exitObservations: item.exitObservations,
+                    quantity: item.quantity
+                };
+            }));
+
+            loanCreate = {
+                requestorId: formData.requestorId,
+                scheduledReturnDate: format(formData.scheduledReturnDate, "yyyy-MM-dd'T'HH:mm"),
+                reason: formData.reason,
+                notes: formData.notes || "",
+                blockBlackListed: true,
+                loanDetails
+            };
+
+            // Crear el préstamo SOLO si todas las actualizaciones fueron exitosas
+            await submitLoanWithBlacklistHandling(loanCreate);
+        } catch (error: any) {
+            // Verificar si es un error de blacklist en el catch
+            let errorMessage = '';
+            if (error?.response?.data?.message?.content) {
+                errorMessage = error.response.data.message.content.join(' ');
+            } else if (error?.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error?.message) {
+                errorMessage = error.message;
+            } else {
+                errorMessage = error?.toString() || '';
+            }
+            toast.error(errorMessage || "Error al crear el préstamo");
         }
     };
 

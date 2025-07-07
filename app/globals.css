@@ -124,3 +124,12 @@
   }
 }
 
+/* Utility for strict truncation in table cells */
+.truncate-cell {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+

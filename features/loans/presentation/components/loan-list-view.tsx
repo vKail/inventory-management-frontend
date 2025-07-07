@@ -3,6 +3,7 @@ import { formatDate } from "../../data/utils/date-formatter";
 import { Loan, LoanStatus } from "@/features/loans/data/interfaces/loan.interface";
 import { useState } from "react";
 import { LoanDetailsModal } from "./loan-details-modal";
+import { EmptyLoanState } from "./empty-loan-state";
 
 interface LoanListViewProps {
     loans: Loan[];
@@ -38,42 +39,46 @@ export function LoanListView({ loans, onViewDetails, onReturn }: LoanListViewPro
     return (
         <>
             <div className="space-y-4">
-                {loans.map((loan) => (
-                    <div
-                        key={loan.id}
-                        className="bg-white p-4 rounded-lg border shadow-sm cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedLoanId(loan.id)}
-                    >
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                                <div>
-                                    <p className="font-medium">Juan Pérez</p>
-                                    <div className="flex gap-4 mt-1">
-                                        <p className="text-sm text-muted-foreground">
-                                            Inicio: {formatDate(loan.requestDate)}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Vencimiento: {formatDate(loan.scheduledReturnDate)}
-                                        </p>
+                {loans.length === 0 ? (
+                    <EmptyLoanState />
+                ) : (
+                    loans.map((loan) => (
+                        <div
+                            key={loan.id}
+                            className="bg-white p-4 rounded-lg border shadow-sm cursor-pointer hover:bg-muted/50"
+                            onClick={() => setSelectedLoanId(loan.id)}
+                        >
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                    <div>
+                                        <p className="font-medium">Juan Pérez</p>
+                                        <div className="flex gap-4 mt-1">
+                                            <p className="text-sm text-muted-foreground">
+                                                Inicio: {formatDate(loan.requestDate)}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Vencimiento: {formatDate(loan.scheduledReturnDate)}
+                                            </p>
+                                        </div>
                                     </div>
+                                    {getStatusBadge(loan.status)}
                                 </div>
-                                {getStatusBadge(loan.status)}
+                                {loan.status === LoanStatus.DELIVERED && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onReturn(loan);
+                                        }}
+                                    >
+                                        Devolver
+                                    </Button>
+                                )}
                             </div>
-                            {loan.status === LoanStatus.DELIVERED && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onReturn(loan);
-                                    }}
-                                >
-                                    Devolver
-                                </Button>
-                            )}
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
 
             <LoanDetailsModal

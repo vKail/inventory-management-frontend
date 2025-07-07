@@ -127,7 +127,7 @@ export default function MaterialTable() {
     };
 
     return (
-        <Card className="w-full max-w-[1200px] mx-auto">
+        <Card className="w-full mx-auto">
             <CardHeader className="px-4 md:px-8 pb-0">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">

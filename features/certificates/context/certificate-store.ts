@@ -8,12 +8,13 @@ interface CertificateStore {
     filteredCertificates: ICertificate[];
     searchTerm: string;
     typeFilter: string;
+    statusFilter: string;
     dateFilter: string;
     loading: boolean;
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getCertificates: (page?: number, limit?: number) => Promise<void>;
+    getCertificates: (page?: number, limit?: number, filters?: { search?: string; type?: string; status?: string; dateFrom?: string; dateTo?: string }) => Promise<void>;
     getCertificateById: (certificateId: string) => Promise<ICertificate | undefined>;
     addCertificate: (certificate: Partial<ICertificate>) => Promise<void>;
     updateCertificate: (certificateId: string, certificate: Partial<ICertificate>) => Promise<void>;
@@ -21,6 +22,7 @@ interface CertificateStore {
     refreshTable: () => Promise<void>;
     setSearchTerm: (term: string) => void;
     setTypeFilter: (type: string) => void;
+    setStatusFilter: (status: string) => void;
     setDateFilter: (date: string) => void;
     clearFilters: () => void;
 }
@@ -30,6 +32,7 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
     filteredCertificates: [],
     searchTerm: '',
     typeFilter: 'all',
+    statusFilter: 'all',
     dateFilter: '',
     loading: false,
     error: null,
@@ -37,69 +40,55 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
     totalPages: 1,
 
     setSearchTerm: (term: string) => {
-        const { certificates, typeFilter, dateFilter } = get();
-        const filtered = certificates.filter((certificate) => {
-            const matchesSearch = certificate.number.toString().includes(term);
-            const matchesType = typeFilter === 'all' || certificate.type === typeFilter;
-            const matchesDate = dateFilter === '' || certificate.date === dateFilter;
-
-            return matchesSearch && matchesType && matchesDate;
-        });
-        set({ searchTerm: term, filteredCertificates: filtered });
+        set({ searchTerm: term });
+        get().refreshTable();
     },
 
     setTypeFilter: (type: string) => {
-        const { certificates, searchTerm, dateFilter } = get();
-        const filtered = certificates.filter((certificate) => {
-            const matchesSearch = searchTerm === '' || certificate.number.toString().includes(searchTerm);
-            const matchesType = type === 'all' || certificate.type === type;
-            const matchesDate = dateFilter === '' || certificate.date === dateFilter;
+        set({ typeFilter: type });
+        get().refreshTable();
+    },
 
-            return matchesSearch && matchesType && matchesDate;
-        });
-        set({ typeFilter: type, filteredCertificates: filtered });
+    setStatusFilter: (status: string) => {
+        set({ statusFilter: status });
+        get().refreshTable();
     },
 
     setDateFilter: (date: string) => {
-        const { certificates, searchTerm, typeFilter } = get();
-        const filtered = certificates.filter((certificate) => {
-            const matchesSearch = searchTerm === '' || certificate.number.toString().includes(searchTerm);
-            const matchesType = typeFilter === 'all' || certificate.type === typeFilter;
-            const matchesDate = date === '' || certificate.date === date;
-
-            return matchesSearch && matchesType && matchesDate;
-        });
-        set({ dateFilter: date, filteredCertificates: filtered });
+        set({ dateFilter: date });
+        get().refreshTable();
     },
 
     clearFilters: () => {
-        const { certificates } = get();
         set({
             searchTerm: '',
             typeFilter: 'all',
-            dateFilter: '',
-            filteredCertificates: certificates
+            statusFilter: 'all',
+            dateFilter: ''
         });
+        get().refreshTable();
     },
 
-    getCertificates: async (page = 1, limit = 10) => {
+    getCertificates: async (page = 1, limit = 10, filters?: { search?: string; type?: string; status?: string; dateFrom?: string; dateTo?: string }) => {
         try {
             set({ loading: true, error: null });
-            const response = await CertificateService.getInstance().getCertificates(page, limit);
-            const { searchTerm, typeFilter, dateFilter } = get();
-            const allCertificates = response.records;
-
-            const filtered = allCertificates.filter((certificate) => {
-                const matchesSearch = searchTerm === '' || certificate.number.toString().includes(searchTerm);
-                const matchesType = typeFilter === 'all' || certificate.type === typeFilter;
-                const matchesDate = dateFilter === '' || certificate.date === dateFilter;
-
-                return matchesSearch && matchesType && matchesDate;
-            });
-
+            // Construir query params solo con los filtros, sin page ni limit
+            const queryParams = new URLSearchParams();
+            // Agregar filtros si están presentes
+            const searchTerm = filters?.search ?? get().searchTerm;
+            const typeFilter = filters?.type ?? get().typeFilter;
+            const statusFilter = filters?.status ?? get().statusFilter;
+            const dateFrom = filters?.dateFrom;
+            const dateTo = filters?.dateTo;
+            if (searchTerm) queryParams.append('search', searchTerm);
+            if (typeFilter && typeFilter !== 'all') queryParams.append('type', typeFilter);
+            if (statusFilter && statusFilter !== 'all') queryParams.append('status', statusFilter);
+            if (dateFrom) queryParams.append('dateFrom', dateFrom);
+            if (dateTo) queryParams.append('dateTo', dateTo);
+            const response = await CertificateService.getInstance().getCertificates(page, limit, queryParams.toString());
             set({
-                certificates: allCertificates,
-                filteredCertificates: filtered,
+                certificates: response.records,
+                filteredCertificates: response.records,
                 currentPage: response.page,
                 totalPages: response.pages,
                 loading: false

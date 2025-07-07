@@ -79,9 +79,9 @@ export default function ColorView() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between space-y-2">
                 <div>
-                    <Breadcrumb>
+                    <Breadcrumb className="mb-6">
                         <BreadcrumbList>
                             <BreadcrumbItem>
                                 <span className="text-muted-foreground font-medium">Configuración</span>
@@ -94,6 +94,7 @@ export default function ColorView() {
                         </BreadcrumbList>
                     </Breadcrumb>
                     <h2 className="text-2xl font-bold tracking-tight mt-2">Lista de Colores</h2>
+                    <p className="text-muted-foreground">Todos los colores registrados en el sistema</p>
                 </div>
             </div>
 

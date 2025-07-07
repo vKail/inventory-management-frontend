@@ -95,7 +95,8 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-x-8 gap-y-8 w-full">
+        {/* Detalles Básicos */}
+        <div className="flex flex-col md:flex-row gap-8 w-full">
           <div className="md:w-1/3">
             <h3 className="text-lg font-semibold mb-1">Detalles Básicos</h3>
             <p className="text-muted-foreground text-sm">
@@ -123,9 +124,13 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                         <Input
                           placeholder="Nombre de la ubicación"
                           maxLength={30}
-                          textOnly={true}
                           shouldAutoCapitalize={true}
                           {...field}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            value = value.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s]/g, '');
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
@@ -146,9 +151,13 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                         <Textarea
                           placeholder="Descripción de la ubicación"
                           maxLength={250}
-                          textOnly={true}
                           shouldAutoCapitalize={true}
                           {...field}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            value = value.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s]/g, '');
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
@@ -200,8 +209,8 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
             </Card>
           </div>
         </div>
-
-        <div className="flex flex-col md:flex-row gap-x-8 gap-y-8 w-full">
+        {/* Detalles de Ubicación */}
+        <div className="flex flex-col md:flex-row gap-8 w-full">
           <div className="md:w-1/3">
             <h3 className="text-lg font-semibold mb-1">Detalles de Ubicación</h3>
             <p className="text-muted-foreground text-sm">
@@ -244,16 +253,22 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                       <FormLabel>Piso (Opcional)</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Número o nombre del piso"
+                          placeholder="Ej: 1, 2, -1, A1, B_2"
                           maxLength={10}
-                          textOnly={true}
-                          shouldAutoCapitalize={true}
                           {...field}
                           value={field.value ?? ""}
+                          onChange={(e) => {
+                            let value = e.target.value;
+
+                            // Allow only numbers, letters, dash and underscore
+                            value = value.replace(/[^a-zA-Z0-9\-_]/g, '');
+
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
-                      <div className="text-xs text-muted-foreground text-right">
-                        {field.value?.length || 0}/10 caracteres
+                      <div className="text-xs text-muted-foreground">
+                        Solo letras, números, guiones (-) y guiones bajos (_)
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -268,15 +283,22 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                       <FormLabel>Referencia *</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Código o referencia de la ubicación"
+                          placeholder="Ej: REF-001, A1_B2, LOC_123"
                           maxLength={50}
-                          textOnly={true}
-                          shouldAutoCapitalize={true}
                           {...field}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            // Allow only numbers, letters, dash, underscore and spaces
+                            value = value.replace(/[^a-zA-Z0-9\-_\s]/g, '');
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
                         {field.value?.length || 0}/50 caracteres
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Solo letras, números, guiones (-), guiones bajos (_) y espacios
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -292,19 +314,22 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                         <FormLabel>Capacidad *</FormLabel>
                         <FormControl>
                           <Input
-                            type="number"
+                            type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            placeholder="0"
-                            min="1"
-                            max="999999"
+                            placeholder="Capacidad"
                             maxLength={6}
                             {...field}
-                            value={field.value || 0}
+                            value={field.value === 0 || field.value === undefined ? 0 : field.value}
                             onChange={(e) => {
                               let value = e.target.value.replace(/[^0-9]/g, "");
                               if (value.length > 6) value = value.slice(0, 6);
-                              field.onChange(value === "" ? 0 : Number(value));
+                              field.onChange(value === '' ? 0 : Number(value));
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value === '' || e.target.value === undefined) {
+                                field.onChange(0);
+                              }
                             }}
                           />
                         </FormControl>
@@ -347,22 +372,26 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="occupancy"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ocupación *</FormLabel>
+                      <FormLabel>Ocupación (Opcional, 0 por defecto)</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
+                          type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          placeholder="0"
-                          min="0"
-                          max="999999"
+                          placeholder="Ocupación"
+                          min={0}
                           maxLength={6}
                           {...field}
-                          value={field.value || 0}
+                          value={field.value === 0 || field.value === undefined ? 0 : field.value}
                           onChange={(e) => {
                             let value = e.target.value.replace(/[^0-9]/g, "");
                             if (value.length > 6) value = value.slice(0, 6);
-                            field.onChange(value === "" ? 0 : Number(value));
+                            field.onChange(value === '' ? 0 : Number(value));
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value === '' || e.target.value === undefined) {
+                              field.onChange(0);
+                            }
                           }}
                         />
                       </FormControl>
@@ -379,14 +408,18 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notas</FormLabel>
+                      <FormLabel>Notas (Opcional)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Notas adicionales sobre la ubicación"
                           maxLength={250}
-                          textOnly={true}
                           shouldAutoCapitalize={true}
                           {...field}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            value = value.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s]/g, '');
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
@@ -400,8 +433,8 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
             </Card>
           </div>
         </div>
-
-        <div className="flex justify-end gap-x-2">
+        {/* Button row */}
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="outline"

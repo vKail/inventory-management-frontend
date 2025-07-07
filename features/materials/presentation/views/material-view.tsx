@@ -19,7 +19,7 @@ export default function MaterialView() {
                     <Breadcrumb className="mb-6">
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <span className="text-muted-foreground font-medium">Inventario</span>
+                                <span className="text-muted-foreground font-medium">Configuración</span>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                             <BreadcrumbItem>
