@@ -189,6 +189,7 @@ export interface LoanFilters {
     deliveryDateRange?: string; // '7days' | '1month' | '6months' | '1year'
     dueDateRange?: string; // '7days' | '1month' | '6months' | '1year'
     status?: string;
+    requestorDni?: string;
     view?: 'table' | 'grid' | 'list';
 }
 

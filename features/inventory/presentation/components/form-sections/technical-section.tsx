@@ -25,7 +25,7 @@ export const TechnicalSection = () => {
 
     const certificateOptions = certificates.map(certificate => ({
         value: certificate.id,
-        label: `${certificate.number} - ${certificate.observations}`
+        label: `${certificate.number} - ${certificate.observations?.length > 30 ? certificate.observations.substring(0, 30) + '...' : certificate.observations}`
     }));
 
     return (
@@ -67,10 +67,10 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="entryOrigin">
                                     <FormLabel>Origen de Entrada *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Origen del bien" maxLength={20} {...field} />
+                                        <Input placeholder="Origen del bien" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -84,10 +84,10 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="entryType">
                                     <FormLabel>Tipo de Entrada *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Tipo de entrada" maxLength={20} {...field} />
+                                        <Input placeholder="Tipo de entrada" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -143,10 +143,18 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="commitmentNumber">
                                     <FormLabel>Número de Compromiso *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Número de compromiso" maxLength={20} {...field} />
+                                        <Input
+                                            placeholder="Número de compromiso"
+                                            maxLength={20}
+                                            {...field}
+                                            value={field.value || ''}
+                                            onChange={(e) => {
+                                                field.onChange(e.target.value);
+                                            }}
+                                        />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {(field.value || '').length}/20 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -160,10 +168,10 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="modelCharacteristics">
                                     <FormLabel>Características del Modelo *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Características del modelo" maxLength={20} {...field} />
+                                        <Input placeholder="Características del modelo" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -177,10 +185,10 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="brandBreedOther">
                                     <FormLabel>Marca/Raza/Otro *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Marca, raza u otro" maxLength={20} {...field} />
+                                        <Input placeholder="Marca, raza u otro" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -194,10 +202,10 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="identificationSeries">
                                     <FormLabel>Serie de Identificación *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Serie de identificación" maxLength={20} {...field} />
+                                        <Input placeholder="Serie de identificación" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
@@ -247,10 +255,10 @@ export const TechnicalSection = () => {
                                 <FormItem>
                                     <FormLabel>Dimensiones *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Dimensiones del bien" maxLength={20} {...field} />
+                                        <Input placeholder="Dimensiones del bien" maxLength={60} {...field} />
                                     </FormControl>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/20 caracteres
+                                        {field.value?.length || 0}/60 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>

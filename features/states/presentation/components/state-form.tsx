@@ -54,108 +54,104 @@ export function StateForm({ initialData, onSubmit, isLoading }: StateFormProps) 
     const handleSubmit: SubmitHandler<StateFormValues> = async (data) => {
         try {
             await onSubmit(data);
-            router.push('/states');
         } catch (error) {
             console.error('Error en el formulario:', error);
         }
     };
 
     return (
-        <div className="flex flex-col items-center w-full">
-            <div className="flex flex-col md:flex-row gap-8 w-full">
-                <div className="md:w-1/3">
-                    <h3 className="text-2xl font-semibold mb-2">
-                        {initialData ? "Editar Estado" : "Nuevo Estado"}
-                    </h3>
-                    <p className="text-muted-foreground text-base">
-                        {initialData
-                            ? "Modifica los datos del estado"
-                            : "Complete los datos para crear un nuevo estado"}
-                    </p>
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                {/* Detalles Básicos */}
+                <div className="flex flex-col md:flex-row gap-8 w-full">
+                    <div className="md:w-1/3">
+                        <h3 className="text-lg font-semibold mb-1">Detalles Básicos</h3>
+                        <p className="text-muted-foreground text-sm">
+                            Información general del estado.
+                        </p>
+                    </div>
+                    <div className="md:w-2/3">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{initialData ? "Editar Estado" : "Nuevo Estado"}</CardTitle>
+                                <CardDescription>
+                                    {initialData
+                                        ? "Modifica los datos del estado"
+                                        : "Complete los datos para crear un nuevo estado"}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Nombre *</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Nombre del estado"
+                                                    maxLength={25}
+                                                    shouldAutoCapitalize={true}
+                                                    {...field}
+                                                    onChange={e => {
+                                                        let value = e.target.value;
+                                                        value = value.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\-_\s]/g, '');
+                                                        field.onChange(value);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <div className="text-xs text-muted-foreground text-right">
+                                                {field.value?.length || 0}/25 caracteres
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="description"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Descripción *</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder="Descripción del estado"
+                                                    maxLength={250}
+                                                    shouldAutoCapitalize={true}
+                                                    {...field}
+                                                    onChange={e => {
+                                                        let value = e.target.value;
+                                                        value = value.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\-_\s]/g, '');
+                                                        field.onChange(value);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                            <div className="text-xs text-muted-foreground text-right">
+                                                {field.value?.length || 0}/250 caracteres
+                                            </div>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
-                <div className="md:w-2/3">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Información del Estado</CardTitle>
-                            <CardDescription>
-                                Ingrese los datos requeridos para el estado
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Nombre *</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="Nombre del estado"
-                                                        maxLength={25}
-                                                        textOnly={true}
-                                                        shouldAutoCapitalize={true}
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <div className="text-xs text-muted-foreground text-right">
-                                                    {field.value?.length || 0}/25 caracteres
-                                                </div>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="description"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Descripción *</FormLabel>
-                                                <FormControl>
-                                                    <Textarea
-                                                        placeholder="Descripción del estado"
-                                                        maxLength={250}
-                                                        descriptionOnly={true}
-                                                        shouldAutoCapitalize={true}
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <div className="text-xs text-muted-foreground text-right">
-                                                    {field.value?.length || 0}/250 caracteres
-                                                </div>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <div className="flex justify-end gap-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => router.push('/states')}
-                                            className="cursor-pointer"
-                                        >
-                                            Cancelar
-                                        </Button>
-                                        <Button type="submit" disabled={isLoading} className="cursor-pointer">
-                                            {isLoading ? (
-                                                <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    {initialData ? "Actualizando..." : "Creando..."}
-                                                </>
-                                            ) : (
-                                                initialData ? "Actualizar" : "Crear"
-                                            )}
-                                        </Button>
-                                    </div>
-                                </form>
-                            </Form>
-                        </CardContent>
-                    </Card>
+                {/* Botones */}
+                <div className="flex justify-end gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => router.back()}
+                        disabled={isLoading}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button type="submit" variant="default" disabled={isLoading}>
+                        {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear"}
+                    </Button>
                 </div>
-            </div>
-        </div>
+            </form>
+        </Form>
     );
 }

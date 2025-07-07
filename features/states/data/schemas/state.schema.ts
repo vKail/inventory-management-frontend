@@ -14,9 +14,10 @@ export const stateSchema = z.object({
         .max(250, "La descripción no puede exceder 250 caracteres")
         .refine((value) => {
             if (!value || value.trim() === "") return false;
-            const textRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s.,;:!?()-]+$/;
+            // Allow letters, numbers, spaces, and common punctuation: . , ; : ! ? ( ) - _ ' "
+            const textRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s.,;:!\?()\-_'"]+$/;
             return textRegex.test(value.trim());
-        }, "La descripción debe contener solo letras y espacios válidos")
+        }, "La descripción solo puede contener letras, números, espacios y los caracteres . , ; : ! ? ( ) - _ ' \"")
 });
 
 export type StateFormValues = z.infer<typeof stateSchema>; 

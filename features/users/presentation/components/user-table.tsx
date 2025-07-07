@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Pencil, Trash2, Users, X } from 'lucide-react';
+import { PlusCircle, Pencil, Users, X, UserMinus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from "@/components/ui/badge";
 import { UserRole, UserStatus } from '../../data/schemas/user.schema';
@@ -42,7 +42,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UserPagination } from './user-pagination';
-import { formatNullValue, capitalizeWords, formatBooleanValue } from '@/lib/utils';
+import { formatNullValue, capitalizeWords } from '@/lib/utils';
+
+type StatusBadgeProps = {
+  value: string | boolean;
+  trueLabel?: string;
+  falseLabel?: string;
+  trueColor?: string;
+  falseColor?: string;
+  custom?: Record<string, { label: string; color: string }>;
+};
+
+function StatusBadge({ value, trueLabel = 'Activo', falseLabel = 'Inactivo', trueColor = 'bg-green-100 text-green-800', falseColor = 'bg-red-100 text-red-800', custom = {} }: StatusBadgeProps) {
+  let label = value ? trueLabel : falseLabel;
+  let color = value ? trueColor : falseColor;
+  if (typeof value === 'string' && custom && custom[value]) {
+    label = custom[value].label;
+    color = custom[value].color;
+  }
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>{label}</span>
+  );
+}
 
 const getUserTypeLabel = (type: string) => {
   switch (type) {
@@ -59,27 +80,12 @@ const getUserTypeLabel = (type: string) => {
   }
 };
 
-const getStatusVariant = (status: string) => {
-  switch (status) {
-    case UserStatus.ACTIVE:
-      return 'default';
-    case UserStatus.INACTIVE:
-      return 'outline';
-    default:
-      return 'outline';
-  }
-};
-
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case UserStatus.ACTIVE:
-      return 'Activo';
-    case UserStatus.INACTIVE:
-      return 'Inactivo';
-    default:
-      return status;
-  }
-};
+const USER_STATUSES = [
+  { value: 'ACTIVE', label: 'Activo' },
+  { value: 'INACTIVE', label: 'Inactivo' },
+  { value: 'SUSPENDED', label: 'Suspendido' },
+  { value: 'DEFAULTER', label: 'Moroso' },
+];
 
 export function UserTable() {
   const router = useRouter();
@@ -94,12 +100,18 @@ export function UserTable() {
     clearFilters,
     loading,
     getUsers,
-    deleteUser,
+    changeUserStatus,
     currentPage,
     totalPages
   } = useUserStore();
 
   const itemsPerPage = 10;
+
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>('INACTIVE');
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusUserName, setStatusUserName] = useState<string>('');
 
   useEffect(() => {
     loadUsers();
@@ -123,19 +135,29 @@ export function UserTable() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteUser(id);
-      toast.success('Usuario eliminado exitosamente');
-      loadUsers();
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Error al eliminar el usuario');
-    }
-  };
-
   const handleEdit = (id: string) => {
     router.push(`/users/edit/${id}`);
+  };
+
+  const openStatusModal = (user: any) => {
+    setSelectedUserId(user.id);
+    setStatusUserName(`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim());
+    setSelectedStatus(user.status);
+    setStatusModalOpen(true);
+  };
+
+  const handleStatusChange = async () => {
+    if (!selectedUserId) return;
+    setStatusLoading(true);
+    try {
+      await changeUserStatus(selectedUserId, selectedStatus);
+      toast.success('Estado actualizado exitosamente');
+      setStatusModalOpen(false);
+    } catch (error) {
+      toast.error('Error al actualizar el estado');
+    } finally {
+      setStatusLoading(false);
+    }
   };
 
   return (
@@ -159,8 +181,10 @@ export function UserTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value={UserStatus.ACTIVE}>Activo</SelectItem>
-                  <SelectItem value={UserStatus.INACTIVE}>Inactivo</SelectItem>
+                  <SelectItem value="ACTIVE">Activo</SelectItem>
+                  <SelectItem value="INACTIVE">Inactivo</SelectItem>
+                  <SelectItem value="SUSPENDED">Suspendido</SelectItem>
+                  <SelectItem value="DEFAULTER">Moroso</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -173,8 +197,6 @@ export function UserTable() {
                 <SelectContent>
                   <SelectItem value="all">Todos los tipos</SelectItem>
                   <SelectItem value={UserRole.ADMINISTRATOR}>Administrador</SelectItem>
-                  <SelectItem value={UserRole.TEACHER}>Profesor</SelectItem>
-                  <SelectItem value={UserRole.STUDENT}>Estudiante</SelectItem>
                   <SelectItem value={UserRole.MANAGER}>Gestor</SelectItem>
                 </SelectContent>
               </Select>
@@ -212,19 +234,20 @@ export function UserTable() {
                     <TableHead className="w-[250px]">Nombre Completo</TableHead>
                     <TableHead className="w-[200px]">Email</TableHead>
                     <TableHead className="w-[120px]">Tipo</TableHead>
-                    <TableHead className="w-[100px] text-right">Acciones</TableHead>
+                    <TableHead className="w-[100px]">Estado</TableHead>
+                    <TableHead className="w-[120px] text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={5}>
-                        <LoaderComponent rows={5} columns={5} />
+                      <TableCell colSpan={6}>
+                        <LoaderComponent rows={5} columns={6} />
                       </TableCell>
                     </TableRow>
                   ) : filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-20 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="py-20 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                           <Users className="h-10 w-10 opacity-30" />
                           <span>No hay usuarios para mostrar</span>
@@ -248,43 +271,40 @@ export function UserTable() {
                             {getUserTypeLabel(user.userType)}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          <StatusBadge
+                            value={user.status}
+                            trueLabel="Activo"
+                            falseLabel="Inactivo"
+                            trueColor="bg-green-100 text-green-800"
+                            falseColor="bg-red-100 text-red-800"
+                            custom={{
+                              'ACTIVE': { label: 'Activo', color: 'bg-green-100 text-green-800' },
+                              'INACTIVE': { label: 'Inactivo', color: 'bg-red-100 text-red-800' },
+                              'SUSPENDED': { label: 'Suspendido', color: 'bg-yellow-100 text-yellow-800' },
+                              'DEFAULTER': { label: 'Moroso', color: 'bg-purple-100 text-purple-800' },
+                            }}
+                          />
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex flex-row justify-end items-center gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(user.id)}
+                              title="Editar usuario"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Esta acción no se puede deshacer. Se eliminará permanentemente el usuario
-                                    <span className="font-semibold"> {formatNullValue(capitalizeWords(`${user.person?.firstName || ''} ${user.person?.lastName || ''}`.trim()), "Sin nombre")}</span>.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(user.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Eliminar
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openStatusModal(user)}
+                              className="cursor-pointer"
+                              title="Cambiar estado"
+                            >
+                              <UserMinus className="h-4 w-4 text-red-600" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -305,6 +325,39 @@ export function UserTable() {
           </div>
         </CardContent>
       </Card>
+      {/* Status Change Modal */}
+      <AlertDialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambiar estado del usuario</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecciona el nuevo estado para <span className="font-semibold">{statusUserName}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecciona un estado" />
+              </SelectTrigger>
+              <SelectContent>
+                {USER_STATUSES.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setStatusModalOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleStatusChange}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={statusLoading}
+            >
+              {statusLoading ? 'Actualizando...' : 'Actualizar Estado'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

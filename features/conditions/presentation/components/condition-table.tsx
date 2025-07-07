@@ -28,6 +28,27 @@ import { ConditionPagination } from './condition-pagination';
 import LoaderComponent from '@/shared/components/ui/Loader';
 import { formatNullValue, capitalizeWords, formatBooleanValue } from '@/lib/utils';
 
+type StatusBadgeProps = {
+    value: string | boolean;
+    trueLabel?: string;
+    falseLabel?: string;
+    trueColor?: string;
+    falseColor?: string;
+    custom?: Record<string, { label: string; color: string }>;
+};
+
+function StatusBadge({ value, trueLabel = 'Sí', falseLabel = 'No', trueColor = 'bg-green-100 text-green-800', falseColor = 'bg-gray-100 text-gray-800', custom = {} }: StatusBadgeProps) {
+    let label = value ? trueLabel : falseLabel;
+    let color = value ? trueColor : falseColor;
+    if (typeof value === 'string' && custom && custom[value]) {
+        label = custom[value].label;
+        color = custom[value].color;
+    }
+    return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>{label}</span>
+    );
+}
+
 export default function ConditionTable() {
     const router = useRouter();
     const {
@@ -80,8 +101,8 @@ export default function ConditionTable() {
     return (
         <Card className="w-full">
             <CardHeader className="px-2 sm:px-4 md:px-8 pb-0">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                         <Input
                             placeholder="Buscar por nombre..."
                             className="w-full sm:w-64"
@@ -147,12 +168,13 @@ export default function ConditionTable() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${condition.requiresMaintenance
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
-                                                        }`}>
-                                                        {condition.requiresMaintenance ? 'Sí' : 'No'}
-                                                    </span>
+                                                    <StatusBadge
+                                                        value={condition.requiresMaintenance}
+                                                        trueLabel="Sí"
+                                                        falseLabel="No"
+                                                        trueColor="bg-green-100 text-green-800"
+                                                        falseColor="bg-gray-100 text-gray-800"
+                                                    />
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex items-center justify-end space-x-2">

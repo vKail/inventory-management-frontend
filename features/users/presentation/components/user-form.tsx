@@ -20,33 +20,48 @@ interface UserFormProps {
     isLoading: boolean;
 }
 
+// Remove createUserSchema and editUserSchema, use userSchema for both create and edit
 export default function UserForm({ initialData, onSubmit, isLoading }: UserFormProps) {
     const router = useRouter()
     const isEdit = !!initialData
 
     const form = useForm<UserFormValues>({
         resolver: zodResolver(userSchema),
-        defaultValues: {
-            userName: '',
-            password: '',
-            career: '',
-            userType: UserRole.ADMINISTRATOR,
-            status: UserStatus.ACTIVE,
-            person: {
-                dni: '',
-                firstName: '',
-                lastName: '',
-                email: '',
-                phone: ''
+        defaultValues: isEdit
+            ? {
+                userName: '',
+                career: '',
+                userType: UserRole.ADMINISTRATOR,
+                status: UserStatus.ACTIVE,
+                person: {
+                    dni: '',
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: ''
+                }
+                // Do NOT include password on edit
             }
-        },
+            : {
+                userName: '',
+                password: '',
+                career: '',
+                userType: UserRole.ADMINISTRATOR,
+                status: UserStatus.ACTIVE,
+                person: {
+                    dni: '',
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: ''
+                }
+            },
     })
 
     useEffect(() => {
         if (initialData) {
             form.reset({
                 userName: initialData.userName,
-                password: '',
                 career: initialData.career || '',
                 userType: initialData.userType as UserRole,
                 status: initialData.status as UserStatus,
@@ -57,7 +72,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                     email: initialData.person?.email || '',
                     phone: initialData.person?.phone || ''
                 }
-            })
+                // Do NOT include password on edit
+            });
         }
     }, [initialData, form])
 
@@ -82,8 +98,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
     }
 
     return (
-        <div className="flex flex-col items-center w-full px-6 md:px-12">
-            <div className="w-full max-w-[1200px]">
+        <div className="flex flex-col items-center w-full">
+            <div className="w-full">
                 {/* Breadcrumb */}
                 <Breadcrumb className="mb-6">
                     <BreadcrumbList>
@@ -99,7 +115,6 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <Users className="inline mr-1 h-4 w-4 text-primary align-middle" />
                             <BreadcrumbPage>{isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
@@ -135,6 +150,7 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                             )}
                                         />
 
+                                        {/* Password field is only rendered on create. Validation (length and special char) is handled in Zod schema. */}
                                         {!isEdit && (
                                             <FormField
                                                 control={form.control}
@@ -173,12 +189,6 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                                         <SelectContent>
                                                             <SelectItem value={UserRole.ADMINISTRATOR}>
                                                                 Administrador
-                                                            </SelectItem>
-                                                            <SelectItem value={UserRole.TEACHER}>
-                                                                Profesor
-                                                            </SelectItem>
-                                                            <SelectItem value={UserRole.STUDENT}>
-                                                                Estudiante
                                                             </SelectItem>
                                                             <SelectItem value={UserRole.MANAGER}>
                                                                 Gestor
@@ -319,12 +329,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                         Cancelar
                                     </Button>
                                     <Button
-                                        type="button"
+                                        type="submit"
                                         disabled={isLoading}
-                                        onClick={() => {
-                                            const formData = form.getValues();
-                                            handleSubmit(formData);
-                                        }}
                                     >
                                         {isLoading ? (
                                             <>

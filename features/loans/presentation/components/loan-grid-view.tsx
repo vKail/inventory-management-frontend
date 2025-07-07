@@ -3,6 +3,7 @@ import { formatDate } from "../../data/utils/date-formatter";
 import { Loan, LoanStatus } from "@/features/loans/data/interfaces/loan.interface";
 import { useState } from "react";
 import { LoanDetailsModal } from "./loan-details-modal";
+import { EmptyLoanState } from "./empty-loan-state";
 
 interface LoanGridViewProps {
     loans: Loan[];
@@ -38,47 +39,51 @@ export function LoanGridView({ loans, onViewDetails, onReturn }: LoanGridViewPro
 
     return (
         <>
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {loans.map((loan) => (
-                    <div
-                        key={loan.id}
-                        className="rounded-lg border bg-card text-card-foreground shadow-sm cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedLoanId(loan.id)}
-                    >
-                        <div className="p-6">
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="font-medium">Juan Pérez</h3>
-                                {getStatusBadge(loan.status)}
+            {loans.length === 0 ? (
+                <EmptyLoanState />
+            ) : (
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {loans.map((loan) => (
+                        <div
+                            key={loan.id}
+                            className="rounded-lg border bg-card text-card-foreground shadow-sm cursor-pointer hover:bg-muted/50"
+                            onClick={() => setSelectedLoanId(loan.id)}
+                        >
+                            <div className="p-6">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h3 className="font-medium">Juan Pérez</h3>
+                                    {getStatusBadge(loan.status)}
+                                </div>
+                                <div className="space-y-2">
+                                    <div>
+                                        <span className="text-sm text-muted-foreground">Fecha de inicio:</span>
+                                        <p className="text-sm font-medium">{formatDate(loan.requestDate)}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-sm text-muted-foreground">Fecha de vencimiento:</span>
+                                        <p className={`text-sm font-medium ${loan.status === LoanStatus.OVERDUE ? 'text-red-600' : ''}`}>
+                                            {formatDate(loan.scheduledReturnDate)}
+                                        </p>
+                                    </div>
+                                </div>
+                                {loan.status === LoanStatus.DELIVERED && (
+                                    <div className="mt-4">
+                                        <Button
+                                            className="w-full"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onReturn(loan);
+                                            }}
+                                        >
+                                            Devolver
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-2">
-                                <div>
-                                    <span className="text-sm text-muted-foreground">Fecha de inicio:</span>
-                                    <p className="text-sm font-medium">{formatDate(loan.requestDate)}</p>
-                                </div>
-                                <div>
-                                    <span className="text-sm text-muted-foreground">Fecha de vencimiento:</span>
-                                    <p className={`text-sm font-medium ${loan.status === LoanStatus.OVERDUE ? 'text-red-600' : ''}`}>
-                                        {formatDate(loan.scheduledReturnDate)}
-                                    </p>
-                                </div>
-                            </div>
-                            {loan.status === LoanStatus.DELIVERED && (
-                                <div className="mt-4">
-                                    <Button
-                                        className="w-full"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onReturn(loan);
-                                        }}
-                                    >
-                                        Devolver
-                                    </Button>
-                                </div>
-                            )}
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             <LoanDetailsModal
                 isOpen={selectedLoanId !== null}

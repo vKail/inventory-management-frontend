@@ -84,13 +84,7 @@ export class AxiosClient implements HttpHandler {
             },
           });
 
-          if (error.response.status === HTTP_STATUS_CODE.UNAUTHORIZED) {
-            if (typeof window !== 'undefined') {
-              document.dispatchEvent(new CustomEvent('Usuario No Autorizado'));
-            }
-          }
-
-          if (error.response.message === 'Token not Found') {
+          if (error.response.status === HTTP_STATUS_CODE.UNAUTHORIZED || error.response.message === 'Token not Found') {
             if (typeof window !== 'undefined') {
               document.dispatchEvent(new CustomEvent('Sesion Finalizada'));
               window.location.href = '/login';

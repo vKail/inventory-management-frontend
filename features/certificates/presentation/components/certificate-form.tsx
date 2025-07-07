@@ -23,7 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCertificateStore } from '../../context/certificate-store';
-import { useUserStore } from '@/features/users/context/user-store';
+import { useUserStore, getActiveUsersForCertificates } from '@/features/users/context/user-store';
 import {
     Select,
     SelectContent,
@@ -63,7 +63,7 @@ interface CertificateFormProps {
 export function CertificateForm({ initialData, onSubmit, isLoading, id }: CertificateFormProps) {
     const router = useRouter();
     const { getCertificateById } = useCertificateStore();
-    const { getUsers, users } = useUserStore();
+    const { users, setUsers } = useUserStore();
     const [openDelivery, setOpenDelivery] = useState(false);
     const [openReception, setOpenReception] = useState(false);
 
@@ -110,13 +110,14 @@ export function CertificateForm({ initialData, onSubmit, isLoading, id }: Certif
     useEffect(() => {
         const loadUsers = async () => {
             try {
-                await getUsers(1, 100);
+                const response = await getActiveUsersForCertificates();
+                setUsers(response.records);
             } catch (error) {
                 console.error('Error loading users:', error);
             }
         };
         loadUsers();
-    }, [getUsers]);
+    }, [setUsers]);
 
     const handleSubmit = async (data: CertificateFormValues) => {
         const formattedData = {

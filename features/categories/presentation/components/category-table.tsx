@@ -115,10 +115,10 @@ export function CategoryTable({ currentPage, itemsPerPage }: CategoryTableProps)
               onValueChange={setParentCategoryFilter}
             >
               <SelectTrigger className="w-full sm:w-56">
-                <SelectValue placeholder="Todas las categorías padre" />
+                <SelectValue placeholder="Todas las categorías" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las categorías padre</SelectItem>
+                <SelectItem value="all">Todas las categorías</SelectItem>
                 <SelectItem value="none">Sin categoría padre</SelectItem>
               </SelectContent>
             </Select>

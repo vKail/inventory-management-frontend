@@ -40,7 +40,8 @@ export function LoanView() {
         getLoans,
         returnLoan,
         setPage,
-        setFilters
+        setFilters,
+        clearFilters
     } = useLoanStore();
 
     const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
@@ -84,10 +85,14 @@ export function LoanView() {
     };
 
     const handleGoBack = () => {
+        clearFilters();
+        // Optionally, you can also reset other UI state here if needed
         router.push('/loans');
     };
 
     if (error) {
+        // Improved custom message for DNI not found
+        const isDniNotFound = typeof error === 'string' && error.toLowerCase().includes('persona con dni') && error.toLowerCase().includes('no encontrada');
         return (
             <div className="space-y-4">
                 {/* Breadcrumbs y título */}
@@ -116,10 +121,12 @@ export function LoanView() {
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                Error al cargar los préstamos
+                                {isDniNotFound ? 'Persona no encontrada' : 'Error al cargar los préstamos'}
                             </h3>
                             <p className="text-gray-600 mb-6 max-w-md">
-                                {error || "Ha ocurrido un error inesperado al cargar los préstamos. Por favor, inténtalo de nuevo."}
+                                {isDniNotFound
+                                    ? 'La persona ingresada no tiene préstamos registrados en el sistema.'
+                                    : (error || 'Ha ocurrido un error inesperado al cargar los préstamos. Por favor, inténtalo de nuevo.')}
                             </p>
                             <div className="flex gap-3">
                                 <Button
@@ -174,8 +181,8 @@ export function LoanView() {
                 </div>
             </div>
 
-            <Card className="w-full">
-                <CardContent className="p-6">
+            <Card className="w-full py-2">
+                <CardContent className="px-6">
                     <div className="space-y-4">
                         <LoanHeader
                             onViewChange={handleViewChange}

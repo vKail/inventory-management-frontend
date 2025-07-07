@@ -116,7 +116,6 @@ export const useCategoryStore = create<CategoryStore>()(
             error: null
           });
         } catch (error) {
-          console.error('Error fetching categories:', error);
           set({
             error: 'Error al cargar las categorías',
             loading: false,

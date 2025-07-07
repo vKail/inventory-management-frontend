@@ -93,6 +93,16 @@ export const InventoryTable = ({
         <>
             <div className="rounded-md border">
                 <Table>
+                    <colgroup>
+                        <col style={{ width: '140px' }} />
+                        <col style={{ width: '120px' }} />
+                        <col style={{ width: '200px' }} />
+                        <col style={{ width: '180px' }} />
+                        <col />
+                        <col />
+                        <col />
+                        <col />
+                    </colgroup>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Código</TableHead>
@@ -108,10 +118,26 @@ export const InventoryTable = ({
                     <TableBody>
                         {filteredItems.map((item) => (
                             <TableRow key={item.id}>
-                                <TableCell>{item.code}</TableCell>
-                                <TableCell>{item.name}</TableCell>
-                                <TableCell>{item.category?.name || 'Sin categoría'}</TableCell>
-                                <TableCell>{item.location?.name || 'Sin departamento'}</TableCell>
+                                <TableCell>
+                                    <div className="max-w-[140px] w-full">
+                                        <span className="truncate-cell" title={item.code}>{item.code}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="overflow-hidden">
+                                    <div className="max-w-[120px] w-full">
+                                        <span className="truncate-cell" title={item.name}>{item.name}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="max-w-[200px] w-full">
+                                        <span className="truncate-cell" title={item.category?.name || 'Sin categoría'}>{item.category?.name || 'Sin categoría'}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="max-w-[180px] w-full">
+                                        <span className="truncate-cell" title={item.location?.name || 'Sin departamento'}>{item.location?.name || 'Sin departamento'}</span>
+                                    </div>
+                                </TableCell>
                                 <TableCell>{item.stock}</TableCell>
                                 <TableCell>
                                     <Badge

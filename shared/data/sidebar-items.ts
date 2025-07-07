@@ -9,10 +9,10 @@ import {
   Palette,
   ShieldCheck,
   Tag,
-  User,
   Users,
+  Handshake,
   AlertCircle,
-  File,
+  FileText,
 } from 'lucide-react';
 
 export const sidebarItems = [
@@ -40,7 +40,7 @@ export const sidebarItems = [
       },
       {
         title: 'Préstamos',
-        icon: Users,
+        icon: Handshake,
         roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
         subItems: [
           {
@@ -64,7 +64,7 @@ export const sidebarItems = [
     items: [
       {
         title: 'Usuarios',
-        icon: User,
+        icon: Users,
         roles: [UserRole.ADMIN],
         subItems: [
           {
@@ -88,7 +88,7 @@ export const sidebarItems = [
     items: [
       {
         title: 'Actas',
-        icon: File,
+        icon: FileText,
         roles: [UserRole.ADMIN],
         subItems: [
           {

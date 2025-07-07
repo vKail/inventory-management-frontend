@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { Handshake, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface EmptyLoanStateProps {
@@ -19,6 +19,7 @@ export function EmptyLoanState({
 
     return (
         <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
+            <Handshake className="h-20 w-20 opacity-30" />
             <p className="mb-4 text-lg">{message}</p>
             <Button
                 onClick={() => router.push(actionPath)}

@@ -11,7 +11,7 @@ interface ColorStore {
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getColors: (page?: number, limit?: number) => Promise<void>;
+    getColors: (page?: number, limit?: number, options?: { allRecords?: boolean, search?: string }) => Promise<void>;
     getColorById: (colorId: number) => Promise<IColorResponse | undefined>;
     addColor: (color: IColor) => Promise<void>;
     updateColor: (colorId: number, color: IColor) => Promise<void>;
@@ -34,56 +34,39 @@ export const useColorStore = create<ColorStore>()(
             currentPage: 1,
             totalPages: 1,
 
-            setSearchTerm: (term: string) => {
-                const { colors } = get();
-                const filtered = colors.filter((color) => {
-                    const matchesSearch = color.name.toLowerCase().includes(term.toLowerCase()) ||
-                        color.hexCode.toLowerCase().includes(term.toLowerCase()) ||
-                        color.description?.toLowerCase().includes(term.toLowerCase());
-
-                    return matchesSearch;
-                });
-                set({ searchTerm: term, filteredColors: filtered });
+            setSearchTerm: async (term: string) => {
+                set({ searchTerm: term, loading: true });
+                try {
+                    await get().getColors(1, 10, { search: term });
+                } finally {
+                    set({ loading: false });
+                }
             },
 
-            clearFilters: () => {
-                const { colors } = get();
-                set({
-                    searchTerm: '',
-                    filteredColors: colors
-                });
+            clearFilters: async () => {
+                set({ searchTerm: '', loading: true });
+                try {
+                    await get().getColors(1, 100); // Recargar sin filtros
+                } finally {
+                    set({ loading: false });
+                }
             },
 
             refreshTable: async () => {
                 const { currentPage } = get();
-                await get().getColors(currentPage, 10);
+                await get().getColors(currentPage, 100);
             },
 
-            getColors: async (page = 1, limit = 10) => {
+            getColors: async (page = 1, limit = 10, options?: { allRecords?: boolean, search?: string }) => {
                 set({ loading: true });
                 try {
-                    const data = await ColorService.getInstance().getColors(page, limit);
-
-                    if (data.pages > 0 && page > data.pages) {
-                        await get().getColors(1, limit);
-                        return;
-                    }
-
-                    const { searchTerm } = get();
-                    const allColors = data.records;
-
-                    const filtered = allColors.filter((color) => {
-                        const matchesSearch = searchTerm === '' ||
-                            color.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            color.hexCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            color.description?.toLowerCase().includes(searchTerm.toLowerCase());
-
-                        return matchesSearch;
-                    });
+                    const searchTerm = options?.search ?? get().searchTerm;
+                    const allRecords = options?.allRecords ?? false;
+                    const data = await ColorService.getInstance().getColors(page, limit, searchTerm, allRecords);
 
                     set({
-                        colors: allColors,
-                        filteredColors: filtered,
+                        colors: data.records,
+                        filteredColors: data.records,
                         currentPage: data.page,
                         totalPages: data.pages,
                         loading: false,

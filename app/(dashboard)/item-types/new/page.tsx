@@ -1,11 +1,11 @@
 'use client'
 
-import ItemTypeForm from '@/features/item-types/presentation/components/item-type-form'
+import ItemTypeFormView from '@/features/item-types/presentation/views/item-type-form-view'
 
 export default function NewItemTypePage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <ItemTypeForm />
+      <ItemTypeFormView />
     </div>
   )
 }

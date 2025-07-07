@@ -128,7 +128,15 @@ export default function ColorForm() {
                                                             maxLength={25}
                                                             textOnly={true}
                                                             shouldAutoCapitalize={true}
-                                                            {...field}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                const cleanedValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                                                                field.onChange(cleanedValue);
+                                                            }}
+                                                            value={field.value}
+                                                            onBlur={field.onBlur}
+                                                            name={field.name}
+                                                            ref={field.ref}
                                                         />
                                                     </FormControl>
                                                     <div className="text-xs text-muted-foreground text-right">

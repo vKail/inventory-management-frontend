@@ -11,8 +11,8 @@ const normalizeMaterialType = (type: string): string => {
     const typeMapping: { [key: string]: string } = {
         'METAL': 'METAL',
         'OTRO': 'OTHER',
-        'PLÁSTICO': 'PLASTIC',
-        'PLASTICO': 'PLASTIC',
+        'PLÁSTICO': 'OTHER',
+        'PLASTICO': 'OTHER',
         'CONSUMABLE': 'CONSUMABLE',
         'TOOL': 'TOOL',
         'EQUIPMENT': 'EQUIPMENT',
@@ -30,7 +30,8 @@ interface MaterialState {
     totalPages: number;
     searchTerm: string;
     typeFilter: string;
-    getMaterials: (page?: number, limit?: number) => Promise<void>;
+    refreshTable: () => Promise<void>;
+    getMaterials: (page?: number, limit?: number, options?: { allRecords?: boolean }) => Promise<void>;
     getMaterialById: (materialId: number) => Promise<IMaterial | undefined>;
     addMaterial: (material: Partial<IMaterial>) => Promise<void>;
     updateMaterial: (materialId: number, material: Partial<IMaterial>) => Promise<void>;
@@ -74,13 +75,18 @@ export const useMaterialStore = create<MaterialState>()(
                 get().getMaterials(1, 10);
             },
 
-            getMaterials: async (page = 1, limit = 10) => {
+            refreshTable: async () => {
+                const { currentPage } = get();
+                await get().getMaterials(currentPage, 10);
+            },
+
+            getMaterials: async (page = 1, limit = 10, options?: { allRecords?: boolean }) => {
                 set({ loading: true });
                 try {
                     const { searchTerm, typeFilter } = get();
 
                     // Prepare filters for backend
-                    const filters: { name?: string; materialType?: string } = {};
+                    const filters: { name?: string; materialType?: string; allRecords?: boolean } = {};
 
                     if (searchTerm && searchTerm.trim() !== '') {
                         filters.name = searchTerm.trim();
@@ -88,6 +94,11 @@ export const useMaterialStore = create<MaterialState>()(
 
                     if (typeFilter && typeFilter !== 'all') {
                         filters.materialType = typeFilter;
+                    }
+
+                    // Add allRecords option if provided
+                    if (options?.allRecords) {
+                        filters.allRecords = true;
                     }
 
                     const response = await MaterialService.getInstance().getMaterials(page, limit, filters);
@@ -156,7 +167,7 @@ export const useMaterialStore = create<MaterialState>()(
                         await get().getMaterials(currentPage - 1, 10);
                     } else {
                         // Refrescamos la página actual
-                        await get().getMaterials(currentPage, 10);
+                        await get().refreshTable();
                     }
                     set({ loading: false });
                 } catch (error) {

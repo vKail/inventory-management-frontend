@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'GIIT',
+  title: 'GITT',
   description: 'Gestión de Inventario e Infraestructura Tecnológica',
 };
 

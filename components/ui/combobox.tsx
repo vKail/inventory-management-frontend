@@ -28,6 +28,7 @@ interface ComboboxProps {
     emptyMessage?: string;
     searchPlaceholder?: string;
     className?: string;
+    loading?: boolean;
 }
 
 export function Combobox({
@@ -52,7 +53,9 @@ export function Combobox({
                     aria-expanded={open}
                     className={cn("w-full justify-between", className)}
                 >
-                    {selectedOption ? selectedOption.label : placeholder}
+                    <span className="truncate">
+                        {selectedOption ? selectedOption.label : placeholder}
+                    </span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
@@ -69,14 +72,15 @@ export function Combobox({
                                     onChange(option.value);
                                     setOpen(false);
                                 }}
+                                className="truncate"
                             >
                                 <Check
                                     className={cn(
-                                        "mr-2 h-4 w-4",
+                                        "mr-2 h-4 w-4 shrink-0",
                                         value === option.value ? "opacity-100" : "opacity-0"
                                     )}
                                 />
-                                {option.label}
+                                <span className="truncate">{option.label}</span>
                             </CommandItem>
                         ))}
                     </CommandGroup>

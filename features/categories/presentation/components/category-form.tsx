@@ -77,7 +77,13 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
 
   const handleSubmit = async (data: CategoryFormValues) => {
     try {
-      await onSubmit(data);
+      // Normalize depreciationPercentage: convert comma to dot for backend
+      const normalizedData = {
+        ...data,
+        depreciationPercentage: data.depreciationPercentage.replace(',', '.')
+      };
+
+      await onSubmit(normalizedData);
     } catch (error) {
       console.error("Error submitting form:", error);
     }
@@ -227,10 +233,27 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                   name="standardUsefulLife"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Vida útil estándar (años)</FormLabel>
+                      <FormLabel>Vida útil estándar (años) *</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                        <Input
+                          type="number"
+                          placeholder="Ingrese la vida útil en años"
+                          min="0"
+                          max="50"
+                          {...field}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (value > 50) {
+                              field.onChange(50);
+                            } else {
+                              field.onChange(value);
+                            }
+                          }}
+                        />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground">
+                        Máximo 50 años
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -241,10 +264,67 @@ export function CategoryForm({ initialData, onSubmit, isLoading }: CategoryFormP
                   name="depreciationPercentage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Porcentaje de depreciación</FormLabel>
+                      <FormLabel>Porcentaje de depreciación *</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input
+                          placeholder="Ej: 0.15 o 0,25"
+                          {...field}
+                          onChange={(e) => {
+                            let value = e.target.value;
+
+                            // Allow only numbers, dots, and commas
+                            value = value.replace(/[^0-9.,]/g, '');
+
+                            // Ensure only one decimal separator
+                            const dotCount = (value.match(/\./g) || []).length;
+                            const commaCount = (value.match(/,/g) || []).length;
+
+                            if (dotCount > 1 || commaCount > 1) {
+                              // Keep only the first decimal separator
+                              const firstDot = value.indexOf('.');
+                              const firstComma = value.indexOf(',');
+
+                              if (firstDot !== -1 && firstComma !== -1) {
+                                // Both separators present, keep the first one
+                                if (firstDot < firstComma) {
+                                  value = value.replace(/,/g, '');
+                                } else {
+                                  value = value.replace(/\./g, '');
+                                }
+                              } else if (dotCount > 1) {
+                                // Multiple dots, keep only the first
+                                const parts = value.split('.');
+                                value = parts[0] + '.' + parts.slice(1).join('');
+                              } else if (commaCount > 1) {
+                                // Multiple commas, keep only the first
+                                const parts = value.split(',');
+                                value = parts[0] + ',' + parts.slice(1).join('');
+                              }
+                            }
+
+                            // Limit to 2 decimal places
+                            const decimalSeparator = value.includes('.') ? '.' : ',';
+                            if (decimalSeparator) {
+                              const parts = value.split(decimalSeparator);
+                              if (parts[1] && parts[1].length > 2) {
+                                parts[1] = parts[1].substring(0, 2);
+                                value = parts.join(decimalSeparator);
+                              }
+                            }
+
+                            // Limit the whole number part to prevent values over 1
+                            const parts = value.split(/[.,]/);
+                            if (parts[0] && parseInt(parts[0]) > 1) {
+                              value = '1' + (parts[1] ? decimalSeparator + parts[1] : '');
+                            }
+
+                            field.onChange(value);
+                          }}
+                        />
                       </FormControl>
+                      <div className="text-xs text-muted-foreground">
+                        Valor entre 0 y 1 con máximo 2 decimales (ej: 0.15, 0,25, 1.00)
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}

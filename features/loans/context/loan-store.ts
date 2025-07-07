@@ -17,7 +17,8 @@ export const useLoanStore = create<LoanState>()(
             filters: {
                 status: 'DELIVERED',
                 deliveryDateRange: 'all',
-                dueDateRange: 'all'
+                dueDateRange: 'all',
+                requestorDni: ''
             },
 
             setPage: (page: number) => {
@@ -39,6 +40,7 @@ export const useLoanStore = create<LoanState>()(
                         status: 'DELIVERED',
                         deliveryDateRange: 'all',
                         dueDateRange: 'all',
+                        requestorDni: '',
                         view: state.filters.view
                     },
                     currentPage: 1
@@ -61,9 +63,12 @@ export const useLoanStore = create<LoanState>()(
                     queryParams.append('page', page.toString());
                     queryParams.append('limit', limit.toString());
 
-                    // Optionally add filters as query params if backend supports them
+                    // Add filters as query params
                     if (filters.status && filters.status !== 'all') {
                         queryParams.append('status', filters.status);
+                    }
+                    if (filters.requestorDni && filters.requestorDni.trim()) {
+                        queryParams.append('requestorDni', filters.requestorDni.trim());
                     }
                     // (Add deliveryDateRange/dueDateRange if backend supports it)
 

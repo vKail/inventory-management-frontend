@@ -13,6 +13,7 @@ import { formatDate } from "../../data/utils/date-formatter";
 import { useState, useEffect } from "react";
 import { LoanDetailsModal } from "./loan-details-modal";
 import { UserService } from "@/features/users/services/user.service";
+import { EmptyLoanState } from "./empty-loan-state";
 
 interface LoanTableViewProps {
     loans: Loan[];
@@ -88,7 +89,7 @@ export function LoanTableView({
                     <TableHeader>
                         <TableRow>
                             <TableHead>Solicitante</TableHead>
-                            <TableHead>Fecha de Entrega</TableHead>
+                            <TableHead>Fecha del Préstamo</TableHead>
                             <TableHead>Fecha de Vencimiento</TableHead>
                             <TableHead>Número de Items</TableHead>
                             <TableHead>Estado</TableHead>
@@ -99,10 +100,7 @@ export function LoanTableView({
                         {loans.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center h-32">
-                                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                        <p>No se encontraron préstamos</p>
-                                        <p className="text-sm">Intenta ajustar los filtros de búsqueda</p>
-                                    </div>
+                                    <EmptyLoanState />
                                 </TableCell>
                             </TableRow>
                         ) : (

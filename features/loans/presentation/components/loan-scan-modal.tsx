@@ -1,7 +1,6 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Loader2, QrCode, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryItem } from "@/features/inventory/data/interfaces/inventory.interface";

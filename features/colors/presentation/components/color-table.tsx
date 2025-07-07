@@ -76,7 +76,7 @@ export default function ColorTable({
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto py-2 mb-4">
                         <Input
-                            placeholder="Buscar por nombre, código HEX o descripción..."
+                            placeholder="Buscar por nombre o descripción..."
                             className="w-full sm:w-64"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -85,9 +85,17 @@ export default function ColorTable({
                             <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={clearFilters}
+                                onClick={async () => {
+                                    try {
+                                        await clearFilters();
+                                    } catch (error) {
+                                        console.error('Error clearing filters:', error);
+                                        toast.error('Error al limpiar filtros');
+                                    }
+                                }}
                                 className="h-10 w-10 cursor-pointer"
                                 title="Limpiar filtros"
+                                disabled={loading}
                             >
                                 <X className="h-4 w-4" />
                             </Button>

@@ -21,7 +21,7 @@ const formatNullValue = (value: any): string => {
 };
 
 interface ColorServiceProps {
-  getColors: (page?: number, limit?: number, search?: string) => Promise<PaginatedColors>;
+  getColors: (page?: number, limit?: number, search?: string, allRecords?: boolean) => Promise<PaginatedColors>;
   getColorById: (id: number) => Promise<IColorResponse | undefined>;
   createColor: (color: IColor) => Promise<IColorResponse | undefined>;
   updateColor: (id: number, color: IColor) => Promise<IColorResponse | undefined>;
@@ -44,9 +44,11 @@ export class ColorService implements ColorServiceProps {
     return ColorService.instance;
   }
 
-  public async getColors(page = 1, limit = 10): Promise<PaginatedColors> {
+  public async getColors(page = 1, limit = 10, search = '', allRecords = false): Promise<PaginatedColors> {
     try {
       let url = `${ColorService.url}?page=${page}&limit=${limit}`;
+      if (allRecords) url += `&allRecords=true`;
+      if (search && search.trim() !== '') url += `&name=${encodeURIComponent(search)}`;
 
       const response = await this.httpClient.get<PaginatedColors>(url);
       return response.data;
