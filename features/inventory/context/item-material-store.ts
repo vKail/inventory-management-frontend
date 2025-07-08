@@ -55,12 +55,10 @@ export const useItemMaterialStore = create<ItemMaterialState>((set, get) => ({
         );
         // Eliminar relaciones removidas
         for (const mat of toDelete) {
-            console.log('[ItemMaterial] Eliminando relación:', mat);
             await itemMaterialService.removeItemMaterial(mat.id);
         }
         // Agregar nuevas relaciones
         for (const mat of toAdd) {
-            console.log('[ItemMaterial] Creando relación:', { itemId, materialId: mat.materialId });
             await itemMaterialService.addMaterialToItem({
                 itemId,
                 materialId: mat.materialId,

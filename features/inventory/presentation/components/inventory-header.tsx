@@ -11,7 +11,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useCategoryStore } from "@/features/categories/context/category-store";
 import { useItemTypeStore } from "@/features/item-types/context/item-types-store";
-import { useStateStore } from "@/features/states/context/state-store";
+import { useLocationStore } from "@/features/locations/context/location-store";
+import { Combobox } from "@/components/ui/combobox";
 import { useInventoryStore } from "../../context/inventory-store";
 import { useCallback, useEffect, useState } from "react";
 import { ScanProcessModal } from "./scan-process-modal";
@@ -29,7 +30,7 @@ export function InventoryHeader({
     const router = useRouter();
     const { categories, getCategories } = useCategoryStore();
     const { itemTypes, getItemTypes } = useItemTypeStore();
-    const { states, getStates } = useStateStore();
+    const { locations, getLocations } = useLocationStore();
     const { setFilters, getInventoryItemByCode, clearFilters, filters } = useInventoryStore();
     const [isScanModalOpen, setIsScanModalOpen] = useState(false);
     const [scannedItem, setScannedItem] = useState<InventoryItem | null>(null);
@@ -37,23 +38,23 @@ export function InventoryHeader({
     useEffect(() => {
         getCategories();
         getItemTypes();
-        getStates();
-    }, [getCategories, getItemTypes, getStates]);
+        getLocations();
+    }, [getCategories, getItemTypes, getLocations]);
 
     const handleSearch = useCallback((value: string) => {
         setFilters({ search: value });
     }, [setFilters]);
 
-    const handleCategoryChange = useCallback((value: string) => {
-        setFilters({ categoryId: value });
+    const handleCategoryChange = useCallback((value: string | number) => {
+        setFilters({ categoryId: value.toString() });
     }, [setFilters]);
 
-    const handleStateChange = useCallback((value: string) => {
-        setFilters({ statusId: value });
+    const handleLocationChange = useCallback((value: string | number) => {
+        setFilters({ locationId: value === 'all' ? undefined : value });
     }, [setFilters]);
 
-    const handleTypeChange = useCallback((value: string) => {
-        setFilters({ itemTypeId: value });
+    const handleTypeChange = useCallback((value: string | number) => {
+        setFilters({ itemTypeId: value.toString() });
     }, [setFilters]);
 
     const handleScan = () => {
@@ -68,7 +69,7 @@ export function InventoryHeader({
 
     const hasActiveFilters = filters.search ||
         (filters.categoryId && filters.categoryId !== 'all') ||
-        (filters.statusId && filters.statusId !== 'all') ||
+        (filters.locationId && filters.locationId !== 'all') ||
         (filters.itemTypeId && filters.itemTypeId !== 'all');
 
     return (
@@ -85,47 +86,49 @@ export function InventoryHeader({
                         />
                     </div>
 
-                    <Select onValueChange={handleCategoryChange} value={filters.categoryId || 'all'}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todas las categorías</SelectItem>
-                            {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id.toString()}>
-                                    {category.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="min-w-[120px] flex-1 max-w-[200px]">
+                        <Combobox
+                            options={[
+                                { value: 'all', label: 'Todas las categorías' },
+                                ...categories.map((category) => ({ value: category.id.toString(), label: category.name }))
+                            ]}
+                            value={filters.categoryId?.toString() || 'all'}
+                            onChange={handleCategoryChange}
+                            placeholder="Categoría"
+                            searchPlaceholder="Buscar categoría..."
+                            emptyMessage="No se encontraron categorías"
+                        />
+                    </div>
 
-                    <Select onValueChange={handleStateChange} value={filters.statusId || 'all'}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los estados</SelectItem>
-                            {states.map((state) => (
-                                <SelectItem key={state.id} value={state.id.toString()}>
-                                    {state.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="min-w-[120px] flex-1 max-w-[200px]">
+                        <Combobox
+                            options={[
+                                { value: 'all', label: 'Todas las ubicaciones' },
+                                ...locations
+                                    .filter((location) => typeof location.id === 'string' || typeof location.id === 'number')
+                                    .map((location) => ({ value: String(location.id), label: location.name }))
+                            ]}
+                            value={filters.locationId?.toString() || 'all'}
+                            onChange={handleLocationChange}
+                            placeholder="Ubicación"
+                            searchPlaceholder="Buscar ubicación..."
+                            emptyMessage="No se encontraron ubicaciones"
+                        />
+                    </div>
 
-                    <Select onValueChange={handleTypeChange} value={filters.itemTypeId || 'all'}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los tipos</SelectItem>
-                            {itemTypes.map((type) => (
-                                <SelectItem key={type.id} value={type.id.toString()}>
-                                    {type.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="min-w-[120px] flex-1 max-w-[200px]">
+                        <Combobox
+                            options={[
+                                { value: 'all', label: 'Todos los tipos' },
+                                ...itemTypes.map((type) => ({ value: type.id.toString(), label: type.name }))
+                            ]}
+                            value={filters.itemTypeId?.toString() || 'all'}
+                            onChange={handleTypeChange}
+                            placeholder="Tipo"
+                            searchPlaceholder="Buscar tipo..."
+                            emptyMessage="No se encontraron tipos"
+                        />
+                    </div>
 
                     {hasActiveFilters && (
                         <Button

@@ -31,7 +31,6 @@ export class ItemMaterialService {
             }
 
             const materials = response.data?.data?.records || [];
-            console.log('Materials from item-materials endpoint:', materials);
 
             // The data already has the correct structure, just ensure itemId is set
             const mappedMaterials = materials.map((material: any) => ({
@@ -42,7 +41,6 @@ export class ItemMaterialService {
                 material: material.material
             }));
 
-            console.log('Mapped materials:', mappedMaterials);
             return mappedMaterials;
         } catch (error) {
             console.error('Error fetching item materials:', error);
@@ -52,16 +50,13 @@ export class ItemMaterialService {
 
     public async removeAllMaterialsFromItem(itemId: number): Promise<void> {
         try {
-            console.log(`Removing all materials for item ID: ${itemId}`);
 
             // First, get all materials for this item
             const materials = await this.getItemMaterials(itemId);
-            console.log(`Found ${materials.length} materials to remove`);
 
             // Remove each material individually
             const removePromises = materials.map(material => {
                 if (material.id && material.id > 0) {
-                    console.log(`Removing material with ID: ${material.id} (${material.material?.name})`);
                     return this.removeItemMaterial(material.id);
                 } else {
                     console.warn('Material has no valid ID:', material);
@@ -71,7 +66,6 @@ export class ItemMaterialService {
 
             // Execute all removals in parallel
             await Promise.all(removePromises);
-            console.log(`Successfully removed ${materials.length} materials`);
         } catch (error) {
             console.error('Error removing all materials from item:', error);
             throw error;
@@ -93,7 +87,6 @@ export class ItemMaterialService {
 
     public async removeItemMaterial(id: number): Promise<void> {
         try {
-            console.log('Removing material with ID:', id);
             const response = await this.httpClient.delete<IHttpResponse<void>>(`${ItemMaterialService.url}/${id}`);
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));
@@ -106,7 +99,6 @@ export class ItemMaterialService {
 
     public async updateItemMaterial(id: number, data: { isMainMaterial: boolean }): Promise<ItemMaterial> {
         try {
-            console.log('[ItemMaterial] Actualizando relación:', { id, data });
             const response = await this.httpClient.patch<IHttpResponse<ItemMaterial>>(`${ItemMaterialService.url}/${id}`, data);
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));

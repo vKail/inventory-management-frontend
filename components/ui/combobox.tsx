@@ -29,6 +29,9 @@ interface ComboboxProps {
     searchPlaceholder?: string;
     className?: string;
     loading?: boolean;
+    fieldName?: string; // Para identificación del campo
+    onFocus?: () => void; // Callback para focus
+    onBlur?: () => void; // Callback para blur
 }
 
 export function Combobox({
@@ -39,10 +42,21 @@ export function Combobox({
     emptyMessage = "No se encontraron resultados.",
     searchPlaceholder = "Buscar...",
     className,
+    fieldName,
+    onFocus,
+    onBlur,
 }: ComboboxProps) {
     const [open, setOpen] = React.useState(false);
 
     const selectedOption = options.find((option) => option.value === value);
+
+    const handleFocus = () => {
+        onFocus?.();
+    };
+
+    const handleBlur = () => {
+        onBlur?.();
+    };
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -52,6 +66,10 @@ export function Combobox({
                     role="combobox"
                     aria-expanded={open}
                     className={cn("w-full justify-between", className)}
+                    data-field={fieldName}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    tabIndex={0}
                 >
                     <span className="truncate">
                         {selectedOption ? selectedOption.label : placeholder}

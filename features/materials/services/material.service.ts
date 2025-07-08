@@ -3,7 +3,7 @@ import { ApiResponse, IMaterial, PaginatedMaterials } from '../data/interfaces/m
 import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 interface MaterialServiceProps {
-  getMaterials: (page?: number, limit?: number, filters?: { name?: string; materialType?: string }) => Promise<PaginatedMaterials>;
+  getMaterials: (page?: number, limit?: number, filters?: { name?: string; materialType?: string; allRecords?: boolean }) => Promise<PaginatedMaterials>;
   getMaterialById: (id: number) => Promise<IMaterial | undefined>;
   createMaterial: (material: Partial<IMaterial>) => Promise<IMaterial | undefined>;
   updateMaterial: (id: number, material: Partial<IMaterial>) => Promise<IMaterial | undefined>;
@@ -26,7 +26,7 @@ export class MaterialService implements MaterialServiceProps {
     return MaterialService.instance;
   }
 
-  public async getMaterials(page = 1, limit = 10, filters?: { name?: string; materialType?: string }): Promise<PaginatedMaterials> {
+  public async getMaterials(page = 1, limit = 10, filters?: { name?: string; materialType?: string; allRecords?: boolean }): Promise<PaginatedMaterials> {
     try {
       let url = `${MaterialService.url}?page=${page}&limit=${limit}`;
 
@@ -38,6 +38,14 @@ export class MaterialService implements MaterialServiceProps {
       if (filters?.materialType && filters.materialType !== 'all') {
         url += `&materialType=${encodeURIComponent(filters.materialType)}`;
       }
+
+      // Add allRecords parameter if provided
+      if (filters?.allRecords) {
+        url += `&allRecords=true`;
+        console.log('🔧 Materials API - allRecords=true added to URL');
+      }
+
+      console.log('🔧 Materials API URL:', url); // Debug log
 
       const response = await this.httpClient.get<PaginatedMaterials>(url);
       if (response.success) {

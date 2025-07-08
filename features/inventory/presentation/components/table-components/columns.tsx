@@ -31,12 +31,12 @@ export const useColumns = () => {
             id: "code",
             accessorKey: "code",
             header: "Código",
-            size: 40,
+            size: 110,
             cell: ({ row }) => {
                 const code = row.getValue("code") as string;
                 return (
                     <div
-                        className="max-w-[60px] truncate text-sm font-mono"
+                        className="max-w-[120px] truncate text-sm font-mono"
                         title={code}
                     >
                         {code || "Sin código"}
@@ -70,7 +70,7 @@ export const useColumns = () => {
                 const description = row.getValue("description") as string;
                 return (
                     <div
-                        className="max-w-[120px] truncate text-sm text-muted-foreground"
+                        className="max-w-[200px] truncate text-sm text-muted-foreground"
                         title={description}
                     >
                         {description || "Sin descripción"}
@@ -82,6 +82,7 @@ export const useColumns = () => {
             id: "categoryId",
             accessorKey: "categoryId",
             header: "Categoría",
+            size: 80,
             cell: ({ row }) => {
                 const categoryId = row.getValue("categoryId") as number;
                 const category = categories.find(c => c.id === categoryId);
@@ -95,11 +96,12 @@ export const useColumns = () => {
         {
             id: "locationId",
             accessorKey: "locationId",
-            header: "Departamento",
+            header: "Ubicación",
+            size: 120,
             cell: ({ row }) => {
                 const location = row.original.location;
                 return (
-                    <div className="max-w-[80px] truncate text-sm" title={location?.name || "Sin departamento"}>
+                    <div className="max-w-[150px] truncate text-sm" title={location?.name || "Sin departamento"}>
                         {location?.name || "Sin departamento"}
                     </div>
                 );
@@ -109,13 +111,13 @@ export const useColumns = () => {
             id: "stock",
             accessorKey: "stock",
             header: "Artículos en Stock",
-            size: 150,
+            size: 70,
             cell: ({ row }) => {
                 const stock = row.getValue("stock") as number;
                 return (
                     <Badge
                         variant={stock < 10 ? "destructive" : "outline"}
-                        className={stock < 10 ? "bg-red-500 text-white hover:bg-red-600" : ""}
+                        className={stock < 10 ? "bg-red-500 text-white hover:bg-red-600" : "max-w-[50px]"}
                     >
                         {stock}
                     </Badge>
@@ -126,6 +128,7 @@ export const useColumns = () => {
             id: "statusId",
             accessorKey: "statusId",
             header: "Estado",
+            size: 80,
             cell: ({ row }) => {
                 const status = row.original.status;
                 return (
@@ -137,10 +140,10 @@ export const useColumns = () => {
                                         'outline'
                         }
                         className={
-                            status?.name?.toLowerCase() === 'disponible' ? 'bg-green-500 hover:bg-green-600' :
+                            (status?.name?.toLowerCase() === 'disponible' ? 'bg-green-500 hover:bg-green-600' :
                                 status?.name?.toLowerCase() === 'en uso' ? 'bg-yellow-500 hover:bg-yellow-600' :
                                     status?.name?.toLowerCase() === 'en mantenimiento' ? 'bg-red-500 hover:bg-red-600' :
-                                        'bg-blue-200 hover:bg-blue-300'
+                                        'bg-blue-200 hover:bg-blue-300') + ' max-w-[60px]'
                         }
                     >
                         {status?.name || "Sin estado"}
@@ -152,13 +155,13 @@ export const useColumns = () => {
             id: "availableForLoan",
             accessorKey: "availableForLoan",
             header: "Disponible para Préstamo",
-            size: 150,
+            size: 80,
             cell: ({ row }) => {
                 const availableForLoan = row.getValue("availableForLoan") as boolean;
                 return (
                     <Badge
                         variant={availableForLoan ? "default" : "destructive"}
-                        className={availableForLoan ? "bg-green-600 hover:bg-green-800" : "bg-red-500 text-white hover:bg-red-600"}
+                        className={availableForLoan ? "bg-green-600 hover:bg-green-800 max-w-[60px]" : "bg-red-500 text-white hover:bg-red-600 max-w-[60px]"}
                     >
                         {availableForLoan ? "Sí" : "No"}
                     </Badge>
@@ -168,6 +171,7 @@ export const useColumns = () => {
         {
             id: "actions",
             header: "Acciones",
+            size: 60,
             cell: ({ row }) => {
                 const item = row.original;
                 return (
