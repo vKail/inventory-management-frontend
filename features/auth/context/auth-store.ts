@@ -25,19 +25,15 @@ export const useAuthStore = create<AuthSession>()(
       isAuthenticated: false,
       login: async user => {
         try {
-          console.log('Auth store: Starting login...');
           const response = await AuthService.getInstance().login(user);
-          console.log('Auth store: Login response:', response);
 
           if (response?.token && response?.user) {
-            console.log('Auth store: Setting authentication state...');
             set({
               user: response.user,
               token: response.token,
               role: response.user.userType,
               isAuthenticated: true
             });
-            console.log('Auth store: Authentication state set successfully');
           } else {
             console.error('Auth store: Invalid login response - no token or user');
             throw new Error('Invalid login response');

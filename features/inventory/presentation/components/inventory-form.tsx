@@ -639,17 +639,14 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           ...changedFields,
           images: images
         };
-        console.log('[Actualizar Item] Campos a enviar:', updateData);
         await updateInventoryItem(selectedItem!.id.toString(), updateData);
 
         // Sincronizar materiales
         const { toDelete: matsToDelete, toAdd: matsToAdd, toUpdate: matsToUpdate } = getMaterialDiffs();
         for (const mat of matsToDelete) {
-          console.log('[ItemMaterial] Eliminando relación:', mat);
           await ItemMaterialService.getInstance().removeItemMaterial(mat.id);
         }
         for (const mat of matsToAdd) {
-          console.log('[ItemMaterial] Creando relación:', { itemId: selectedItem!.id, materialId: mat.materialId });
           await ItemMaterialService.getInstance().addMaterialToItem({
             itemId: selectedItem!.id,
             materialId: mat.materialId,
@@ -657,18 +654,15 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           });
         }
         for (const mat of matsToUpdate) {
-          console.log('[ItemMaterial] Actualizando relación:', { id: mat.id, isMainMaterial: mat.isMainMaterial });
           await ItemMaterialService.getInstance().updateItemMaterial(mat.id, { isMainMaterial: mat.isMainMaterial });
         }
 
         // Sincronizar colores
         const { toDelete: colsToDelete, toAdd: colsToAdd, toUpdate: colsToUpdate } = getColorDiffs();
         for (const col of colsToDelete) {
-          console.log('[ItemColor] Eliminando relación:', col);
           await ItemColorService.getInstance().removeColorFromItem(col.id);
         }
         for (const col of colsToAdd) {
-          console.log('[ItemColor] Creando relación:', { itemId: selectedItem!.id, colorId: col.colorId });
           await ItemColorService.getInstance().addColorToItem({
             itemId: selectedItem!.id,
             colorId: col.colorId,
@@ -676,7 +670,6 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           });
         }
         for (const col of colsToUpdate) {
-          console.log('[ItemColor] Actualizando relación:', { id: col.id, isMainColor: col.isMainColor });
           await ItemColorService.getInstance().updateItemColor(col.id, { isMainColor: col.isMainColor });
         }
 
