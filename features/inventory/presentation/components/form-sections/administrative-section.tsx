@@ -61,6 +61,7 @@ export const AdministrativeSection = () => {
                                             placeholder="Seleccionar ubicación"
                                             searchPlaceholder="Buscar ubicación..."
                                             emptyMessage="No se encontraron ubicaciones"
+                                            fieldName="locationId"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -82,6 +83,7 @@ export const AdministrativeSection = () => {
                                             placeholder="Seleccionar custodio"
                                             searchPlaceholder="Buscar custodio..."
                                             emptyMessage="No se encontraron custodios"
+                                            fieldName="custodianId"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -103,6 +105,7 @@ export const AdministrativeSection = () => {
                                             placeholder="Seleccionar condición"
                                             searchPlaceholder="Buscar condición..."
                                             emptyMessage="No se encontraron condiciones"
+                                            fieldName="conditionId"
                                         />
                                     </FormControl>
                                     <FormMessage />

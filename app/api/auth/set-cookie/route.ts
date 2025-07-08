@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json();
-    console.log('Set-cookie API: Received token request');
 
     if (!token) {
       console.error('Set-cookie API: No token provided');
@@ -14,12 +13,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Set-cookie API: Processing token...');
     const decodedToken = JSON.parse(atob(token.split('.')[1]));
     const expiresAt = new Date(decodedToken.exp * 1000);
-
-    console.log('Set-cookie API: Token expires at:', expiresAt);
-    console.log('Set-cookie API: Environment:', process.env.NODE_ENV);
 
     const cookieStore = await cookies();
     cookieStore.set({
@@ -32,8 +27,6 @@ export async function POST(request: NextRequest) {
       path: '/',
       sameSite: 'lax',
     });
-
-    console.log('Set-cookie API: Cookie set successfully');
 
     return NextResponse.json({
       success: true,

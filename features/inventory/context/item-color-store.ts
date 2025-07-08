@@ -44,7 +44,6 @@ export const useItemColorStore = create<ItemColorState>((set, get) => ({
      * Ejecuta en serie para mejor trazabilidad.
      */
     syncColors: async (itemId) => {
-        console.log("LLEGA AQUI")
         const { originalColors, currentColors } = get();
         // 1. Eliminar los que estaban y ya no están
         const toDelete = originalColors.filter(
@@ -56,12 +55,10 @@ export const useItemColorStore = create<ItemColorState>((set, get) => ({
         );
         // Eliminar relaciones removidas
         for (const col of toDelete) {
-            console.log('[ItemColor] Eliminando relación:', col);
             await itemColorService.removeColorFromItem(col.id);
         }
         // Agregar nuevas relaciones
         for (const col of toAdd) {
-            console.log('[ItemColor] Creando relación:', { itemId, colorId: col.colorId });
             await itemColorService.addColorToItem({
                 itemId,
                 colorId: col.colorId,

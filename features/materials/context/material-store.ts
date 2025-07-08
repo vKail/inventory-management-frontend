@@ -24,6 +24,7 @@ const normalizeMaterialType = (type: string): string => {
 
 interface MaterialState {
     materials: IMaterial[];
+    allMaterials: IMaterial[]; // Nuevo estado para todos los materiales
     loading: boolean;
     error: string | null;
     currentPage: number;
@@ -32,6 +33,7 @@ interface MaterialState {
     typeFilter: string;
     refreshTable: () => Promise<void>;
     getMaterials: (page?: number, limit?: number, options?: { allRecords?: boolean }) => Promise<void>;
+    getAllMaterials: () => Promise<void>; // Nueva función específica para cargar todos
     getMaterialById: (materialId: number) => Promise<IMaterial | undefined>;
     addMaterial: (material: Partial<IMaterial>) => Promise<void>;
     updateMaterial: (materialId: number, material: Partial<IMaterial>) => Promise<void>;
@@ -47,6 +49,7 @@ export const useMaterialStore = create<MaterialState>()(
     persist(
         (set, get) => ({
             materials: [],
+            allMaterials: [], // Nuevo estado para todos los materiales
             loading: false,
             error: null,
             currentPage: 1,
@@ -101,7 +104,10 @@ export const useMaterialStore = create<MaterialState>()(
                         filters.allRecords = true;
                     }
 
+                    console.log('🔧 MaterialStore - Fetching materials with:', { page, limit, filters });
+
                     const response = await MaterialService.getInstance().getMaterials(page, limit, filters);
+                    console.log('🔧 MaterialStore - Received materials:', response.records.length, 'total:', response.total);
 
                     set({
                         materials: response.records,
@@ -111,7 +117,27 @@ export const useMaterialStore = create<MaterialState>()(
                         error: null
                     });
                 } catch (error) {
+                    console.error('❌ MaterialStore - Error:', error);
                     set({ error: 'Error al cargar los materiales', loading: false });
+                    throw error;
+                }
+            },
+
+            getAllMaterials: async () => {
+                set({ loading: true });
+                try {
+                    console.log('🔧 MaterialStore - Loading ALL materials...');
+                    const response = await MaterialService.getInstance().getMaterials(1, 10000, { allRecords: true });
+                    console.log('🔧 MaterialStore - Received ALL materials:', response.records.length, 'total:', response.total);
+
+                    set({
+                        allMaterials: response.records, // Guardar en allMaterials, NO en materials
+                        loading: false,
+                        error: null
+                    });
+                } catch (error) {
+                    console.error('❌ MaterialStore - Error loading all materials:', error);
+                    set({ error: 'Error al cargar todos los materiales', loading: false });
                     throw error;
                 }
             },

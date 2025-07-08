@@ -234,32 +234,32 @@ export const ImageSection = ({
                 {existingImages.map((img) => {
                   const isMarkedForDelete = imagesToDelete.includes(img.id);
                   return (
-                  <Card key={img.id} className="overflow-hidden">
-                    <div className="flex flex-col">
+                    <Card key={img.id} className="overflow-hidden">
+                      <div className="flex flex-col">
                         <div className="relative w-[180px] h-[180px] bg-muted mx-auto mt-4 mb-2 rounded-lg overflow-hidden">
-                        <img
-                          src={`${API_URL}${img.filePath}`}
-                          alt={`Imagen ${img.id}`}
+                          <img
+                            src={`${API_URL}${img.filePath}`}
+                            alt={`Imagen ${img.id}`}
                             className={`w-full h-full object-cover transition-opacity duration-300 ${isMarkedForDelete ? 'opacity-40 grayscale' : ''}`}
                             style={{ width: '180px', height: '180px' }}
-                        />
-                        <div className="absolute top-2 left-2 flex gap-2">
-                          <span
+                          />
+                          <div className="absolute top-2 left-2 flex gap-2">
+                            <span
                               className={`px-2 py-1 text-xs font-medium rounded-full ${img.isPrimary ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white'}`}
-                          >
-                            {img.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
+                            >
+                              {img.isPrimary ? 'PRINCIPAL' : 'SECUNDARIA'}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
                             onClick={() => toggleDeleteExistingImage(img.id)}
                             className={`absolute top-2 right-2 p-1 rounded-full transition-colors ${isMarkedForDelete ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}`}
-                        >
+                          >
                             {isMarkedForDelete ? <span>Restaurar</span> : <X className="w-4 h-4" />}
-                        </button>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
                   );
                 })}
               </div>
@@ -308,16 +308,42 @@ export const ImageSection = ({
                         {imageErrors[image.id]?.description && (
                           <p className="text-xs text-red-500 mt-1">{imageErrors[image.id]?.description}</p>
                         )}
-                        <Input
-                          type="date"
-                          placeholder="Fecha de la foto"
-                          value={image.photoDate}
-                          onChange={e => handleInputChange(image.id, 'photoDate', e.target.value)}
-                          className={imageErrors[image.id]?.photoDate ? 'border-red-500' : ''}
-                        />
-                        {imageErrors[image.id]?.photoDate && (
-                          <p className="text-xs text-red-500 mt-1">{imageErrors[image.id]?.photoDate}</p>
-                        )}
+                        {/* CAMBIO: Campo de fecha con Popover y Calendar igual a technical-section */}
+                        <div className="flex flex-col gap-1">
+                          <label className="text-sm font-medium">Fecha de la foto *</label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${!image.photoDate && "text-muted-foreground"} ${imageErrors[image.id]?.photoDate ? 'border-red-500' : ''}`}
+                              >
+                                {image.photoDate ? (
+                                  format(new Date(image.photoDate), "PPP", { locale: es })
+                                ) : (
+                                  <span>Seleccionar fecha</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={image.photoDate ? new Date(image.photoDate) : undefined}
+                                onSelect={date => {
+                                  if (date) {
+                                    // Guardar como string yyyy-MM-dd
+                                    const iso = date.toISOString().slice(0, 10);
+                                    handleInputChange(image.id, 'photoDate', iso);
+                                  }
+                                }}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          {imageErrors[image.id]?.photoDate && (
+                            <p className="text-xs text-red-500 mt-1">{imageErrors[image.id]?.photoDate}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Card>

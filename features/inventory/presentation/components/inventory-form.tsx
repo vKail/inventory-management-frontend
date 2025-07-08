@@ -25,6 +25,7 @@ import { useItemColorStore } from '../../context/item-color-store';
 import { ItemMaterialService } from '../../services/item-material.service';
 import { ItemColorService } from '../../services/item-color.service';
 import { imageArraySchema } from '../../data/schemas/inventory.schema';
+import { useFormValidation } from '../../hooks/use-form-validation';
 
 interface InventoryFormProps {
   mode: 'create' | 'edit';
@@ -36,6 +37,9 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
   const { createInventoryItem, updateInventoryItem, selectedItem } = useInventoryStore();
   const { materials: allMaterials } = useMaterialStore();
   const { colors: allColors } = useColorStore();
+
+  // Hook para validación y focuseo
+  const { handleValidationErrors, validateRequiredFields, validateMaterialsAndColors } = useFormValidation();
 
   // Estados para materiales y colores (originales y actuales)
   const [originalMaterials, setOriginalMaterials] = useState<any[]>([]);
@@ -60,127 +64,7 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
   const itemMaterialService = ItemMaterialService.getInstance();
   const itemColorService = ItemColorService.getInstance();
 
-  // Función refinada para hacer focus y scroll a campos con errores
-  const focusOnErrorField = (fieldName: string) => {
-    setTimeout(() => {
-      let errorElement: HTMLElement | null = null;
 
-      // 1. Buscar el elemento por selectores comunes
-      const selectors = [
-        `[name="${fieldName}"]`,
-        `[data-field="${fieldName}"]`,
-        `input[name="${fieldName}"]`,
-        `select[name="${fieldName}"]`,
-        `textarea[name="${fieldName}"]`,
-        `[id="${fieldName}"]`,
-        `[aria-describedby*="${fieldName}"]`,
-      ];
-      for (const selector of selectors) {
-        const element = document.querySelector(selector) as HTMLElement;
-        if (element) {
-          errorElement = element;
-          break;
-        }
-      }
-
-      // 2. Si no se encuentra, buscar triggers de comboBox
-      if (!errorElement) {
-        // Buscar por [role="combobox"] y [data-radix-trigger]
-        const comboTriggers = document.querySelectorAll(`[role="combobox"], [data-radix-trigger]`);
-        Array.from(comboTriggers).forEach(trigger => {
-          if (errorElement) return;
-          const triggerElement = trigger as HTMLElement;
-          // Buscar por aria-labelledby, aria-label, data-field, name, id
-          if (
-            triggerElement.getAttribute('aria-labelledby')?.includes(fieldName) ||
-            triggerElement.getAttribute('aria-label') === fieldName ||
-            triggerElement.getAttribute('data-field') === fieldName ||
-            triggerElement.getAttribute('name') === fieldName ||
-            triggerElement.getAttribute('id') === fieldName
-          ) {
-            errorElement = triggerElement;
-          }
-        });
-      }
-
-      // 3. Manejo especial para secciones de materiales, colores, imágenes, etc.
-      const sectionMap: Record<string, string> = {
-        materials: 'materials-section',
-        colors: 'colors-section',
-        images: 'images-section',
-        general: 'general-info-section',
-        technical: 'technical-section',
-        accounting: 'accounting-section',
-        administrative: 'administrative-section',
-        identification: 'identification-section',
-      };
-      if (!errorElement && sectionMap[fieldName]) {
-        const sectionElement = document.getElementById(sectionMap[fieldName]);
-        if (sectionElement) errorElement = sectionElement;
-      }
-
-      // 4. Si se encontró el elemento, hacer focus, scroll y highlight
-      if (errorElement) {
-        // Focus y scroll
-        if (typeof errorElement.focus === 'function') errorElement.focus();
-        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Efecto visual de resaltado
-        const originalBorder = errorElement.style.borderColor;
-        const originalBoxShadow = errorElement.style.boxShadow;
-        const originalTransition = errorElement.style.transition;
-        errorElement.style.borderColor = '#ef4444';
-        errorElement.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.3)';
-        errorElement.style.transition = 'all 0.3s ease';
-
-        // Resaltar el contenedor padre si existe
-        const parentFormItem = errorElement.closest('[data-field]');
-        if (parentFormItem) {
-          const parentElement = parentFormItem as HTMLElement;
-          parentElement.style.borderColor = '#ef4444';
-          parentElement.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
-          parentElement.style.transition = 'all 0.3s ease';
-        }
-
-        // Efecto de pulso
-        let pulseCount = 0;
-        const pulseInterval = setInterval(() => {
-          if (pulseCount >= 6) {
-            clearInterval(pulseInterval);
-            return;
-          }
-          if (pulseCount % 2 === 0) {
-            errorElement!.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.4)';
-            if (parentFormItem) {
-              const parentElement = parentFormItem as HTMLElement;
-              parentElement.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.3)';
-            }
-          } else {
-            errorElement!.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
-            if (parentFormItem) {
-              const parentElement = parentFormItem as HTMLElement;
-              parentElement.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.1)';
-            }
-          }
-          pulseCount++;
-        }, 300);
-
-        // Remover el resaltado después de 4 segundos
-        setTimeout(() => {
-          clearInterval(pulseInterval);
-          errorElement!.style.borderColor = originalBorder;
-          errorElement!.style.boxShadow = originalBoxShadow;
-          errorElement!.style.transition = originalTransition;
-          if (parentFormItem) {
-            const parentElement = parentFormItem as HTMLElement;
-            parentElement.style.borderColor = '';
-            parentElement.style.boxShadow = '';
-            parentElement.style.transition = '';
-          }
-        }, 4000);
-      }
-    }, 200);
-  };
 
   // Function to convert string dates to Date objects
   const convertDatesToObjects = (data: any) => {
@@ -239,16 +123,28 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
 
   const form = useForm<InventoryFormData>({
     resolver: zodResolver(inventorySchema) as any,
-    defaultValues
+    defaultValues,
+    mode: 'onChange'
   });
+
+  // Manejar errores de validación del formulario
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      const errors = form.formState.errors;
+      if (Object.keys(errors).length > 0) {
+        handleValidationErrors(errors);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, handleValidationErrors]);
 
   // Load materials and colors from stores
   useEffect(() => {
     const loadStores = async () => {
       try {
         await Promise.all([
-          useMaterialStore.getState().getMaterials(),
-          useColorStore.getState().getColors()
+          useMaterialStore.getState().getAllMaterials(),
+          useColorStore.getState().getAllColors()
         ]);
       } catch (error) {
         console.error('Error loading stores:', error);
@@ -467,30 +363,7 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
     setExistingImages(prev => prev.filter(img => img.id !== imageId));
   };
 
-  // Validar materiales y colores
-  const validateMaterialsAndColors = (): boolean => {
-    let isValid = true;
 
-    // Validar materiales
-    if (currentMaterials.length === 0) {
-      setMaterialsError('Debe seleccionar al menos un material');
-      focusOnErrorField('materials');
-      isValid = false;
-    } else {
-      setMaterialsError('');
-    }
-
-    // Validar colores
-    if (currentColors.length === 0) {
-      setColorsError('Debe seleccionar al menos un color');
-      focusOnErrorField('colors');
-      isValid = false;
-    } else {
-      setColorsError('');
-    }
-
-    return isValid;
-  };
 
   // Validar imágenes antes de submit
   const validateImages = (): boolean => {
@@ -505,49 +378,7 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
     return true;
   };
 
-  // Validar campos requeridos del formulario
-  const validateRequiredFields = (): boolean => {
-    let isValid = true;
 
-    // Validar campos básicos
-    if (!form.getValues('name')?.trim()) {
-      toast.error('El nombre del item es requerido');
-      focusOnErrorField('name');
-      isValid = false;
-    }
-
-    if (!form.getValues('stock') || form.getValues('stock') < 0) {
-      toast.error('El stock debe ser mayor o igual a 0');
-      focusOnErrorField('stock');
-      isValid = false;
-    }
-
-    if (!form.getValues('categoryId')) {
-      toast.error('Debe seleccionar una categoría');
-      focusOnErrorField('categoryId');
-      isValid = false;
-    }
-
-    if (!form.getValues('itemTypeId')) {
-      toast.error('Debe seleccionar un tipo de item');
-      focusOnErrorField('itemTypeId');
-      isValid = false;
-    }
-
-    if (!form.getValues('locationId')) {
-      toast.error('Debe seleccionar una ubicación');
-      focusOnErrorField('locationId');
-      isValid = false;
-    }
-
-    if (!form.getValues('conditionId')) {
-      toast.error('Debe seleccionar una condición');
-      focusOnErrorField('conditionId');
-      isValid = false;
-    }
-
-    return isValid;
-  };
 
   // Manejar errores del backend
   const handleBackendErrors = (errors: any) => {
@@ -558,7 +389,6 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           : errors[fieldName];
 
         toast.error(`${fieldName}: ${errorMessage}`);
-        focusOnErrorField(fieldName);
       });
     }
   };
@@ -568,12 +398,12 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
     if (isSubmitting.current) return;
 
     // Validar campos requeridos
-    if (!validateRequiredFields()) {
+    if (!validateRequiredFields(data)) {
       return;
     }
 
     // Validar materiales y colores
-    if (!validateMaterialsAndColors()) {
+    if (!validateMaterialsAndColors(currentMaterials, currentColors)) {
       return;
     }
 
@@ -639,17 +469,14 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           ...changedFields,
           images: images
         };
-        console.log('[Actualizar Item] Campos a enviar:', updateData);
         await updateInventoryItem(selectedItem!.id.toString(), updateData);
 
         // Sincronizar materiales
         const { toDelete: matsToDelete, toAdd: matsToAdd, toUpdate: matsToUpdate } = getMaterialDiffs();
         for (const mat of matsToDelete) {
-          console.log('[ItemMaterial] Eliminando relación:', mat);
           await ItemMaterialService.getInstance().removeItemMaterial(mat.id);
         }
         for (const mat of matsToAdd) {
-          console.log('[ItemMaterial] Creando relación:', { itemId: selectedItem!.id, materialId: mat.materialId });
           await ItemMaterialService.getInstance().addMaterialToItem({
             itemId: selectedItem!.id,
             materialId: mat.materialId,
@@ -657,18 +484,15 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           });
         }
         for (const mat of matsToUpdate) {
-          console.log('[ItemMaterial] Actualizando relación:', { id: mat.id, isMainMaterial: mat.isMainMaterial });
           await ItemMaterialService.getInstance().updateItemMaterial(mat.id, { isMainMaterial: mat.isMainMaterial });
         }
 
         // Sincronizar colores
         const { toDelete: colsToDelete, toAdd: colsToAdd, toUpdate: colsToUpdate } = getColorDiffs();
         for (const col of colsToDelete) {
-          console.log('[ItemColor] Eliminando relación:', col);
           await ItemColorService.getInstance().removeColorFromItem(col.id);
         }
         for (const col of colsToAdd) {
-          console.log('[ItemColor] Creando relación:', { itemId: selectedItem!.id, colorId: col.colorId });
           await ItemColorService.getInstance().addColorToItem({
             itemId: selectedItem!.id,
             colorId: col.colorId,
@@ -676,7 +500,6 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           });
         }
         for (const col of colsToUpdate) {
-          console.log('[ItemColor] Actualizando relación:', { id: col.id, isMainColor: col.isMainColor });
           await ItemColorService.getInstance().updateItemColor(col.id, { isMainColor: col.isMainColor });
         }
 
