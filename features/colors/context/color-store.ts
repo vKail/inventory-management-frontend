@@ -5,6 +5,7 @@ import { ColorService } from "../services/color.service";
 
 interface ColorStore {
     colors: IColorResponse[];
+    allColors: IColorResponse[]; // Nuevo estado para todos los colores
     filteredColors: IColorResponse[];
     searchTerm: string;
     loading: boolean;
@@ -12,6 +13,7 @@ interface ColorStore {
     currentPage: number;
     totalPages: number;
     getColors: (page?: number, limit?: number, options?: { allRecords?: boolean, search?: string }) => Promise<void>;
+    getAllColors: () => Promise<void>; // Nueva función específica para cargar todos
     getColorById: (colorId: number) => Promise<IColorResponse | undefined>;
     addColor: (color: IColor) => Promise<void>;
     updateColor: (colorId: number, color: IColor) => Promise<void>;
@@ -27,6 +29,7 @@ export const useColorStore = create<ColorStore>()(
     persist(
         (set, get) => ({
             colors: [],
+            allColors: [], // Nuevo estado para todos los colores
             filteredColors: [],
             searchTerm: '',
             loading: false,
@@ -46,7 +49,7 @@ export const useColorStore = create<ColorStore>()(
             clearFilters: async () => {
                 set({ searchTerm: '', loading: true });
                 try {
-                    await get().getColors(1, 100); // Recargar sin filtros
+                    await get().getColors(1, 10); // Recargar sin filtros
                 } finally {
                     set({ loading: false });
                 }
@@ -54,7 +57,7 @@ export const useColorStore = create<ColorStore>()(
 
             refreshTable: async () => {
                 const { currentPage } = get();
-                await get().getColors(currentPage, 100);
+                await get().getColors(currentPage, 10);
             },
 
             getColors: async (page = 1, limit = 10, options?: { allRecords?: boolean, search?: string }) => {
@@ -62,7 +65,10 @@ export const useColorStore = create<ColorStore>()(
                 try {
                     const searchTerm = options?.search ?? get().searchTerm;
                     const allRecords = options?.allRecords ?? false;
+                    console.log('🎨 ColorStore - Fetching colors with:', { page, limit, searchTerm, allRecords });
+
                     const data = await ColorService.getInstance().getColors(page, limit, searchTerm, allRecords);
+                    console.log('🎨 ColorStore - Received colors:', data.records.length, 'total:', data.total);
 
                     set({
                         colors: data.records,
@@ -73,12 +79,35 @@ export const useColorStore = create<ColorStore>()(
                         error: null
                     });
                 } catch (err: any) {
+                    console.error('❌ ColorStore - Error:', err);
                     set({
                         error: "Error al cargar los colores",
                         colors: [],
                         filteredColors: [],
                         currentPage: 1,
                         totalPages: 1,
+                        loading: false
+                    });
+                }
+            },
+
+            getAllColors: async () => {
+                set({ loading: true });
+                try {
+                    console.log('🎨 ColorStore - Loading ALL colors...');
+                    const data = await ColorService.getInstance().getColors(1, 10000, '', true);
+                    console.log('🎨 ColorStore - Received ALL colors:', data.records.length, 'total:', data.total);
+
+                    set({
+                        allColors: data.records, // Guardar en allColors, NO en colors
+                        loading: false,
+                        error: null
+                    });
+                } catch (err: any) {
+                    console.error('❌ ColorStore - Error loading all colors:', err);
+                    set({
+                        error: "Error al cargar todos los colores",
+                        allColors: [],
                         loading: false
                     });
                 }

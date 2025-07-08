@@ -19,7 +19,7 @@ interface MaterialsSectionProps {
 }
 
 export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, error }: MaterialsSectionProps) => {
-    const { materials, getMaterials, loading } = useMaterialStore();
+    const { allMaterials, getAllMaterials, loading } = useMaterialStore();
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredMaterials, setFilteredMaterials] = useState<IMaterial[]>([]);
 
@@ -27,15 +27,16 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
     useEffect(() => {
         const loadAllMaterials = async () => {
             try {
+                console.log('🔄 Loading all materials with getAllMaterials...');
                 // Fetch all materials with allRecords=true
-                await getMaterials(1, 1000, { allRecords: true });
+                await getAllMaterials();
             } catch (error) {
-                console.error('Error loading materials:', error);
+                console.error('❌ Error loading materials:', error);
             }
         };
 
         loadAllMaterials();
-    }, [getMaterials]);
+    }, []); // Solo se ejecuta una vez al montar
 
     // Función para actualizar los materiales filtrados (disponibles)
     const updateFilteredMaterials = (
@@ -50,12 +51,18 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
             return matchesSearch && isNotSelected;
         });
         setFilteredMaterials(filtered);
+        console.log('🔧 MaterialsSection - Filtered materials available:', filtered.length);
     };
 
     // Actualizar materiales filtrados cuando cambia la búsqueda o los materiales seleccionados
     useEffect(() => {
-        updateFilteredMaterials(materials, selectedMaterials, searchTerm);
-    }, [searchTerm, selectedMaterials, materials]);
+        console.log('🔧 MaterialsSection - Updating filtered materials:', {
+            totalMaterials: allMaterials.length,
+            selectedMaterials: selectedMaterials.length,
+            searchTerm
+        });
+        updateFilteredMaterials(allMaterials, selectedMaterials, searchTerm);
+    }, [searchTerm, selectedMaterials, allMaterials]);
 
     const handleDragEnd = (result: any) => {
         if (!result.destination) return;
@@ -139,19 +146,19 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
                     )}
 
                     <div id="materials-section" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <DragDropContext onDragEnd={handleDragEnd}>
+                        <DragDropContext onDragEnd={handleDragEnd}>
                             <div className="space-y-3">
-                            <Input
-                                placeholder="Buscar materiales..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                <Input
+                                    placeholder="Buscar materiales..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full text-sm"
-                            />
-                            <Droppable droppableId="available-materials">
-                                {(provided) => (
-                                    <div
+                                />
+                                <Droppable droppableId="available-materials">
+                                    {(provided) => (
+                                        <div
                                             {...provided.droppableProps}
-                                        ref={provided.innerRef}
+                                            ref={provided.innerRef}
                                             className="space-y-2 h-[350px] overflow-y-auto border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50/50"
                                         >
                                             {filteredMaterials.map((material, index) => (
@@ -175,11 +182,11 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
                                                     )}
                                                 </Draggable>
                                             ))}
-                                        {provided.placeholder}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </div>
+                                            {provided.placeholder}
+                                        </div>
+                                    )}
+                                </Droppable>
+                            </div>
 
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
@@ -189,33 +196,33 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
                                         className="w-32 text-xs"
                                     />
                                 </div>
-                            <Droppable droppableId="selected-materials">
-                                {(provided) => (
-                                    <div
+                                <Droppable droppableId="selected-materials">
+                                    {(provided) => (
+                                        <div
                                             {...provided.droppableProps}
-                                        ref={provided.innerRef}
+                                            ref={provided.innerRef}
                                             className="space-y-2 h-[350px] overflow-y-auto border-2 border-dashed border-red-300 rounded-lg p-4 bg-red-50/30"
-                                    >
+                                        >
                                             {selectedMaterials.map((item, index) => (
-                                            <Draggable
+                                                <Draggable
                                                     key={`selected-material-${item.id}-${item.materialId}`}
                                                     draggableId={`selected-${item.id}-${item.materialId}`}
-                                                index={index}
-                                            >
-                                                {(provided) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
+                                                    index={index}
+                                                >
+                                                    {(provided) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
                                                             className="bg-white p-2.5 rounded-md shadow-sm border border-gray-200 cursor-move hover:shadow-md transition-all duration-200"
-                                                    >
+                                                        >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                                            <Checkbox
+                                                                    <Checkbox
                                                                         checked={item.isMainMaterial}
                                                                         onCheckedChange={(checked) => handleMainMaterialChange(index, checked as boolean)}
                                                                         className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 flex-shrink-0"
-                                                            />
+                                                                    />
                                                                     <span className="text-sm font-medium text-gray-900 truncate">
                                                                         {item.material?.name || 'Material sin nombre'}
                                                                     </span>
@@ -223,26 +230,26 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
                                                                         <Badge variant="default" className="bg-red-50 text-red-800 border-red-200 text-xs px-2 py-0.5 flex-shrink-0">
                                                                             Principal
                                                                         </Badge>
-                                                            )}
-                                                        </div>
-                                                        <Button
-                                                            variant="ghost"
+                                                                    )}
+                                                                </div>
+                                                                <Button
+                                                                    variant="ghost"
                                                                     size="sm"
-                                                            onClick={() => handleRemoveMaterial(index)}
+                                                                    onClick={() => handleRemoveMaterial(index)}
                                                                     className="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors p-1 h-auto flex-shrink-0"
-                                                        >
+                                                                >
                                                                     <X className="h-3.5 w-3.5" />
-                                                        </Button>
+                                                                </Button>
                                                             </div>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </div>
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {provided.placeholder}
+                                        </div>
+                                    )}
+                                </Droppable>
+                            </div>
                         </DragDropContext>
                     </div>
                 </div>

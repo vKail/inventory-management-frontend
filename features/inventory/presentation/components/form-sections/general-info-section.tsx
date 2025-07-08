@@ -136,6 +136,7 @@ export const GeneralInfoSection = () => {
                                             placeholder="Seleccionar tipo de item"
                                             searchPlaceholder="Buscar tipo de item..."
                                             emptyMessage="No se encontraron tipos de item"
+                                            fieldName="itemTypeId"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -157,6 +158,7 @@ export const GeneralInfoSection = () => {
                                             placeholder="Seleccionar categoría"
                                             searchPlaceholder="Buscar categoría..."
                                             emptyMessage="No se encontraron categorías"
+                                            fieldName="categoryId"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -178,6 +180,7 @@ export const GeneralInfoSection = () => {
                                             placeholder="Seleccionar estado"
                                             searchPlaceholder="Buscar estado..."
                                             emptyMessage="No se encontraron estados"
+                                            fieldName="statusId"
                                         />
                                     </FormControl>
                                     <FormMessage />

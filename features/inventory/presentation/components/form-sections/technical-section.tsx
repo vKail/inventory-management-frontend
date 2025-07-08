@@ -53,6 +53,7 @@ export const TechnicalSection = () => {
                                             placeholder="Seleccionar Acta"
                                             searchPlaceholder="Buscar Acta..."
                                             emptyMessage="No se encontraron Actas"
+                                            fieldName="certificateId"
                                         />
                                     </FormControl>
                                     <FormMessage />
