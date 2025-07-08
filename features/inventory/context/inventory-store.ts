@@ -9,6 +9,7 @@ interface InventoryFilters {
     categoryId?: string;
     statusId?: string;
     itemTypeId?: string;
+    locationId?: string | number;
     view?: 'table' | 'grid' | 'list';
 }
 
@@ -80,6 +81,7 @@ export const useInventoryStore = create<InventoryState>()(
                     if (filters.categoryId && filters.categoryId !== 'all') queryParams.append('categoryId', filters.categoryId);
                     if (filters.statusId && filters.statusId !== 'all') queryParams.append('statusId', filters.statusId);
                     if (filters.itemTypeId && filters.itemTypeId !== 'all') queryParams.append('itemTypeId', filters.itemTypeId);
+                    if (filters.locationId && filters.locationId !== 'all') queryParams.append('locationId', String(filters.locationId));
 
                     const response = await inventoryService.getInventoryItems(page, limit, queryParams.toString());
 
