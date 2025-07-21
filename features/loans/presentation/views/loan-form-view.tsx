@@ -183,6 +183,20 @@ export function LoanFormView() {
         form.setValue("requestorInfo", requestorInfo);
     }, [requestorInfo, form]);
 
+    // Fix: When allowLongLoan is toggled off, ensure the date is valid for ESTUDIANTES
+    useEffect(() => {
+        if (userType === "ESTUDIANTES" && !allowLongLoan) {
+            const current = form.getValues("scheduledReturnDate");
+            const today19 = new Date();
+            today19.setHours(19, 0, 0, 0);
+            // If today19 is before minDate, use minDate
+            const validMax = today19 < minDate ? minDate : today19;
+            if (current > validMax) {
+                form.setValue("scheduledReturnDate", validMax);
+            }
+        }
+    }, [allowLongLoan, userType]);
+
     useEffect(() => {
         // Load all conditions when component mounts
         const loadConditions = async () => {
@@ -771,7 +785,7 @@ export function LoanFormView() {
                                                                     data-field="scheduledReturnDate"
                                                                 >
                                                                     {field.value ? (
-                                                                        format(field.value, "PPP 'a las' HH:mm", { locale: es })
+                                                                        format(field.value, "PPP HH:mm", { locale: es })
                                                                     ) : (
                                                                         <span>Seleccionar fecha y hora</span>
                                                                     )}
@@ -786,13 +800,14 @@ export function LoanFormView() {
                                                                             type="time"
                                                                             className="w-32"
                                                                             value={field.value ? format(field.value, "HH:mm") : ""}
+                                                                            step={60}
                                                                             onChange={(e) => {
                                                                                 if (field.value && e.target.value) {
-                                                                                    const [hours, minutes] = e.target.value.split(':').map(Number);
+                                                                                    // e.target.value is always 24h format ("HH:mm")
+                                                                                    const [hours, minutes] = e.target.value.split(":").map(Number);
                                                                                     const newDate = new Date(field.value);
                                                                                     newDate.setHours(hours);
                                                                                     newDate.setMinutes(minutes);
-
                                                                                     if (newDate >= minDate && newDate <= maxDate) {
                                                                                         field.onChange(newDate);
                                                                                     } else {
