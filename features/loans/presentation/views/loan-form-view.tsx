@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { loanService } from "../../services/loan.service";
 import { inventoryService } from "@/features/inventory/services/inventory.service";
+import { Switch } from "@/components/ui/switch";
 
 interface RequestorInfo {
     firstName: string;
@@ -90,6 +91,7 @@ export function LoanFormView() {
     const [conditionNames, setConditionNames] = useState<Record<string, string>>({});
     const [showBlacklistDialog, setShowBlacklistDialog] = useState(false);
     const [pendingLoanData, setPendingLoanData] = useState<LoanCreateType | null>(null);
+    const [allowLongLoan, setAllowLongLoan] = useState(false);
 
     const [requestorInfo, setRequestorInfo] = useState<RequestorInfo>({
         firstName: "",
@@ -99,19 +101,40 @@ export function LoanFormView() {
         type: "",
     });
 
+    // Helper to get user type
+    const userType = requestorInfo.type;
+
+    // Compute min/max dates for validation
+    const now = new Date();
+    const minDate = new Date(now.getTime() + 30 * 60 * 1000); // 30 min from now
+    let maxDate: Date;
+    if (userType === "DOCENTES") {
+        maxDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    } else if (userType === "ESTUDIANTES" && allowLongLoan) {
+        maxDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    } else {
+        // 19:00 today
+        maxDate = new Date(now);
+        maxDate.setHours(19, 0, 0, 0);
+        if (maxDate < minDate) {
+            // If 19:00 already passed, fallback to minDate
+            maxDate = new Date(minDate);
+        }
+    }
+
+    // Update Zod schema for scheduledReturnDate
     const formSchema = z.object({
         requestorId: z.string().min(1, "La cédula es requerida"),
         scheduledReturnDate: z.date({
             required_error: "La fecha de devolución es requerida",
         }).refine(
             (date) => {
-                const now = new Date();
-                const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-                const fourWeeksFromNow = new Date(now.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
-                return date >= twoHoursFromNow && date <= fourWeeksFromNow;
+                return date >= minDate && date <= maxDate;
             },
             {
-                message: "La fecha de devolución debe ser mínimo 2 horas y máximo 4 semanas desde ahora"
+                message: userType === "DOCENTES" || (userType === "ESTUDIANTES" && allowLongLoan)
+                    ? "La fecha de devolución debe ser mínimo 30 minutos y máximo 7 días desde ahora"
+                    : "La fecha de devolución debe ser mínimo 30 minutos y máximo hasta las 19:00 de hoy",
             }
         ),
         reason: z.string().min(1, "El motivo es requerido").max(250, "El motivo no puede exceder 250 caracteres"),
@@ -695,136 +718,149 @@ export function LoanFormView() {
                                     <p className="text-muted-foreground">Complete los datos del préstamo.</p>
                                 </div>
                                 <div className="p-6 pt-0">
-                                    <div className="grid grid-cols-1 gap-6">
-                                        <div className="space-y-4">
-                                            <FormField
-                                                control={form.control}
-                                                name="reason"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Motivo del Préstamo *</FormLabel>
-                                                        <FormControl>
-                                                            <Textarea
-                                                                {...field}
-                                                                maxLength={250}
-                                                                placeholder="Ingrese el motivo del préstamo (máximo 250 caracteres)"
-                                                                data-field="reason"
-                                                            />
-                                                        </FormControl>
-                                                        <div className="text-xs text-muted-foreground text-right">
-                                                            {field.value?.length || 0}/250
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="scheduledReturnDate"
-                                                render={({ field }) => (
-                                                    <FormItem className="flex flex-col">
-                                                        <FormLabel>Fecha y Hora de Devolución Programada *</FormLabel>
-                                                        <FormControl>
-                                                            <Popover>
-                                                                <PopoverTrigger asChild>
-                                                                    <Button
-                                                                        variant={"outline"}
-                                                                        className={cn(
-                                                                            "w-full pl-3 text-left font-normal",
-                                                                            !field.value && "text-muted-foreground"
-                                                                        )}
-                                                                        data-field="scheduledReturnDate"
-                                                                    >
-                                                                        {field.value ? (
-                                                                            format(field.value, "PPP 'a las' HH:mm", { locale: es })
-                                                                        ) : (
-                                                                            <span>Seleccionar fecha y hora</span>
-                                                                        )}
-                                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                                    </Button>
-                                                                </PopoverTrigger>
-                                                                <PopoverContent className="w-auto p-0" align="start">
-                                                                    <div className="p-3 border-b">
-                                                                        <div className="flex items-center gap-2 mb-2">
-                                                                            <label className="text-sm font-medium">Hora:</label>
-                                                                            <Input
-                                                                                type="time"
-                                                                                className="w-32"
-                                                                                value={field.value ? format(field.value, "HH:mm") : ""}
-                                                                                onChange={(e) => {
-                                                                                    if (field.value && e.target.value) {
-                                                                                        const [hours, minutes] = e.target.value.split(':').map(Number);
-                                                                                        const newDate = new Date(field.value);
-                                                                                        newDate.setHours(hours);
-                                                                                        newDate.setMinutes(minutes);
+                                    <div className="space-y-4">
+                                        {/* Checkbox for ESTUDIANTES */}
+                                        {userType === "ESTUDIANTES" && (
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Switch
+                                                    checked={allowLongLoan}
+                                                    onCheckedChange={setAllowLongLoan}
+                                                    id="allowLongLoan"
+                                                />
+                                                <label htmlFor="allowLongLoan" className="text-sm">
+                                                    Marcar si se presta más de un día (máximo 7 días). (No recomendado para Estudiantes)
+                                                </label>
+                                            </div>
+                                        )}
+                                        <FormField
+                                            control={form.control}
+                                            name="reason"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Motivo del Préstamo *</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            {...field}
+                                                            maxLength={250}
+                                                            placeholder="Ingrese el motivo del préstamo (máximo 250 caracteres)"
+                                                            data-field="reason"
+                                                        />
+                                                    </FormControl>
+                                                    <div className="text-xs text-muted-foreground text-right">
+                                                        {field.value?.length || 0}/250
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="scheduledReturnDate"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col">
+                                                    <FormLabel>Fecha y Hora de Devolución Programada *</FormLabel>
+                                                    <FormControl>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <Button
+                                                                    variant={"outline"}
+                                                                    className={cn(
+                                                                        "w-full pl-3 text-left font-normal",
+                                                                        !field.value && "text-muted-foreground"
+                                                                    )}
+                                                                    data-field="scheduledReturnDate"
+                                                                >
+                                                                    {field.value ? (
+                                                                        format(field.value, "PPP 'a las' HH:mm", { locale: es })
+                                                                    ) : (
+                                                                        <span>Seleccionar fecha y hora</span>
+                                                                    )}
+                                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                                </Button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-auto p-0" align="start">
+                                                                <div className="p-3 border-b">
+                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                        <label className="text-sm font-medium">Hora:</label>
+                                                                        <Input
+                                                                            type="time"
+                                                                            className="w-32"
+                                                                            value={field.value ? format(field.value, "HH:mm") : ""}
+                                                                            onChange={(e) => {
+                                                                                if (field.value && e.target.value) {
+                                                                                    const [hours, minutes] = e.target.value.split(':').map(Number);
+                                                                                    const newDate = new Date(field.value);
+                                                                                    newDate.setHours(hours);
+                                                                                    newDate.setMinutes(minutes);
 
-                                                                                        // Validate the new datetime
-                                                                                        const now = new Date();
-                                                                                        const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-                                                                                        const fourWeeksFromNow = new Date(now.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
-
-                                                                                        if (newDate >= twoHoursFromNow && newDate <= fourWeeksFromNow) {
-                                                                                            field.onChange(newDate);
-                                                                                        } else {
-                                                                                            toast.error("La fecha y hora debe ser mínimo 2 horas y máximo 4 semanas desde ahora");
-                                                                                        }
+                                                                                    if (newDate >= minDate && newDate <= maxDate) {
+                                                                                        field.onChange(newDate);
+                                                                                    } else {
+                                                                                        toast.error(
+                                                                                            userType === "DOCENTES" || (userType === "ESTUDIANTES" && allowLongLoan)
+                                                                                                ? "La fecha de devolución debe ser mínimo 30 minutos y máximo 7 días desde ahora"
+                                                                                                : "La fecha de devolución debe ser mínimo 30 minutos y máximo hasta las 19:00 de hoy"
+                                                                                        );
                                                                                     }
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                        <p className="text-xs text-muted-foreground">
-                                                                            Selecciona la fecha y luego ajusta la hora
-                                                                        </p>
+                                                                                }
+                                                                            }}
+                                                                        />
                                                                     </div>
-                                                                    <Calendar
-                                                                        mode="single"
-                                                                        selected={field.value}
-                                                                        onSelect={(date) => {
-                                                                            if (date) {
-                                                                                // Preserve the current time when changing date
-                                                                                const currentTime = field.value || new Date();
-                                                                                const newDate = new Date(date);
-                                                                                newDate.setHours(currentTime.getHours());
-                                                                                newDate.setMinutes(currentTime.getMinutes());
+                                                                    <p className="text-xs text-muted-foreground">
+                                                                        Selecciona la fecha y luego ajusta la hora
+                                                                    </p>
+                                                                </div>
+                                                                <Calendar
+                                                                    mode="single"
+                                                                    selected={field.value}
+                                                                    onSelect={(date) => {
+                                                                        if (date) {
+                                                                            // Preserve the current time when changing date
+                                                                            const currentTime = field.value || new Date();
+                                                                            const newDate = new Date(date);
+                                                                            newDate.setHours(currentTime.getHours());
+                                                                            newDate.setMinutes(currentTime.getMinutes());
+                                                                            if (newDate >= minDate && newDate <= maxDate) {
                                                                                 field.onChange(newDate);
+                                                                            } else {
+                                                                                toast.error(
+                                                                                    userType === "DOCENTES" || (userType === "ESTUDIANTES" && allowLongLoan)
+                                                                                        ? "La fecha de devolución debe ser mínimo 30 minutos y máximo 7 días desde ahora"
+                                                                                        : "La fecha de devolución debe ser mínimo 30 minutos y máximo hasta las 19:00 de hoy"
+                                                                                );
                                                                             }
-                                                                        }}
-                                                                        disabled={(date) => {
-                                                                            const now = new Date();
-                                                                            const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-                                                                            const fourWeeksFromNow = new Date(now.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
-                                                                            return date < twoHoursFromNow || date > fourWeeksFromNow;
-                                                                        }}
-                                                                        initialFocus
-                                                                    />
-                                                                </PopoverContent>
-                                                            </Popover>
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="notes"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Notas Adicionales</FormLabel>
-                                                        <FormControl>
-                                                            <Textarea
-                                                                {...field}
-                                                                maxLength={250}
-                                                                placeholder="Ingrese notas adicionales (máximo 250 caracteres)"
-                                                            />
-                                                        </FormControl>
-                                                        <div className="text-xs text-muted-foreground text-right">
-                                                            {field.value?.length || 0}/250
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
+                                                                        }
+                                                                    }}
+                                                                    disabled={(date) => date < minDate || date > maxDate}
+                                                                    initialFocus
+                                                                />
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="notes"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Notas Adicionales</FormLabel>
+                                                    <FormControl>
+                                                        <Textarea
+                                                            {...field}
+                                                            maxLength={250}
+                                                            placeholder="Ingrese notas adicionales (máximo 250 caracteres)"
+                                                        />
+                                                    </FormControl>
+                                                    <div className="text-xs text-muted-foreground text-right">
+                                                        {field.value?.length || 0}/250
+                                                    </div>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
                                 </div>
                             </div>
