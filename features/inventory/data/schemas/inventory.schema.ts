@@ -3,8 +3,7 @@ import { z } from 'zod';
 export const inventorySchema = z.object({
   code: z
     .string()
-    .min(1, 'El código es requerido')
-    .max(15, 'El código no puede exceder 15 caracteres'),
+    .regex(/^\d{8}$/, 'El código debe tener exactamente 8 dígitos numéricos'),
   stock: z.coerce
     .number()
     .int()
@@ -43,8 +42,7 @@ export const inventorySchema = z.object({
     .max(60, 'El origen de entrada no puede exceder 60 caracteres'),
   entryType: z
     .string()
-    .min(1, 'El tipo de entrada es requerido')
-    .max(60, 'El tipo de entrada no puede exceder 60 caracteres'),
+    .optional(),
   acquisitionDate: z.date({
     required_error: 'La fecha de adquisición es requerida',
     invalid_type_error: 'La fecha de adquisición debe ser una fecha válida',

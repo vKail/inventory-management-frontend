@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { InventoryFormData } from "@/features/inventory/data/interfaces/inventory.interface";
 import { useCertificateStore } from "@/features/certificates/context/certificate-store";
 import { useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -68,32 +67,29 @@ export const TechnicalSection = () => {
                                 <FormItem data-field="entryOrigin">
                                     <FormLabel>Origen de Entrada *</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Origen del bien" maxLength={60} {...field} />
+                                        <Combobox
+                                            options={[
+                                                { value: "LOAN", label: "Prestamo" },
+                                                { value: "PURCHASE", label: "Compra" }
+                                            ]}
+                                            value={typeof field.value === 'string' ? field.value : ''}
+                                            onChange={(value) => {
+                                                const val = (value === 'LOAN' || value === 'PURCHASE') ? value : '';
+                                                field.onChange(val as 'LOAN' | 'PURCHASE');
+                                                form.setValue("entryType", val as 'LOAN' | 'PURCHASE');
+                                            }}
+                                            placeholder="Seleccionar Origen"
+                                            searchPlaceholder="Buscar Origen..."
+                                            emptyMessage="No se encontraron opciones"
+                                            fieldName="entryOrigin"
+                                        />
                                     </FormControl>
-                                    <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/60 caracteres
-                                    </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-
-                        <FormField
-                            control={form.control}
-                            name="entryType"
-                            render={({ field }) => (
-                                <FormItem data-field="entryType">
-                                    <FormLabel>Tipo de Entrada *</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Tipo de entrada" maxLength={60} {...field} />
-                                    </FormControl>
-                                    <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/60 caracteres
-                                    </div>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {/* Hidden field for entryType to ensure it is sent in the form data */}
+                        <input type="hidden" {...form.register("entryType")} />
 
                         <FormField
                             control={form.control}

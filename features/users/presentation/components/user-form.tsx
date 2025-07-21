@@ -179,6 +179,7 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                                     <FormLabel>Tipo de Usuario</FormLabel>
                                                     <Select
                                                         onValueChange={(value) => field.onChange(value as UserRole)}
+                                                        value={field.value}
                                                         defaultValue={field.value}
                                                     >
                                                         <FormControl>
@@ -187,12 +188,8 @@ export default function UserForm({ initialData, onSubmit, isLoading }: UserFormP
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            <SelectItem value={UserRole.ADMINISTRATOR}>
-                                                                Administrador
-                                                            </SelectItem>
-                                                            <SelectItem value={UserRole.MANAGER}>
-                                                                Gestor
-                                                            </SelectItem>
+                                                            <SelectItem value={UserRole.ADMINISTRATOR}>Administrador</SelectItem>
+                                                            <SelectItem value={UserRole.MANAGER}>Gestor</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />

@@ -28,14 +28,25 @@ export const IdentificationSection = () => {
                                     <FormLabel>Código del Bien *</FormLabel>
                                     <div className="flex gap-2">
                                         <FormControl>
-                                            <Input placeholder="Código único del bien" maxLength={15} {...field} />
+                                            <Input
+                                                placeholder="Código único del bien"
+                                                maxLength={8}
+                                                inputMode="numeric"
+                                                {...field}
+                                                value={field.value || ''}
+                                                onChange={e => {
+                                                    // Only allow digits and max 8 chars
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                                    field.onChange(value);
+                                                }}
+                                            />
                                         </FormControl>
                                         <Button type="button" variant="secondary" size="icon">
                                             <Barcode className="h-4 w-4" />
                                         </Button>
                                     </div>
                                     <div className="text-xs text-muted-foreground text-right">
-                                        {field.value?.length || 0}/15 caracteres
+                                        {(field.value || '').length}/8 caracteres
                                     </div>
                                     <FormMessage />
                                 </FormItem>
