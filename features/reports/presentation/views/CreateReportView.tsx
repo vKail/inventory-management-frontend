@@ -5,22 +5,31 @@ import ReportScanner from '../components/ReportScanner';
 import ReportList from '../components/ReportList';
 import { Button } from '@/shared/components/ui/Button';
 import { useReport } from '@/features/reports/hooks/useReport';
+import { useAuthStore } from '@/features/auth/context/auth-store';
 import { generateAreaReportPDF } from '@/features/reports/services/report-pdf.service';
 
 export default function CreateReportView() {
-        const { rows, scanCode, removeRow, clearRows, updateLocation, loading, lastAdded, error } = useReport();
-        const [activeType, setActiveType] = useState<string | null>(null);
-        const [manualCode, setManualCode] = useState('');
-        const [createdBy, setCreatedBy] = useState('');
+    const { rows, scanCode, removeRow, clearRows, updateLocation, loading, lastAdded, error } = useReport();
+    const authUser = useAuthStore(state => state.user);
+    const [activeType, setActiveType] = useState<string | null>(null);
+    const [manualCode, setManualCode] = useState('');
+    const [createdBy, setCreatedBy] = useState(authUser?.userName ?? '');
 
-        const handleDownload = async () => {
-            try {
-                const locationName = lastAdded?.location ?? (rows.length > 0 ? rows[0].location : '');
-                await generateAreaReportPDF(rows, { title: 'Reporte de Área', createdBy: createdBy, locationName });
-            } catch (error) {
-                console.error('Error generando PDF', error);
+    const handleDownload = async () => {
+        try {
+            // determine location name: if all rows share same non-empty location use it, otherwise blank
+            let locationName = '';
+            if (rows.length > 0) {
+                const firstLoc = rows[0].location ?? '';
+                const allSame = rows.every(r => (r.location ?? '') === firstLoc && firstLoc !== '');
+                if (allSame) locationName = firstLoc;
             }
-        };
+
+            await generateAreaReportPDF(rows, { title: 'Reporte de Área', createdBy: createdBy, locationName });
+        } catch (error) {
+            console.error('Error generando PDF', error);
+        }
+    };
 
     const reportTypes = useMemo(
         () => [
@@ -59,16 +68,14 @@ export default function CreateReportView() {
                             <h3 className="text-md font-semibold">{reportTypes.find(r => r.id === activeType)?.title}</h3>
                             <div className="text-sm text-muted-foreground">Escuche el escáner y agregue productos a la lista</div>
                         </div>
-                            <div className="flex items-center gap-2">
-                                                <Button variant="ghost" onClick={() => clearRows()} size="sm">Limpiar</Button>
-                                                <input
-                                                    placeholder="Creado por"
-                                                    className="border rounded px-2 py-1"
-                                                    value={createdBy}
-                                                    onChange={e => setCreatedBy(e.target.value)}
-                                                />
-                                                <Button onClick={handleDownload} size="sm">Descargar reporte</Button>
-                                            </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" onClick={() => clearRows()} size="sm">Limpiar</Button>
+                            <div className="text-sm">
+                                <div className="text-muted-foreground">Creado por</div>
+                                <div className="font-medium">{createdBy || 'Usuario'}</div>
+                            </div>
+                            <Button onClick={handleDownload} size="sm">Descargar reporte</Button>
+                        </div>
                     </div>
 
                     <div className="space-y-4">

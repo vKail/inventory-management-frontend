@@ -15,6 +15,18 @@ export default function ReportList({
     onRemoveRow: (code: string) => void;
 }) {
     const [locationOptions, setLocationOptions] = useState<Array<{ value: number; label: string }>>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [bulkLocationId, setBulkLocationId] = useState<number>(0);
+
+    const filteredRows = rows.filter(r => {
+        const q = searchTerm.trim().toLowerCase();
+        if (!q) return true;
+        return (
+            String(r.code).toLowerCase().includes(q) ||
+            String(r.name).toLowerCase().includes(q) ||
+            String(r.location ?? '').toLowerCase().includes(q)
+        );
+    });
 
     useEffect(() => {
         let mounted = true;
@@ -30,32 +42,78 @@ export default function ReportList({
         })();
         return () => { mounted = false; };
     }, []);
+
     return (
         <div>
-            <div className="overflow-x-auto">
-                <table className="w-full table-auto">
-                    <thead>
-                        <tr className="text-left">
-                            <th className="p-2">Código</th>
-                            <th className="p-2">Nombre</th>
-                            <th className="p-2">Ubicación</th>
-                            <th className="p-2">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map(r => (
-                            <ReportRowItem key={r.code} row={r} onApplyLocation={onApplyLocation} onRemoveRow={onRemoveRow} locationOptions={locationOptions} />
-                        ))}
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                    <input
+                        placeholder="Buscar en la lista..."
+                        className="border rounded px-2 py-1 w-64"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                    <div className="w-64">
+                        <Combobox
+                            options={locationOptions}
+                            value={bulkLocationId}
+                            onChange={(val: string | number) => {
+                                const id = Number(val);
+                                if (isNaN(id) || id <= 0) {
+                                    setBulkLocationId(0);
+                                    return;
+                                }
+                                setBulkLocationId(id);
+                                const selected = locationOptions.find(o => o.value === id);
+                                // apply to all rows that don't already have this location
+                                rows.forEach(r => {
+                                    if ((r.locationId ?? 0) !== id) {
+                                        onApplyLocation(r.code, id, selected?.label);
+                                    }
+                                });
+                            }}
+                            placeholder="Cambiar ubicación a todos"
+                            searchPlaceholder="Buscar ubicación..."
+                            emptyMessage="No se encontraron ubicaciones"
+                            fieldName={`bulk-location`}
+                        />
+                    </div>
+                </div>
+                <div className="text-sm text-muted-foreground">{filteredRows.length} / {rows.length} items</div>
+            </div>
 
-                        {rows.length === 0 && (
-                            <tr>
-                                <td colSpan={4} className="p-4 text-center text-muted-foreground">
-                                    No hay productos escaneados aún.
-                                </td>
+            <div className="overflow-x-auto">
+                <div className="max-h-[48vh] overflow-y-auto border rounded">
+                    <table className="w-full table-auto">
+                        <thead>
+                            <tr className="text-left">
+                                <th className="p-2">Código</th>
+                                <th className="p-2">Nombre</th>
+                                <th className="p-2">Ubicación</th>
+                                <th className="p-2">Acciones</th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {filteredRows.map(r => (
+                                <ReportRowItem
+                                    key={r.code}
+                                    row={r}
+                                    onApplyLocation={onApplyLocation}
+                                    onRemoveRow={onRemoveRow}
+                                    locationOptions={locationOptions}
+                                />
+                            ))}
+
+                            {rows.length === 0 && (
+                                <tr>
+                                    <td colSpan={4} className="p-4 text-center text-muted-foreground">
+                                        No hay productos escaneados aún.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
