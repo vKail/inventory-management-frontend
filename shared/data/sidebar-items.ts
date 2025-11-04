@@ -57,6 +57,25 @@ export const sidebarItems = [
           },
         ],
       },
+      {
+        title: 'Reportes',
+        icon: FileText,
+        roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+        subItems: [
+          {
+            title: 'Listar',
+            icon: List,
+            roles: [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT],
+            href: '/reports',
+          },
+          {
+            title: 'Crear reporte',
+            icon: CirclePlus,
+            roles: [UserRole.ADMIN, UserRole.TEACHER],
+            href: '/reports/new',
+          },
+        ],
+      },
     ],
   },
   {
