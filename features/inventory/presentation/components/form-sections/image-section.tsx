@@ -50,6 +50,7 @@ export const ImageSection = ({
 }: ImageSectionProps) => {
   const [imageData, setImageData] = useState<InventoryImageData[]>(images || []);
   const [imageErrors, setImageErrors] = useState<Record<string, { description?: string; photoDate?: string }>>({});
+  const [isDragging, setIsDragging] = useState(false);
   const MAX_IMAGES = 5;
 
   // Obtener la URL base para imágenes
@@ -58,6 +59,17 @@ export const ImageSection = ({
   useEffect(() => {
     setImageData(images);
   }, [images]);
+
+  // Helpers to store dates as yyyy-MM-dd (local) and parse them without timezone shifts
+  const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+  const toLocalDateString = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parseLocalDate = (s?: string) => {
+    if (!s) return undefined;
+    const parts = s.split('-').map(p => parseInt(p, 10));
+    if (parts.length !== 3 || parts.some(isNaN)) return undefined;
+    // Year, Month (1-based), Day -> Date(year, monthIndex, day)
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  };
 
   // Validar metadatos de imágenes
   const validateImageFields = (imgs: InventoryImageData[]) => {
@@ -74,9 +86,7 @@ export const ImageSection = ({
     return Object.keys(errors).length === 0;
   };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+  const processFiles = (files: FileList | File[]) => {
     const newFiles = Array.from(files);
     if (imageData.length + newFiles.length > MAX_IMAGES) {
       toast.error(`Máximo ${MAX_IMAGES} imágenes permitidas`);
@@ -109,7 +119,42 @@ export const ImageSection = ({
     const updated = [...imageData, ...newImageData];
     setImageData(updated);
     setImages(updated);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    processFiles(files);
     event.target.value = '';
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // indicate copy action
+    e.dataTransfer.dropEffect = 'copy';
+    setIsDragging(true);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    processFiles(files);
   };
 
   const removeImage = (imageId: string) => {
@@ -196,7 +241,13 @@ export const ImageSection = ({
           <div className="space-y-6">
             {/* Upload Area */}
             {(imageData.length + (existingImages?.length || 0)) < MAX_IMAGES && (
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'}`}
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 <input
                   id="image-upload"
                   type="file"
@@ -318,7 +369,7 @@ export const ImageSection = ({
                                 className={`w-full pl-3 text-left font-normal ${!image.photoDate && "text-muted-foreground"} ${imageErrors[image.id]?.photoDate ? 'border-red-500' : ''}`}
                               >
                                 {image.photoDate ? (
-                                  format(new Date(image.photoDate), "PPP", { locale: es })
+                                  format(parseLocalDate(image.photoDate) as Date, "PPP", { locale: es })
                                 ) : (
                                   <span>Seleccionar fecha</span>
                                 )}
@@ -328,12 +379,12 @@ export const ImageSection = ({
                             <PopoverContent className="w-auto p-0" align="start">
                               <Calendar
                                 mode="single"
-                                selected={image.photoDate ? new Date(image.photoDate) : undefined}
+                                selected={image.photoDate ? parseLocalDate(image.photoDate) : undefined}
                                 onSelect={date => {
                                   if (date) {
-                                    // Guardar como string yyyy-MM-dd
-                                    const iso = date.toISOString().slice(0, 10);
-                                    handleInputChange(image.id, 'photoDate', iso);
+                                    // Guardar como string yyyy-MM-dd in local timezone
+                                    const local = toLocalDateString(date);
+                                    handleInputChange(image.id, 'photoDate', local);
                                   }
                                 }}
                                 initialFocus

@@ -19,7 +19,7 @@ export class LocationService {
         return LocationService.instance;
     }
 
-    async getLocations(page = 1, limit = 10, filters?: { name?: string; description?: string; type?: string; floor?: string; reference?: string }): Promise<PaginatedLocations> {
+    async getLocations(page = 1, limit = 10, filters?: { name?: string; description?: string; type?: string; floor?: string; reference?: string }, allRecords?: boolean): Promise<PaginatedLocations> {
         try {
             const params = new URLSearchParams({
                 page: page.toString(),
@@ -40,6 +40,9 @@ export class LocationService {
             }
             if (filters?.reference) {
                 params.append('reference', filters.reference);
+            }
+            if (allRecords) {
+                params.append('allRecords', 'true');
             }
 
             const response = await this.httpClient.get<PaginatedLocations>(

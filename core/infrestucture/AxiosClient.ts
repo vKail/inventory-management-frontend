@@ -10,7 +10,7 @@ export class AxiosClient implements HttpHandler {
 
   private constructor() {
     this.axiosInstance = axios.create({
-      baseURL: `${process.env.NEXT_PUBLIC_API_URL}gittb/`,
+      baseURL: `${process.env.NEXT_PUBLIC_API_URL}`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -30,7 +30,7 @@ export class AxiosClient implements HttpHandler {
 
           if (message && Array.isArray(message.content) && message.content.length > 0) {
             if (success && !['get'].includes(response.config.method || '')) {
-              console.log(message.content[0], {
+              toast.success(String(message.content[0]), {
                 duration: 2000,
                 position: 'top-right',
                 style: {
@@ -39,7 +39,7 @@ export class AxiosClient implements HttpHandler {
                 },
               });
             } else if (!success && message.displayable) {
-              console.log(message.content[0], {
+              toast.error(String(message.content[0]), {
                 duration: 2000,
                 position: 'top-right',
                 style: {

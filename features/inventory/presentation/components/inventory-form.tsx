@@ -124,19 +124,15 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
   const form = useForm<InventoryFormData>({
     resolver: zodResolver(inventorySchema) as any,
     defaultValues,
-    mode: 'onChange'
+    // Validate on blur to avoid aggressive validation while typing which causes layout jumps
+    mode: 'onBlur',
+    reValidateMode: 'onChange'
   });
 
-  // Manejar errores de validación del formulario
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      const errors = form.formState.errors;
-      if (Object.keys(errors).length > 0) {
-        handleValidationErrors(errors);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form, handleValidationErrors]);
+  // NOTE: We used to auto-run handleValidationErrors on every change which caused
+  // the UI to jump (focus/scroll) while the user typed or left values temporarily empty.
+  // Validation is now performed on blur and on submit. We show toasts/focus only when
+  // the user submits the form (or blurs a field), reducing intrusive behavior.
 
   // Load materials and colors from stores
   useEffect(() => {
@@ -586,7 +582,7 @@ export const InventoryForm = ({ mode, initialData }: InventoryFormProps) => {
           >
             Cancelar
           </Button>
-          <Button type="submit" onClick={form.handleSubmit(onSubmit)} disabled={loading}>
+          <Button type="submit" onClick={form.handleSubmit(onSubmit, (errors) => handleValidationErrors(errors))} disabled={loading}>
             {loading ? (
               <span className="flex items-center"><span className="animate-spin mr-2 h-4 w-4 border-b-2 border-white rounded-full"></span>Guardando...</span>
             ) : mode === 'create' ? 'Crear Item' : 'Actualizar Item'}

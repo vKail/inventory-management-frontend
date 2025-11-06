@@ -62,7 +62,8 @@ export function LocationForm({ initialData, onSubmit, isLoading }: LocationFormP
 
   useEffect(() => {
     const loadData = async () => {
-      await getLocations()
+      // When editing/creating a location we want the full list for parent selection
+      await getLocations(1, 10, '', 'all', true)
     }
     loadData()
   }, [getLocations])
