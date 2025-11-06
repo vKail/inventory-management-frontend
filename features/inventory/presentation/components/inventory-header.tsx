@@ -37,7 +37,8 @@ export function InventoryHeader({
     useEffect(() => {
         getCategories();
         getItemTypes();
-        getLocations();
+        // Get full locations list for filter dropdowns
+        getLocations(1, 10, '', 'all', true);
     }, [getCategories, getItemTypes, getLocations]);
 
     const handleSearch = useCallback((value: string) => {

@@ -9,7 +9,7 @@ interface LocationRecord {
 export class ReportLocationService {
     private static instance: ReportLocationService;
     private httpClient: HttpHandler;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}locations`;
+    private static readonly url = 'locations';
 
     private constructor() {
         this.httpClient = AxiosClient.getInstance();

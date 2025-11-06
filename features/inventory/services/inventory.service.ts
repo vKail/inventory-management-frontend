@@ -27,7 +27,7 @@ interface InventoryServiceProps {
 export class InventoryService implements InventoryServiceProps {
     private static instance: InventoryService;
     private httpClient: HttpHandler;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}items`;
+    private static readonly url = 'items';
 
     private constructor() {
         this.httpClient = AxiosClient.getInstance();
@@ -196,7 +196,7 @@ export class InventoryService implements InventoryServiceProps {
             }
 
             const response = await this.httpClient.post<void>(
-                `${process.env.NEXT_PUBLIC_API_URL}item-images/upload`,
+                `item-images/upload`,
                 formData,
                 {
                     headers: {
@@ -261,7 +261,7 @@ export class InventoryService implements InventoryServiceProps {
     public async deleteImageById(imageId: number): Promise<void> {
         try {
             const response = await this.httpClient.delete<void>(
-                `${process.env.NEXT_PUBLIC_API_URL}item-images/${imageId}`
+                `item-images/${imageId}`
             );
             if (!response.success) {
                 throw new Error(response.message.content.join(', '));

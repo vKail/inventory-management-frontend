@@ -31,7 +31,7 @@ interface ConditionServiceProps {
 export class ConditionService implements ConditionServiceProps {
     private static instance: ConditionService;
     private httpClient: HttpHandler;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}conditions`;
+    private static readonly url = 'conditions';
 
     private constructor() {
         this.httpClient = AxiosClient.getInstance();

@@ -18,7 +18,7 @@ interface LocationStore {
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getLocations: (page?: number, limit?: number, search?: string, type?: string) => Promise<void>;
+    getLocations: (page?: number, limit?: number, search?: string, type?: string, allRecords?: boolean) => Promise<void>;
     getLocationById: (locationId: number) => Promise<ILocation | undefined>;
     addLocation: (location: LocationFormValues) => Promise<void>;
     updateLocation: (locationId: number, location: LocationFormValues) => Promise<void>;
@@ -70,7 +70,7 @@ export const useLocationStore = create<LocationStore>()(
                 get().getLocations(1, 10);
             },
 
-            getLocations: async (page = 1, limit = 10, search = '', type = 'all') => {
+            getLocations: async (page = 1, limit = 10, search = '', type = 'all', allRecords = false) => {
                 set(state => ({ isLoading: { ...state.isLoading, fetch: true } }));
                 try {
                     // Build query parameters for backend filtering
@@ -82,7 +82,7 @@ export const useLocationStore = create<LocationStore>()(
                         filters.type = type;
                     }
 
-                    const response = await LocationService.getInstance().getLocations(page, limit, filters);
+                    const response = await LocationService.getInstance().getLocations(page, limit, filters, allRecords);
                     if (response && response.records) {
                         set({
                             locations: response.records,

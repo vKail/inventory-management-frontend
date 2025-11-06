@@ -65,10 +65,7 @@ export const useColorStore = create<ColorStore>()(
                 try {
                     const searchTerm = options?.search ?? get().searchTerm;
                     const allRecords = options?.allRecords ?? false;
-                    console.log('🎨 ColorStore - Fetching colors with:', { page, limit, searchTerm, allRecords });
-
                     const data = await ColorService.getInstance().getColors(page, limit, searchTerm, allRecords);
-                    console.log('🎨 ColorStore - Received colors:', data.records.length, 'total:', data.total);
 
                     set({
                         colors: data.records,
@@ -94,9 +91,7 @@ export const useColorStore = create<ColorStore>()(
             getAllColors: async () => {
                 set({ loading: true });
                 try {
-                    console.log('🎨 ColorStore - Loading ALL colors...');
                     const data = await ColorService.getInstance().getColors(1, 10000, '', true);
-                    console.log('🎨 ColorStore - Received ALL colors:', data.records.length, 'total:', data.total);
 
                     set({
                         allColors: data.records, // Guardar en allColors, NO en colors

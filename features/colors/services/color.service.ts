@@ -31,7 +31,7 @@ interface ColorServiceProps {
 export class ColorService implements ColorServiceProps {
   private static instance: ColorService;
   private httpClient: HttpHandler;
-  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}colors`;
+  private static readonly url = 'colors';
 
   private constructor() {
     this.httpClient = AxiosClient.getInstance();
@@ -47,13 +47,11 @@ export class ColorService implements ColorServiceProps {
   public async getColors(page = 1, limit = 10, search = '', allRecords = false): Promise<PaginatedColors> {
     try {
       let url = `${ColorService.url}?page=${page}&limit=${limit}`;
-      if (allRecords) {
-        url += `&allRecords=true`;
-        console.log('🌈 Colors API - allRecords=true added to URL');
-      }
       if (search && search.trim() !== '') url += `&name=${encodeURIComponent(search)}`;
 
-      console.log('🌈 Colors API URL:', url); // Debug log
+      if (allRecords) {
+        url += `&allRecords=true`;
+      }
 
       const response = await this.httpClient.get<PaginatedColors>(url);
       return response.data;

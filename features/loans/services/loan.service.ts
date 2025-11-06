@@ -5,7 +5,7 @@ import { Loan, LoanCreate, LoanReturn, ApiResponse, PaginatedResponse, LoanServi
 export class LoanService implements LoanServiceProps {
     private static instance: LoanService;
     private httpClient: HttpHandler;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}loans`;
+    private static readonly url = 'loans';
 
     private constructor() {
         this.httpClient = AxiosClient.getInstance();

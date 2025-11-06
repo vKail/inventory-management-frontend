@@ -31,7 +31,7 @@ interface CertificateServiceProps {
 export class CertificateService implements CertificateServiceProps {
     private static instance: CertificateService;
     private httpClient: HttpHandler;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}certificates`;
+    private static readonly url = 'certificates';
 
     private constructor() {
         this.httpClient = AxiosClient.getInstance();

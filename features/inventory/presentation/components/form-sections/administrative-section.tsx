@@ -16,7 +16,8 @@ export const AdministrativeSection = () => {
     const { conditions, getConditions } = useConditionStore();
 
     useEffect(() => {
-        getLocations();
+        // Request all locations so combobox shows the full list
+        getLocations(1, 10, '', 'all', true);
         getConditions();
         getUsers();
     }, []);

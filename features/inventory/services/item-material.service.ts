@@ -4,8 +4,8 @@ import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 export class ItemMaterialService {
     private static instance: ItemMaterialService;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}item-materials`;
-    private static readonly urlItem = `${process.env.NEXT_PUBLIC_API_URL}items`;
+    private static readonly url = 'item-materials';
+    private static readonly urlItem = 'items';
     private httpClient: HttpHandler;
 
     private constructor() {

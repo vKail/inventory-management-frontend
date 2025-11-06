@@ -104,10 +104,7 @@ export const useMaterialStore = create<MaterialState>()(
                         filters.allRecords = true;
                     }
 
-                    console.log('🔧 MaterialStore - Fetching materials with:', { page, limit, filters });
-
                     const response = await MaterialService.getInstance().getMaterials(page, limit, filters);
-                    console.log('🔧 MaterialStore - Received materials:', response.records.length, 'total:', response.total);
 
                     set({
                         materials: response.records,
@@ -126,9 +123,7 @@ export const useMaterialStore = create<MaterialState>()(
             getAllMaterials: async () => {
                 set({ loading: true });
                 try {
-                    console.log('🔧 MaterialStore - Loading ALL materials...');
                     const response = await MaterialService.getInstance().getMaterials(1, 10000, { allRecords: true });
-                    console.log('🔧 MaterialStore - Received ALL materials:', response.records.length, 'total:', response.total);
 
                     set({
                         allMaterials: response.records, // Guardar en allMaterials, NO en materials
