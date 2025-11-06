@@ -13,7 +13,7 @@ interface ItemTypeServiceProps {
 export class ItemTypeService implements ItemTypeServiceProps {
   private static instance: ItemTypeService;
   private httpClient: HttpHandler;
-  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}item-types`;
+  private static readonly url = 'item-types';
 
   private constructor() {
     this.httpClient = AxiosClient.getInstance();

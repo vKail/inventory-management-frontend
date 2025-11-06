@@ -13,7 +13,7 @@ interface StateServiceProps {
 export class StateService implements StateServiceProps {
   private static instance: StateService;
   private httpClient: HttpHandler;
-  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}states`;
+  private static readonly url = 'states';
 
   private constructor() {
     this.httpClient = AxiosClient.getInstance();

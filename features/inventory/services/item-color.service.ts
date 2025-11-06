@@ -4,8 +4,8 @@ import { AxiosClient } from '@/core/infrestucture/AxiosClient';
 
 export class ItemColorService {
     private static instance: ItemColorService;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}item-colors`;
-    private static readonly urlItem = `${process.env.NEXT_PUBLIC_API_URL}items`;
+    private static readonly url = 'item-colors';
+    private static readonly urlItem = 'items';
     private httpClient: HttpHandler;
 
     private constructor() {

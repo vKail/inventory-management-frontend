@@ -6,7 +6,7 @@ import { LocationFormValues } from '../data/schemas/location.schema';
 export class LocationService {
     private static instance: LocationService;
     private httpClient: HttpHandler;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}locations`;
+    private static readonly url = 'locations';
 
     private constructor() {
         this.httpClient = AxiosClient.getInstance();

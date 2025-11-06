@@ -13,7 +13,7 @@ interface MaterialServiceProps {
 export class MaterialService implements MaterialServiceProps {
   private static instance: MaterialService;
   private httpClient: HttpHandler;
-  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}materials`;
+  private static readonly url = 'materials';
 
   private constructor() {
     this.httpClient = AxiosClient.getInstance();

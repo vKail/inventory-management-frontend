@@ -14,7 +14,7 @@ interface CategoryServiceProps {
 export class CategoryService implements CategoryServiceProps {
   private static instance: CategoryService;
   private httpClient: HttpHandler;
-  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}categories`;
+  private static readonly url = 'categories';
 
   private constructor() {
     this.httpClient = AxiosClient.getInstance();

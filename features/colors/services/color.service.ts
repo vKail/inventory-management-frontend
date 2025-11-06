@@ -31,7 +31,7 @@ interface ColorServiceProps {
 export class ColorService implements ColorServiceProps {
   private static instance: ColorService;
   private httpClient: HttpHandler;
-  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}colors`;
+  private static readonly url = 'colors';
 
   private constructor() {
     this.httpClient = AxiosClient.getInstance();

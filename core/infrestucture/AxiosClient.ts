@@ -10,7 +10,7 @@ export class AxiosClient implements HttpHandler {
 
   private constructor() {
     this.axiosInstance = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL,
+      baseURL: `${process.env.NEXT_PUBLIC_API_URL}gittb/`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -120,43 +120,31 @@ export class AxiosClient implements HttpHandler {
     return AxiosClient.instance;
   }
 
-  public async get<T>(url: string, config: AxiosRequestConfig): Promise<T> {
-    const promise = this.axiosInstance.get<T>(url, config);
-    const response: AxiosResponse<T> = await promise;
+  public async get<T>(url: string, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
+    const promise = this.axiosInstance.get<IHttpResponse<T>>(url, config);
+    const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async post<T>(
-    url: string,
-    data: any,
-    config: AxiosRequestConfig
-  ): Promise<IHttpResponse<T>> {
+  public async post<T>(url: string, data: any, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.post<IHttpResponse<T>>(url, data, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async put<T>(
-    url: string,
-    data: any,
-    config: AxiosRequestConfig
-  ): Promise<IHttpResponse<T>> {
+  public async put<T>(url: string, data: any, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.put<IHttpResponse<T>>(url, data, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async delete<T>(url: string, config: AxiosRequestConfig): Promise<IHttpResponse<T>> {
+  public async delete<T>(url: string, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.delete<IHttpResponse<T>>(url, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async patch<T>(
-    url: string,
-    data: any,
-    config: AxiosRequestConfig
-  ): Promise<IHttpResponse<T>> {
+  public async patch<T>(url: string, data: any, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.patch<IHttpResponse<T>>(url, data, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;

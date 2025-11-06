@@ -15,7 +15,7 @@ interface UserServiceProps {
 export class UserService implements UserServiceProps {
   private static instance: UserService;
   private httpClient: HttpHandler;
-  private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}users`;
+  private static readonly url = 'users';
 
   private constructor() {
     this.httpClient = AxiosClient.getInstance();
@@ -140,7 +140,7 @@ export class UserService implements UserServiceProps {
 
   async getPersonByDni(dni: string): Promise<PersonApiResponse["data"] | null> {
     try {
-      const response = await this.httpClient.get<PersonApiResponse["data"]>(`${process.env.NEXT_PUBLIC_API_URL}people/find-or-create/${dni}`);
+  const response = await this.httpClient.get<PersonApiResponse["data"]>(`people/find-or-create/${dni}`);
       if (!response.success) {
         return null;
       }
@@ -153,7 +153,7 @@ export class UserService implements UserServiceProps {
 
   async getPersonById(id: string): Promise<PersonApiResponse["data"] | null> {
     try {
-      const response = await this.httpClient.get<PersonApiResponse["data"]>(`${process.env.NEXT_PUBLIC_API_URL}people/${Number(id)}`);
+  const response = await this.httpClient.get<PersonApiResponse["data"]>(`people/${Number(id)}`);
       if (!response.success) {
         return null;
       }
@@ -167,7 +167,7 @@ export class UserService implements UserServiceProps {
   async markAsDefaulter(personId: number, dni: string): Promise<IHttpResponse<any>> {
     try {
       const response = await this.httpClient.post<IHttpResponse<any>>(
-        `${process.env.NEXT_PUBLIC_API_URL}people/mark-as-defaulter`,
+  `people/mark-as-defaulter`,
         { personId, dni }
       );
       if (!response.success) {
@@ -183,7 +183,7 @@ export class UserService implements UserServiceProps {
   async removeDefaulterStatus(personId: number, dni: string): Promise<IHttpResponse<any>> {
     try {
       const response = await this.httpClient.post<IHttpResponse<any>>(
-        `${process.env.NEXT_PUBLIC_API_URL}people/remove-defaulter-status`,
+  `people/remove-defaulter-status`,
         { personId, dni }
       );
       if (!response.success) {
