@@ -19,7 +19,8 @@ export const TechnicalSection = () => {
     const { certificates, getCertificates } = useCertificateStore();
 
     useEffect(() => {
-        getCertificates();
+        // Load all certificates for Combobox selection
+        getCertificates(1, 10, undefined, true);
     }, []);
 
     const certificateOptions = certificates.map(certificate => ({

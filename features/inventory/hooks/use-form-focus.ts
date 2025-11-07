@@ -130,65 +130,60 @@ export const useFormFocus = () => {
 
         // Para ComboBox y Select, solo aplicar efecto al borde
         if (isCombobox || isSelect) {
-            // Aplicar estilos de error iniciales solo al borde
-            element.style.borderColor = '#ef4444';
+            // Aplicar estilos de error iniciales solo al borde (más sutiles)
+            element.style.borderColor = '#f87171';
             element.style.borderWidth = '2px';
-            element.style.boxShadow = '0 0 0 1px rgba(239, 68, 68, 0.2)';
-            element.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+            element.style.boxShadow = '0 0 0 4px rgba(248, 113, 113, 0.06)';
+            element.style.transition = 'border-color 0.2s ease, box-shadow 0.2s ease';
 
-            // Efecto de pulso específico solo para el borde
+            // Pulso breve y suave
             let pulseCount = 0;
             const pulseInterval = setInterval(() => {
-                if (pulseCount >= 6) {
+                if (pulseCount >= 4) {
                     clearInterval(pulseInterval);
                     return;
                 }
                 if (pulseCount % 2 === 0) {
-                    // Pulso intenso - borde más brillante
-                    element.style.borderColor = '#dc2626';
-                    element.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.3)';
-                } else {
-                    // Pulso suave - borde normal
                     element.style.borderColor = '#ef4444';
-                    element.style.boxShadow = '0 0 0 1px rgba(239, 68, 68, 0.2)';
+                    element.style.boxShadow = '0 0 0 6px rgba(239, 68, 68, 0.12)';
+                } else {
+                    element.style.borderColor = '#f87171';
+                    element.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.06)';
                 }
                 pulseCount++;
-            }, 300);
+            }, 200);
 
-            // Restaurar estilos después de 3 segundos
+            // Restaurar estilos después de 2 segundos
             setTimeout(() => {
                 clearInterval(pulseInterval);
                 element.style.borderColor = originalBorder;
                 element.style.borderWidth = originalBorderWidth;
                 element.style.boxShadow = originalBoxShadow;
                 element.style.transition = originalTransition;
-            }, 3000);
+            }, 2000);
         } else {
-            // Para otros elementos (input, textarea), mantener el comportamiento anterior
+            // Para otros elementos (input, textarea): efecto sutil sin cambio de fondo
             const originalBackground = element.style.backgroundColor;
 
-            element.style.borderColor = '#ef4444';
-            element.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.3)';
-            element.style.transition = 'all 0.3s ease';
-            element.style.backgroundColor = '#fef2f2';
+            element.style.borderColor = '#f87171';
+            element.style.boxShadow = '0 0 0 6px rgba(248, 113, 113, 0.06)';
+            element.style.transition = 'all 0.2s ease';
 
             let pulseCount = 0;
             const pulseInterval = setInterval(() => {
-                if (pulseCount >= 6) {
+                if (pulseCount >= 4) {
                     clearInterval(pulseInterval);
                     return;
                 }
                 if (pulseCount % 2 === 0) {
-                    element.style.borderColor = '#dc2626';
-                    element.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.4)';
-                    element.style.backgroundColor = '#fee2e2';
-                } else {
                     element.style.borderColor = '#ef4444';
-                    element.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
-                    element.style.backgroundColor = '#fef2f2';
+                    element.style.boxShadow = '0 0 0 8px rgba(239, 68, 68, 0.10)';
+                } else {
+                    element.style.borderColor = '#f87171';
+                    element.style.boxShadow = '0 0 0 6px rgba(239, 68, 68, 0.06)';
                 }
                 pulseCount++;
-            }, 300);
+            }, 200);
 
             setTimeout(() => {
                 clearInterval(pulseInterval);
@@ -196,7 +191,7 @@ export const useFormFocus = () => {
                 element.style.boxShadow = originalBoxShadow;
                 element.style.transition = originalTransition;
                 element.style.backgroundColor = originalBackground;
-            }, 3000);
+            }, 2000);
         }
     }, []);
 

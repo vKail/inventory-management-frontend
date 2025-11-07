@@ -44,9 +44,15 @@ export class CertificateService implements CertificateServiceProps {
         return CertificateService.instance;
     }
 
-    public async getCertificates(page = 1, limit = 10, queryParams = ''): Promise<PaginatedCertificates> {
+    public async getCertificates(page = 1, limit = 10, queryParams = '', allRecords = false): Promise<PaginatedCertificates> {
         try {
-            const url = `${CertificateService.url}?page=${page}&limit=${limit}${queryParams ? `&${queryParams}` : ''}`;
+            let url: string;
+            if (allRecords) {
+                // Request all records - backend may support this flag
+                url = `${CertificateService.url}?allRecords=true${queryParams ? `&${queryParams}` : ''}`;
+            } else {
+                url = `${CertificateService.url}?page=${page}&limit=${limit}${queryParams ? `&${queryParams}` : ''}`;
+            }
             const response = await this.httpClient.get<PaginatedCertificates>(url);
             if (response.success && response.data) {
                 return response.data;

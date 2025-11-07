@@ -94,14 +94,14 @@ export const InventoryTable = ({
             <div className="rounded-md border">
                 <Table>
                     <colgroup>
-                        <col style={{ width: '140px' }} />
-                        <col style={{ width: '120px' }} />
-                        <col style={{ width: '200px' }} />
-                        <col style={{ width: '180px' }} />
-                        <col />
-                        <col />
-                        <col />
-                        <col />
+                    <col style={{ width: '110px' }} />
+                    <col style={{ width: '240px' }} />
+                    <col style={{ width: '160px' }} />
+                    <col style={{ width: '160px' }} />
+                    <col style={{ width: '80px' }} />
+                    <col style={{ width: '100px' }} />
+                    <col style={{ width: '80px' }} />
+                    <col style={{ width: '60px' }} />
                     </colgroup>
                     <TableHeader>
                         <TableRow>
