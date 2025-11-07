@@ -14,7 +14,7 @@ interface CertificateStore {
     error: string | null;
     currentPage: number;
     totalPages: number;
-    getCertificates: (page?: number, limit?: number, filters?: { search?: string; type?: string; status?: string; dateFrom?: string; dateTo?: string }) => Promise<void>;
+    getCertificates: (page?: number, limit?: number, filters?: { search?: string; type?: string; status?: string; dateFrom?: string; dateTo?: string }, allRecords?: boolean) => Promise<void>;
     getCertificateById: (certificateId: string) => Promise<ICertificate | undefined>;
     addCertificate: (certificate: Partial<ICertificate>) => Promise<void>;
     updateCertificate: (certificateId: string, certificate: Partial<ICertificate>) => Promise<void>;
@@ -69,7 +69,7 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
         get().refreshTable();
     },
 
-    getCertificates: async (page = 1, limit = 10, filters?: { search?: string; type?: string; status?: string; dateFrom?: string; dateTo?: string }) => {
+    getCertificates: async (page = 1, limit = 10, filters?: { search?: string; type?: string; status?: string; dateFrom?: string; dateTo?: string }, allRecords?: boolean) => {
         try {
             set({ loading: true, error: null });
             // Construir query params solo con los filtros, sin page ni limit
@@ -85,7 +85,7 @@ export const useCertificateStore = create<CertificateStore>((set, get) => ({
             if (statusFilter && statusFilter !== 'all') queryParams.append('status', statusFilter);
             if (dateFrom) queryParams.append('dateFrom', dateFrom);
             if (dateTo) queryParams.append('dateTo', dateTo);
-            const response = await CertificateService.getInstance().getCertificates(page, limit, queryParams.toString());
+            const response = await CertificateService.getInstance().getCertificates(page, limit, queryParams.toString(), !!allRecords);
             set({
                 certificates: response.records,
                 filteredCertificates: response.records,
