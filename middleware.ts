@@ -46,7 +46,7 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/forbidden-page', request.url));
       }
     } else {
-      console.log('Middleware: No matching protected route found, general access granted');
+      // No matching protected route found — allow access by default
     }
 
     return NextResponse.next();

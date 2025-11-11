@@ -8,11 +8,14 @@ export function useReport() {
     const loading = useReportStore(state => state.loading);
     const error = useReportStore(state => state.error);
     const lastAdded = useReportStore(state => state.lastAdded);
+    const reportType = useReportStore(state => state.reportType);
+    const setReportType = useReportStore(state => state.setReportType);
     const fetchAndAddByCode = useReportStore(state => state.fetchAndAddByCode);
     const addRow = useReportStore(state => state.addRow);
     const removeRow = useReportStore(state => state.removeRow);
     const clearRows = useReportStore(state => state.clearRows);
     const updateLocationAndPersist = useReportStore(state => state.updateLocationAndPersist);
+    const updateCustodianAndPersist = useReportStore(state => state.updateCustodianAndPersist);
     const setError = useReportStore(state => state.setError);
 
     const scanCode = useCallback(async (code: string) => {
@@ -28,16 +31,23 @@ export function useReport() {
         return updateLocationAndPersist(code, locationId, locationName);
     }, [updateLocationAndPersist]);
 
+    const updateCustodian = useCallback(async (code: string, custodianId: number, custodianName?: string) => {
+        return updateCustodianAndPersist(code, custodianId, custodianName);
+    }, [updateCustodianAndPersist]);
+
     return {
         rows,
         loading,
         error,
         lastAdded,
+        reportType,
+        setReportType,
         scanCode,
         manualAdd,
         removeRow,
         clearRows,
         updateLocation,
+        updateCustodian,
         setError,
     };
 }

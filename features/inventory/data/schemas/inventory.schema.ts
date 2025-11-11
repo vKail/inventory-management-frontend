@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const inventorySchema = z.object({
   code: z
     .string()
-    .regex(/^\d{8}$/, 'El código debe tener exactamente 8 dígitos numéricos'),
+    .regex(/^\d{6,8}$/, 'El código debe tener entre 6 y 8 dígitos numéricos'),
   stock: z.coerce
     .number()
     .int()
@@ -84,7 +84,7 @@ export const inventorySchema = z.object({
     })
     .int({ message: 'La línea de item debe ser un número entero' })
     .min(1, 'La línea de item es requerida')
-    .max(999999, 'La línea de item no puede exceder 999,999'),
+    .max(9999999999, 'La línea de item no puede exceder 9,999,999,999'),
   accountingAccount: z
     .string()
     .min(1, 'La cuenta contable es requerida')

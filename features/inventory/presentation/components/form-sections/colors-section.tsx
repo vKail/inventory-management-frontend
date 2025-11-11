@@ -27,7 +27,6 @@ export const ColorsSection = ({ selectedColors, onColorsChange, mode, error }: C
     useEffect(() => {
         const loadAllColors = async () => {
             try {
-                console.log('🔄 Loading all colors with getAllColors...');
                 await getAllColors();
             } catch (error) {
                 console.error('❌ Error loading colors:', error);
@@ -49,16 +48,11 @@ export const ColorsSection = ({ selectedColors, onColorsChange, mode, error }: C
             return matchesSearch && isNotSelected;
         });
         setFilteredColors(filtered);
-        console.log('🎨 ColorsSection - Filtered colors available:', filtered.length);
     };
 
     // Actualizar colores filtrados cuando cambia la búsqueda o los colores seleccionados
     useEffect(() => {
-        console.log('🎨 ColorsSection - Updating filtered colors:', {
-            totalColors: allColors.length,
-            selectedColors: selectedColors.length,
-            searchTerm
-        });
+        // Update filtered colors when inputs change
         updateFilteredColors(allColors, selectedColors, searchTerm);
     }, [searchTerm, selectedColors, allColors]);
 

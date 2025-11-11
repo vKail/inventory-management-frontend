@@ -27,7 +27,6 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
     useEffect(() => {
         const loadAllMaterials = async () => {
             try {
-                console.log('🔄 Loading all materials with getAllMaterials...');
                 // Fetch all materials with allRecords=true
                 await getAllMaterials();
             } catch (error) {
@@ -56,11 +55,7 @@ export const MaterialsSection = ({ selectedMaterials, onMaterialsChange, mode, e
 
     // Actualizar materiales filtrados cuando cambia la búsqueda o los materiales seleccionados
     useEffect(() => {
-        console.log('🔧 MaterialsSection - Updating filtered materials:', {
-            totalMaterials: allMaterials.length,
-            selectedMaterials: selectedMaterials.length,
-            searchTerm
-        });
+        // Update filtered materials when inputs change
         updateFilteredMaterials(allMaterials, selectedMaterials, searchTerm);
     }, [searchTerm, selectedMaterials, allMaterials]);
 

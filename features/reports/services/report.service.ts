@@ -5,12 +5,13 @@ import { ReportRow } from '@/features/reports/data/interfaces/report.interface';
 interface ReportServiceProps {
     getItemByCode: (code: string) => Promise<any | null>;
     updateItemLocation: (itemId: string | number, locationId: number) => Promise<any>;
+    updateItemCustodian: (itemId: string | number, custodianId: number) => Promise<any>;
 }
 
 export class ReportService implements ReportServiceProps {
     private static instance: ReportService;
     private httpClient: HttpHandler;
-    private static readonly url = `${process.env.NEXT_PUBLIC_API_URL}items`;
+    private static readonly url = 'items';
 
     private constructor() {
         this.httpClient = AxiosClient.getInstance();
@@ -43,6 +44,18 @@ export class ReportService implements ReportServiceProps {
             return response;
         } catch (error) {
             console.error('ReportService.updateItemLocation error', error);
+            throw error;
+        }
+    }
+
+    public async updateItemCustodian(itemId: string | number, custodianId: number): Promise<any> {
+        try {
+            const url = `${ReportService.url}/${itemId}`;
+            const body = { custodianId };
+            const response = await this.httpClient.patch<any>(url, body, {} as any);
+            return response;
+        } catch (error) {
+            console.error('ReportService.updateItemCustodian error', error);
             throw error;
         }
     }

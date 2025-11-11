@@ -10,7 +10,7 @@ export class AxiosClient implements HttpHandler {
 
   private constructor() {
     this.axiosInstance = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL,
+      baseURL: `${process.env.NEXT_PUBLIC_API_URL}`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -30,7 +30,7 @@ export class AxiosClient implements HttpHandler {
 
           if (message && Array.isArray(message.content) && message.content.length > 0) {
             if (success && !['get'].includes(response.config.method || '')) {
-              console.log(message.content[0], {
+              toast.success(String(message.content[0]), {
                 duration: 2000,
                 position: 'top-right',
                 style: {
@@ -39,7 +39,7 @@ export class AxiosClient implements HttpHandler {
                 },
               });
             } else if (!success && message.displayable) {
-              console.log(message.content[0], {
+              toast.error(String(message.content[0]), {
                 duration: 2000,
                 position: 'top-right',
                 style: {
@@ -120,43 +120,31 @@ export class AxiosClient implements HttpHandler {
     return AxiosClient.instance;
   }
 
-  public async get<T>(url: string, config: AxiosRequestConfig): Promise<T> {
-    const promise = this.axiosInstance.get<T>(url, config);
-    const response: AxiosResponse<T> = await promise;
+  public async get<T>(url: string, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
+    const promise = this.axiosInstance.get<IHttpResponse<T>>(url, config);
+    const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async post<T>(
-    url: string,
-    data: any,
-    config: AxiosRequestConfig
-  ): Promise<IHttpResponse<T>> {
+  public async post<T>(url: string, data: any, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.post<IHttpResponse<T>>(url, data, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async put<T>(
-    url: string,
-    data: any,
-    config: AxiosRequestConfig
-  ): Promise<IHttpResponse<T>> {
+  public async put<T>(url: string, data: any, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.put<IHttpResponse<T>>(url, data, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async delete<T>(url: string, config: AxiosRequestConfig): Promise<IHttpResponse<T>> {
+  public async delete<T>(url: string, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.delete<IHttpResponse<T>>(url, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;
   }
 
-  public async patch<T>(
-    url: string,
-    data: any,
-    config: AxiosRequestConfig
-  ): Promise<IHttpResponse<T>> {
+  public async patch<T>(url: string, data: any, config: AxiosRequestConfig = {}): Promise<IHttpResponse<T>> {
     const promise = this.axiosInstance.patch<IHttpResponse<T>>(url, data, config);
     const response: AxiosResponse<IHttpResponse<T>> = await promise;
     return response.data;

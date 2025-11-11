@@ -48,12 +48,12 @@ export const useColumns = () => {
             id: "name",
             accessorKey: "name",
             header: "Nombre",
-            size: 60,
+            size: 220,
             cell: ({ row }) => {
                 const name = row.getValue("name") as string;
                 return (
                     <div
-                        className="max-w-[80px] truncate text-sm"
+                        className="max-w-[220px] truncate text-sm"
                         title={name}
                     >
                         {name || "Sin nombre"}
@@ -65,12 +65,12 @@ export const useColumns = () => {
             id: "description",
             accessorKey: "description",
             header: "Descripción",
-            size: 120,
+            size: 140,
             cell: ({ row }) => {
                 const description = row.getValue("description") as string;
                 return (
                     <div
-                        className="max-w-[200px] truncate text-sm text-muted-foreground"
+                        className="max-w-[140px] truncate text-sm text-muted-foreground"
                         title={description}
                     >
                         {description || "Sin descripción"}
@@ -128,7 +128,7 @@ export const useColumns = () => {
             id: "statusId",
             accessorKey: "statusId",
             header: "Estado",
-            size: 80,
+            size: 90,
             cell: ({ row }) => {
                 const status = row.original.status;
                 return (
@@ -154,8 +154,8 @@ export const useColumns = () => {
         {
             id: "availableForLoan",
             accessorKey: "availableForLoan",
-            header: "Disponible para Préstamo",
-            size: 80,
+            header: "Disponible",
+            size: 60,
             cell: ({ row }) => {
                 const availableForLoan = row.getValue("availableForLoan") as boolean;
                 return (
@@ -171,7 +171,7 @@ export const useColumns = () => {
         {
             id: "actions",
             header: "Acciones",
-            size: 60,
+            size: 50,
             cell: ({ row }) => {
                 const item = row.original;
                 return (

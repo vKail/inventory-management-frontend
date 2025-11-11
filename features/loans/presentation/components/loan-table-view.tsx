@@ -75,7 +75,7 @@ export function LoanTableView({
         return (
             <Badge
                 variant={config.variant as any}
-                className={config.className}
+                className={`${config.className} text-[10px] sm:text-xs whitespace-nowrap`}
             >
                 {config.label}
             </Badge>
@@ -84,56 +84,61 @@ export function LoanTableView({
 
     return (
         <>
-            <div className="w-full overflow-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Solicitante</TableHead>
-                            <TableHead>Fecha del Préstamo</TableHead>
-                            <TableHead>Fecha de Vencimiento</TableHead>
-                            <TableHead>Número de Items</TableHead>
-                            <TableHead>Estado</TableHead>
-                            <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loans.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="text-center h-32">
-                                    <EmptyLoanState />
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            loans.map((loan) => (
-                                <TableRow
-                                    key={loan.id}
-                                    className="cursor-pointer hover:bg-muted/50"
-                                    onClick={() => setSelectedLoanId(loan.id)}
-                                >
-                                    <TableCell>{requestorNames[loan.id] || 'Cargando...'}</TableCell>
-                                    <TableCell>{formatDate(loan.deliveryDate)}</TableCell>
-                                    <TableCell>{formatDate(loan.scheduledReturnDate)}</TableCell>
-                                    <TableCell>{loan.loanDetails?.length || 0}</TableCell>
-                                    <TableCell>{getStatusBadge(loan.status)}</TableCell>
-                                    <TableCell className="text-right">
-                                        {loan.status === 'DELIVERED' && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onReturn(loan);
-                                                }}
-                                            >
-                                                Devolver
-                                            </Button>
-                                        )}
-                                    </TableCell>
+            <div className="w-full overflow-x-auto -mx-2 sm:mx-0">
+                <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Solicitante</TableHead>
+                                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Fecha del Préstamo</TableHead>
+                                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Fecha de Vencimiento</TableHead>
+                                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Número de Items</TableHead>
+                                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Estado</TableHead>
+                                    <TableHead className="text-right text-xs sm:text-sm whitespace-nowrap">Acciones</TableHead>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {loans.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center h-32">
+                                            <EmptyLoanState />
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    loans.map((loan) => (
+                                        <TableRow
+                                            key={loan.id}
+                                            className="cursor-pointer hover:bg-muted/50"
+                                            onClick={() => setSelectedLoanId(loan.id)}
+                                        >
+                                            <TableCell className="text-xs sm:text-sm whitespace-nowrap">{requestorNames[loan.id] || 'Cargando...'}</TableCell>
+                                            <TableCell className="text-xs sm:text-sm whitespace-nowrap">{formatDate(loan.deliveryDate)}</TableCell>
+                                            <TableCell className="text-xs sm:text-sm whitespace-nowrap">{formatDate(loan.scheduledReturnDate)}</TableCell>
+                                            <TableCell className="text-xs sm:text-sm text-center">{loan.loanDetails?.length || 0}</TableCell>
+                                            <TableCell className="text-xs sm:text-sm">{getStatusBadge(loan.status)}</TableCell>
+                                            <TableCell className="text-right">
+                                                {loan.status === 'DELIVERED' && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-8 text-xs"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onReturn(loan);
+                                                        }}
+                                                    >
+                                                        Devolver
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
             </div>
 
             <LoanDetailsModal
