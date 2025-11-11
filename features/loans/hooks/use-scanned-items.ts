@@ -5,6 +5,7 @@ import { useConditionStore } from '@/features/conditions/context/condition-store
 import { useInventoryStore } from '@/features/inventory/context/inventory-store';
 
 export interface ScannedItem {
+    id: number; // ID real del item en la base de datos
     code: string;
     name: string;
     characteristics: string;
@@ -54,6 +55,7 @@ export const useScannedItems = () => {
         }
 
         const newItem: ScannedItem = {
+            id: Number(item.id), // Guardar el ID real del item
             code: item.code,
             name: item.name,
             characteristics: item.modelCharacteristics || "",
@@ -130,6 +132,7 @@ export const useScannedItems = () => {
                 const inventoryItem = await getInventoryItemByCode(item.code);
                 return {
                     ...item,
+                    id: inventoryItem?.id ? Number(inventoryItem.id) : item.id, // Actualizar el ID también
                     stock: inventoryItem?.stock ?? item.stock,
                 };
             })

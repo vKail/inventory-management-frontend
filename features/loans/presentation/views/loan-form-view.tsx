@@ -127,9 +127,10 @@ export function LoanFormView() {
     const handleRemoveItem = (code: string) => {
         removeScannedItem(code);
         const currentDetails = form.getValues("loanDetails");
-        form.setValue("loanDetails", currentDetails.filter(detail =>
-            !scannedItems.find(item => item.code === code && Number(item.code) === detail.itemId)
-        ));
+        const itemToRemove = scannedItems.find(item => item.code === code);
+        if (itemToRemove) {
+            form.setValue("loanDetails", currentDetails.filter(detail => detail.itemId !== itemToRemove.id));
+        }
     };
 
     const handleObservationsChange = (code: string, observations: string) => {
@@ -137,7 +138,7 @@ export function LoanFormView() {
         const currentDetails = form.getValues("loanDetails");
         const updatedDetails = currentDetails.map(detail => {
             const item = scannedItems.find(i => i.code === code);
-            if (item && detail.itemId === Number(item.code)) {
+            if (item && detail.itemId === item.id) { // Usar item.id en lugar de Number(item.code)
                 return { ...detail, exitObservations: observations };
             }
             return detail;
@@ -150,7 +151,7 @@ export function LoanFormView() {
         const currentDetails = form.getValues("loanDetails");
         const item = scannedItems.find(i => i.code === itemCode);
         const updatedDetails = currentDetails.map(detail => {
-            if (item && detail.itemId === Number(item.code)) {
+            if (item && detail.itemId === item.id) { // Usar item.id en lugar de Number(item.code)
                 return { ...detail, exitConditionId: Number(conditionId) };
             }
             return detail;
@@ -161,8 +162,9 @@ export function LoanFormView() {
     const handleQuantityChange = (itemCode: string, quantity: number) => {
         updateItemQuantity(itemCode, quantity);
         const currentDetails = form.getValues("loanDetails");
+        const item = scannedItems.find(i => i.code === itemCode);
         const updatedDetails = currentDetails.map(detail => {
-            if (detail.itemId === Number(itemCode)) {
+            if (item && detail.itemId === item.id) { // Usar item.id en lugar de Number(itemCode)
                 return { ...detail, quantity };
             }
             return detail;
@@ -263,7 +265,7 @@ export function LoanFormView() {
             // Update condition and stock for each item
             for (const item of refreshedItems) {
                 const updateRes = await inventoryService.updateCondition(
-                    Number(item.code),
+                    item.id, // Usar el ID real del item
                     Number(item.exitConditionId),
                     item.stock
                 );
@@ -275,7 +277,7 @@ export function LoanFormView() {
 
             // Build loanDetails with selected condition and updated stock
             const loanDetails = refreshedItems.map(item => ({
-                itemId: Number(item.code),
+                itemId: item.id, // Usar el ID real del item, no el code
                 exitConditionId: Number(item.exitConditionId),
                 exitObservations: item.exitObservations,
                 quantity: item.quantity
