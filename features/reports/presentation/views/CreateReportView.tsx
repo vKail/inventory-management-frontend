@@ -6,26 +6,38 @@ import ReportList from '../components/ReportList';
 import { Button } from '@/shared/components/ui/Button';
 import { useReport } from '@/features/reports/hooks/useReport';
 import { useAuthStore } from '@/features/auth/context/auth-store';
-import { generateAreaReportPDF } from '@/features/reports/services/report-pdf.service';
+import { generateAreaReportPDF, generateCustodianHandoverPDF, generateReconciliationPDF } from '@/features/reports/services/report-pdf.service';
+import { ReportType } from '@/features/reports/data/interfaces/report.interface';
 
 export default function CreateReportView() {
-    const { rows, scanCode, removeRow, clearRows, updateLocation, loading, lastAdded, error } = useReport();
+    const { rows, scanCode, removeRow, clearRows, updateLocation, updateCustodian, loading, lastAdded, error, setReportType } = useReport();
     const authUser = useAuthStore(state => state.user);
-    const [activeType, setActiveType] = useState<string | null>(null);
+    const [activeType, setActiveType] = useState<ReportType | null>(null);
     const [manualCode, setManualCode] = useState('');
     const [createdBy, setCreatedBy] = useState(authUser?.userName ?? '');
 
     const handleDownload = async () => {
         try {
-            // determine location name: if all rows share same non-empty location use it, otherwise blank
-            let locationName = '';
-            if (rows.length > 0) {
-                const firstLoc = rows[0].location ?? '';
-                const allSame = rows.every(r => (r.location ?? '') === firstLoc && firstLoc !== '');
-                if (allSame) locationName = firstLoc;
+            if (activeType === 'area') {
+                // determine location name: if all rows share same non-empty location use it, otherwise blank
+                let locationName = '';
+                if (rows.length > 0) {
+                    const firstLoc = rows[0].location ?? '';
+                    const allSame = rows.every(r => (r.location ?? '') === firstLoc && firstLoc !== '');
+                    if (allSame) locationName = firstLoc;
+                }
+                await generateAreaReportPDF(rows, { title: 'Reporte de Área', createdBy: createdBy, locationName });
+            } else if (activeType === 'custodian-handover') {
+                await generateCustodianHandoverPDF(rows, {
+                    title: 'Reporte de Entrega de Custodio',
+                    createdBy: createdBy
+                });
+            } else if (activeType === 'reconciliation') {
+                await generateReconciliationPDF(rows, {
+                    title: 'Reporte de Reconciliación',
+                    createdBy: createdBy
+                });
             }
-
-            await generateAreaReportPDF(rows, { title: 'Reporte de Área', createdBy: createdBy, locationName });
         } catch (error) {
             console.error('Error generando PDF', error);
         }
@@ -33,7 +45,9 @@ export default function CreateReportView() {
 
     const reportTypes = useMemo(
         () => [
-            { id: 'area', title: 'Reporte de Área', description: 'Escanear productos por área' },
+            { id: 'area' as ReportType, title: 'Reporte de Área', description: 'Escanear productos por área' },
+            { id: 'custodian-handover' as ReportType, title: 'Entrega de Custodio', description: 'Transferir responsabilidad de bienes' },
+            { id: 'reconciliation' as ReportType, title: 'Reconciliación', description: 'Verificar inventario físico vs sistema' },
         ],
         []
     );
@@ -52,7 +66,11 @@ export default function CreateReportView() {
                     {reportTypes.map(t => (
                         <button
                             key={t.id}
-                            onClick={() => setActiveType(t.id)}
+                            onClick={() => {
+                                setActiveType(t.id);
+                                setReportType(t.id);
+                                clearRows(); // Clear previous data when switching types
+                            }}
                             className={`p-4 rounded border ${activeType === t.id ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
                             <div className="font-medium">{t.title}</div>
                             <div className="text-sm text-muted-foreground">{t.description}</div>
@@ -108,7 +126,39 @@ export default function CreateReportView() {
                                 )}
                             </div>
 
-                            <ReportList rows={rows} onApplyLocation={(code, locationId, locationName) => updateLocation(code, locationId, locationName)} onRemoveRow={removeRow} />
+                            {activeType === 'area' && (
+                                <ReportList
+                                    rows={rows}
+                                    onApplyLocation={(code, locationId, locationName) => updateLocation(code, locationId, locationName)}
+                                    onRemoveRow={removeRow}
+                                />
+                            )}
+
+                            {activeType === 'custodian-handover' && (
+                                <ReportList
+                                    rows={rows}
+                                    onApplyCustodian={(code, custodianId, custodianName) => updateCustodian(code, custodianId, custodianName)}
+                                    onRemoveRow={removeRow}
+                                    reportType="custodian-handover"
+                                />
+                            )}
+
+                            {activeType === 'reconciliation' && (
+                                <div className="space-y-4">
+                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                                        <div className="text-sm font-medium text-blue-900">Modo Reconciliación</div>
+                                        <div className="text-xs text-blue-700 mt-1">
+                                            Los códigos escaneados que NO existan en la base de datos serán marcados como "desconocidos"
+                                            y aparecerán en el reporte para su revisión.
+                                        </div>
+                                    </div>
+                                    <ReportList
+                                        rows={rows}
+                                        onRemoveRow={removeRow}
+                                        reportType="reconciliation"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

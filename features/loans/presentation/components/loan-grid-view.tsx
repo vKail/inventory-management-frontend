@@ -26,7 +26,7 @@ export function LoanGridView({ loans, onViewDetails, onReturn }: LoanGridViewPro
 
         const config = statusConfig[status] || { label: status, variant: "default" };
         return (
-            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${config.variant === 'success' ? 'bg-green-100 text-green-800' :
+            <span className={`inline-flex items-center rounded-full border px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 whitespace-nowrap ${config.variant === 'success' ? 'bg-green-100 text-green-800' :
                 config.variant === 'destructive' ? 'bg-red-100 text-red-800' :
                     config.variant === 'warning' ? 'bg-yellow-100 text-yellow-800' :
                         config.variant === 'info' ? 'bg-blue-100 text-blue-800' :
@@ -42,34 +42,34 @@ export function LoanGridView({ loans, onViewDetails, onReturn }: LoanGridViewPro
             {loans.length === 0 ? (
                 <EmptyLoanState />
             ) : (
-                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {loans.map((loan) => (
                         <div
                             key={loan.id}
-                            className="rounded-lg border bg-card text-card-foreground shadow-sm cursor-pointer hover:bg-muted/50"
+                            className="rounded-lg border bg-card text-card-foreground shadow-sm cursor-pointer hover:bg-muted/50 transition-colors"
                             onClick={() => setSelectedLoanId(loan.id)}
                         >
-                            <div className="p-6">
-                                <div className="flex justify-between items-start mb-4">
-                                    <h3 className="font-medium">Juan Pérez</h3>
+                            <div className="p-4 sm:p-6">
+                                <div className="flex justify-between items-start mb-3 sm:mb-4">
+                                    <h3 className="font-medium text-sm sm:text-base">Juan Pérez</h3>
                                     {getStatusBadge(loan.status)}
                                 </div>
                                 <div className="space-y-2">
                                     <div>
-                                        <span className="text-sm text-muted-foreground">Fecha de inicio:</span>
-                                        <p className="text-sm font-medium">{formatDate(loan.requestDate)}</p>
+                                        <span className="text-xs sm:text-sm text-muted-foreground">Fecha de inicio:</span>
+                                        <p className="text-xs sm:text-sm font-medium">{formatDate(loan.requestDate)}</p>
                                     </div>
                                     <div>
-                                        <span className="text-sm text-muted-foreground">Fecha de vencimiento:</span>
-                                        <p className={`text-sm font-medium ${loan.status === LoanStatus.OVERDUE ? 'text-red-600' : ''}`}>
+                                        <span className="text-xs sm:text-sm text-muted-foreground">Fecha de vencimiento:</span>
+                                        <p className={`text-xs sm:text-sm font-medium ${loan.status === LoanStatus.OVERDUE ? 'text-red-600' : ''}`}>
                                             {formatDate(loan.scheduledReturnDate)}
                                         </p>
                                     </div>
                                 </div>
                                 {loan.status === LoanStatus.DELIVERED && (
-                                    <div className="mt-4">
+                                    <div className="mt-3 sm:mt-4">
                                         <Button
-                                            className="w-full"
+                                            className="w-full h-9 text-xs sm:text-sm"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onReturn(loan);
